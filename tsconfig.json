@@ -1,0 +1,9 @@
+﻿{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "esModuleInterop": true,
+    "strict": true,
+    "removeComments": true
+  }
+}

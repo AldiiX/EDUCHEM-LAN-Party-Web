@@ -2,17 +2,14 @@
   font-family: "Ubuntu Bold";
   src: url("/fonts/Ubuntu-B.ttf");
 }
-
 @font-face {
   font-family: "Ubuntu Regular";
   src: url("/fonts/Ubuntu-R.ttf");
 }
-
 @font-face {
   font-family: "Rajdhani";
   src: url("/fonts/Rajdhani-Bold.ttf");
 }
-
 html {
   font-size: 14px;
 }
@@ -22,7 +19,6 @@ html {
     font-size: 16px;
   }
 }
-
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
@@ -36,10 +32,12 @@ body {
   margin-bottom: 60px;
 }
 
-p,a,h4,h5,h6 {
-    font-family: "Ubuntu Regular", sans-serif;
+p, a, h4, h5, h6 {
+  font-family: "Ubuntu Regular", sans-serif;
 }
 
-h1,h2,h3 {
-    font-family: "Rajdhani", sans-serif;
+h1, h2, h3 {
+  font-family: "Rajdhani", sans-serif;
 }
+
+/*# sourceMappingURL=main.css.map */
