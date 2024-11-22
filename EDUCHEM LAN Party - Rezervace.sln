@@ -1,0 +1,19 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduchemLPR", "EduchemLPR.csproj", "{A2561C53-C20B-4083-813D-16CA9747B394}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+								Testing|Any CPU = Testing|Any CPU
+								Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A2561C53-C20B-4083-813D-16CA9747B394}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2561C53-C20B-4083-813D-16CA9747B394}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2561C53-C20B-4083-813D-16CA9747B394}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2561C53-C20B-4083-813D-16CA9747B394}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2561C53-C20B-4083-813D-16CA9747B394}.Testing|Any CPU.ActiveCfg = Testing|Any CPU
+		{A2561C53-C20B-4083-813D-16CA9747B394}.Testing|Any CPU.Build.0 = Testing|Any CPU
+	EndGlobalSection
+EndGlobal
