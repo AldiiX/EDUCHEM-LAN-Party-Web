@@ -1,5 +1,4 @@
 using dotenv.net;
-using EduchemLPR.Middlewares;
 using EduchemLPR.Services;
 using StackExchange.Redis;
 
@@ -14,10 +13,18 @@ public static class Program {
     public static ILogger Logger => App.Logger;
 
     
-    #if DEBUG || TESTING
+    #if DEBUG
         public const bool DEVELOPMENT_MODE = true;
-    #else
+        public const bool USE_LOCALHOST_CONNECTION = false;
+        public const string PROFILE = "DEBUG";
+    #elif RELEASE
         public const bool DEVELOPMENT_MODE = false;
+        public const bool USE_LOCALHOST_CONNECTION = true;
+        public const string PROFILE = "RELEASE";
+    #elif TESTING
+        public const bool DEVELOPMENT_MODE = true;
+        public const bool USE_LOCALHOST_CONNECTION = true;
+        public const string PROFILE = "TESTING";
     #endif
 
     
@@ -32,7 +39,7 @@ public static class Program {
             if (DEVELOPMENT_MODE) {
                 options.ConfigurationOptions = new ConfigurationOptions {
                     EndPoints = { $"{ENV["DATABASE_IP"]}:{ENV["REDIS_PORT"]}" },
-                    Password = ENV["REDIS_PUBLICACC_PASSWORD"],
+                    Password = ENV["REDIS_PASSWORD"],
                 };
             } else options.Configuration = "localhost:6379";
 
@@ -84,10 +91,10 @@ public static class Program {
         
         App.UseHttpsRedirection();
         App.UseStaticFiles();
-        //App.UseSession();
+        App.UseSession();
         App.UseRouting();
         App.UseAuthorization();
-        App.UseMiddleware<ErrorHandlingMiddleware>();
+        //App.UseMiddleware<ErrorHandlingMiddleware>();
         App.MapControllerRoute(name: "default", pattern: "/");
 
         

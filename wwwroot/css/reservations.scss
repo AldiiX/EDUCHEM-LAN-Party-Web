@@ -16,6 +16,8 @@
     object-fit: cover;
     object-position: center;
     transform: scaleX(-1);
+    user-select: none;
+    pointer-events: none;
 }
 
 .flex {
@@ -23,7 +25,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 70%;
+    width: 75%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -40,11 +42,101 @@
     >.display {
         flex-grow: 1;
         aspect-ratio: 16/9;
+        max-height: 75vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        position: relative;
+
+        >.roomname {
+            margin: 0;
+            position: sticky;
+            top: 0;
+        }
+
+        >.selectroom-txt {
+            margin: 0;
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            position: absolute;
+        }
+
+        >.tabule {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        #pcroom-vt3, #pcroom-vrr {
+            margin-top: 36px;
+            display: flex;
+            gap: 124px;
+            justify-content: center;
+
+            >.left, >.right {
+                display: flex;
+                flex-direction: column;
+                gap: 36px;
+            }
+
+            >.left >.pair, >.right >.pair {
+                display: flex;
+                gap: 12px;
+                flex-direction: row-reverse;
+                background-color: rgba(255, 255, 255);
+                padding: 12px;
+                border-radius: 8px;
+
+                >.pc {
+                    background-color: #b2ff7e;
+                    padding: 12px 24px;
+                    position: relative;
+                    margin-top: -36px;
+                    border-radius: 8px;
+
+                    >p {
+                        margin: 0;
+                        font-size: 24px;
+                        user-select: none;
+                    }
+                }
+            }
+        }
     }
 
     >.controls {
         display: flex;
         flex-direction: column;
         gap: 12px;
+        align-self: start;
+
+        >.logininfo {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 250px;
+
+            p {
+                margin: 0;
+            }
+
+            >.logintxt {
+                align-items: center;
+                margin: 0;
+
+                >a {
+                    color: var(--color-yellow);
+                    text-decoration: underline;
+                }
+            }
+        }
+
+        >.settings {
+            h1 {
+                margin: 0;
+            }
+        }
     }
 }

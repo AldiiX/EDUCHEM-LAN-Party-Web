@@ -1,0 +1,270 @@
+﻿@using EduchemLPR
+@using EduchemLPR.Classes
+@using EduchemLPR.Classes.Objects
+@{
+    User? user = Utilities.GetLoggedAccountFromContextOrNull() ?? await Auth.ReAuthUserAsync();
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/reservations.css">
+    <link rel="stylesheet" href="/lib/pure-min.css">
+    <link rel="stylesheet" href="/css/themes/light.css">
+    <link rel="stylesheet" href="/css/components/switch.css">
+    <script src="/lib/vue@(Program.DEVELOPMENT_MODE ? "_dev" : "").js"></script>
+    <title>Rezervace • EDUCHEM LAN Party</title>
+
+    <!-- Favicony -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon_black.ico" type="image/x-icon" media="(prefers-color-scheme: light)">
+    <link rel="icon" href="/favicon_white.ico" type="image/x-icon" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+    <img class="wallpaper" src="/images/wave.svg" />
+
+    <div id="app">
+        <div class="flex">
+        <div class="display">
+            <template v-if="temp.ownSetup">
+
+            </template>
+
+            <template v-if="!temp.ownSetup">
+                <h1 class="selectroom-txt" v-if="temp.room === null">Vyber místnost</h1>
+
+                <h1 class="roomname" v-if="temp.room === 'vt3'">VT3</h1>
+                <h1 class="roomname" v-if="temp.room === 'vrr'">VRR</h1>
+
+                <!--    VT3    -->
+                <p v-if="temp.room === 'vt3'" class="tabule">(tabule)</p>
+                <div id="pcroom-vt3" v-if="temp.room === 'vt3'">
+                    <div class="left">
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC03" v-bind:style="setPCStyle('VT3_PC03')">
+                                <p>03</p>
+                            </div>
+                            <div class="pc" id="VT3_PC04" v-bind:style="setPCStyle('VT3_PC04')">
+                                <p>04</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC07" v-bind:style="setPCStyle('VT3_PC07')">
+                                <p>07</p>
+                            </div>
+                            <div class="pc" id="VT3_PC08" v-bind:style="setPCStyle('VT3_PC08')">
+                                <p>08</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC11" v-bind:style="setPCStyle('VT3_PC11')">
+                                <p>11</p>
+                            </div>
+                            <div class="pc" id="VT3_PC12" v-bind:style="setPCStyle('VT3_PC12')">
+                                <p>12</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC15" v-bind:style="setPCStyle('VT3_PC15')">
+                                <p>15</p>
+                            </div>
+                            <div class="pc" id="VT3_PC16" v-bind:style="setPCStyle('VT3_PC16')">
+                                <p>16</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC19" v-bind:style="setPCStyle('VT3_PC19')">
+                                <p>19</p>
+                            </div>
+                            <div class="pc" id="VT3_PC20" v-bind:style="setPCStyle('VT3_PC20')">
+                                <p>20</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC23" v-bind:style="setPCStyle('VT3_PC23')">
+                                <p>23</p>
+                            </div>
+                            <div class="pc" id="VT3_PC24" v-bind:style="setPCStyle('VT3_PC24')">
+                                <p>24</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC28" v-bind:style="setPCStyle('VT3_PC28')">
+                                <p>28</p>
+                            </div>
+                            <div class="pc" id="VT3_PC29" v-bind:style="setPCStyle('VT3_PC29')">
+                                <p>29</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right">
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC01" v-bind:style="setPCStyle('VT3_PC01')">
+                                <p>01</p>
+                            </div>
+                            <div class="pc" id="VT3_PC02" v-bind:style="setPCStyle('VT3_PC02')">
+                                <p>02</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC05" v-bind:style="setPCStyle('VT3_PC05')">
+                                <p>05</p>
+                            </div>
+                            <div class="pc" id="VT3_PC06" v-bind:style="setPCStyle('VT3_PC06')">
+                                <p>06</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC09" v-bind:style="setPCStyle('VT3_PC09')">
+                                <p>09</p>
+                            </div>
+                            <div class="pc" id="VT3_PC10" v-bind:style="setPCStyle('VT3_PC10')">
+                                <p>10</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC13" v-bind:style="setPCStyle('VT3_PC13')">
+                                <p>13</p>
+                            </div>
+                            <div class="pc" id="VT3_PC14" v-bind:style="setPCStyle('VT3_PC14')">
+                                <p>14</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC17" v-bind:style="setPCStyle('VT3_PC17')">
+                                <p>17</p>
+                            </div>
+                            <div class="pc" id="VT3_PC18" v-bind:style="setPCStyle('VT3_PC18')">
+                                <p>18</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC21" v-bind:style="setPCStyle('VT3_PC21')">
+                                <p>21</p>
+                            </div>
+                            <div class="pc" id="VT3_PC22" v-bind:style="setPCStyle('VT3_PC22')">
+                                <p>22</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VT3_PC26" v-bind:style="setPCStyle('VT3_PC26')">
+                                <p>26</p>
+                            </div>
+                            <div class="pc" id="VT3_PC27" v-bind:style="setPCStyle('VT3_PC27')">
+                                <p>27</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--    VRR    -->
+                <p v-if="temp.room === 'vrr'" class="tabule">(okna)</p>
+                <div id="pcroom-vrr" v-if="temp.room === 'vrr'">
+                    <div class="left">
+                        <div class="pair">
+                            <div class="pc" id="VRR_PC01" v-bind:style="setPCStyle('VRR_PC01')">
+                                <p>01</p>
+                            </div>
+                            <div class="pc" id="VRR_PC10" v-bind:style="setPCStyle('VRR_PC10')">
+                                <p>10</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VRR_PC02" v-bind:style="setPCStyle('VRR_PC02')">
+                                <p>02</p>
+                            </div>
+                            <div class="pc" id="VRR_PC09" v-bind:style="setPCStyle('VRR_PC09')">
+                                <p>09</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VRR_PC03" v-bind:style="setPCStyle('VRR_PC03')">
+                                <p>03</p>
+                            </div>
+                            <div class="pc" id="VRR_PC08" v-bind:style="setPCStyle('VRR_PC08')">
+                                <p>08</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VRR_PC04" v-bind:style="setPCStyle('VRR_PC04')">
+                                <p>04</p>
+                            </div>
+                            <div class="pc" id="VRR_PC07" v-bind:style="setPCStyle('VRR_PC07')">
+                                <p>07</p>
+                            </div>
+                        </div>
+
+                        <div class="pair">
+                            <div class="pc" id="VRR_PC05" v-bind:style="setPCStyle('VRR_PC05')">
+                                <p>05</p>
+                            </div>
+                            <div class="pc" id="VRR_PC06" v-bind:style="setPCStyle('VRR_PC06')">
+                                <p>06</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+            <div class="controls">
+                <div class="settings">
+                    <h1>Rezervace</h1>
+                    <p>
+                        Mám vlastní setup:
+                        <label class="switch">
+                            <input type="checkbox" v-model="temp.ownSetup">
+                            <span class="slider round"></span>
+                        </label>
+                    </p>
+                    <p v-if="!temp.ownSetup">
+                        Místnost:
+                        <select v-model="temp.room" v-on:change="saveRoomToLocalStorage()">
+                            <option value="vt3">VT3</option>
+                            <option value="vrr">VRR</option>
+                        </select>
+                    </p>
+                </div>
+
+                <div>
+                    <p v-cloak>Počet zabraných PC: <strong>{{ pcs?.filter(x => x.reservedBy != null)?.length ?? 0 }}/{{ pcs?.length ?? 0}}</strong></p>
+                </div>
+
+
+                <div class="logininfo">
+                    @if (user != null) {
+                        <p>Přihlášen jako: <strong>@user.DisplayName</strong></p>
+                        <p>Třída: <strong>@(user.Class ?? "???")</strong></p>
+                        <p>Typ účtu: <strong>@user.AccountType</strong></p>
+                        <a class="button-primary" style="margin-top: 16px" href="/auth/logout?r=/rezervace">Odhlásit se</a>
+                    } else {
+                        <p class="logintxt">Pro rezervování <a href="/login?r=/rezervace">se musíš přihlásit</a>.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="module">
+    import {vue} from "/scripts/reservations.js";
+</script>
+</html>

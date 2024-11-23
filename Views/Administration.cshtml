@@ -1,0 +1,54 @@
+﻿@using EduchemLPR
+@using EduchemLPR.Classes
+@using EduchemLPR.Classes.Objects
+@{
+    User user = Utilities.GetLoggedAccountFromContext();
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/administration.css">
+    <link rel="stylesheet" href="/lib/pure-min.css">
+    <link rel="stylesheet" href="/css/themes/light.css">
+    <script src="/lib/vue@(Program.DEVELOPMENT_MODE ? "_dev" : "").js"></script>
+    <title>Administrace • EDUCHEM LAN Party</title>
+
+    <!-- Favicony -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon_black.ico" type="image/x-icon" media="(prefers-color-scheme: light)">
+    <link rel="icon" href="/favicon_white.ico" type="image/x-icon" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<div id="app">
+    <h1>Vygenerovat klíč</h1>
+    <button onclick="document.getElementById('randomkey').innerHTML = generateRandomKey()">Vygenerovat klíč</button>
+    <p>Vygenerovaný klíč: <span id="randomkey"></span></p>
+    
+    <h1>Vytvořit účet</h1>
+    <form method="post">
+        <input type="text" name="name" placeholder="Jméno">
+        <input type="email" name="email" placeholder="Email">
+        <input type="text" name="class" placeholder="Třída">
+        <input type="submit">
+    </form>
+</div>
+</body>
+<script type="module">
+    import {vue} from "/scripts/administration.js";
+</script>
+<script>
+    function generateRandomKey(length = 48) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let key = '';
+        for (let i = 0; i < length; i++) {
+            const randomIndex = Math.floor(Math.random() * chars.length);
+            key += chars[randomIndex];
+        }
+        return key;
+    }
+</script>
+</html>

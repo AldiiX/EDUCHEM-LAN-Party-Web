@@ -14,6 +14,8 @@ body {
   object-fit: cover;
   object-position: center;
   transform: scaleX(-1);
+  user-select: none;
+  pointer-events: none;
 }
 
 .flex {
@@ -21,7 +23,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 70%;
+  width: 75%;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -35,11 +37,86 @@ body {
 .flex > .display {
   flex-grow: 1;
   aspect-ratio: 16/9;
+  max-height: 75vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+}
+.flex > .display > .roomname {
+  margin: 0;
+  position: sticky;
+  top: 0;
+}
+.flex > .display > .selectroom-txt {
+  margin: 0;
+  text-align: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  position: absolute;
+}
+.flex > .display > .tabule {
+  text-align: center;
+  margin-top: 0;
+}
+.flex > .display #pcroom-vt3, .flex > .display #pcroom-vrr {
+  margin-top: 36px;
+  display: flex;
+  gap: 124px;
+  justify-content: center;
+}
+.flex > .display #pcroom-vt3 > .left, .flex > .display #pcroom-vt3 > .right, .flex > .display #pcroom-vrr > .left, .flex > .display #pcroom-vrr > .right {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+.flex > .display #pcroom-vt3 > .left > .pair, .flex > .display #pcroom-vt3 > .right > .pair, .flex > .display #pcroom-vrr > .left > .pair, .flex > .display #pcroom-vrr > .right > .pair {
+  display: flex;
+  gap: 12px;
+  flex-direction: row-reverse;
+  background-color: rgb(255, 255, 255);
+  padding: 12px;
+  border-radius: 8px;
+}
+.flex > .display #pcroom-vt3 > .left > .pair > .pc, .flex > .display #pcroom-vt3 > .right > .pair > .pc, .flex > .display #pcroom-vrr > .left > .pair > .pc, .flex > .display #pcroom-vrr > .right > .pair > .pc {
+  background-color: #b2ff7e;
+  padding: 12px 24px;
+  position: relative;
+  margin-top: -36px;
+  border-radius: 8px;
+}
+.flex > .display #pcroom-vt3 > .left > .pair > .pc > p, .flex > .display #pcroom-vt3 > .right > .pair > .pc > p, .flex > .display #pcroom-vrr > .left > .pair > .pc > p, .flex > .display #pcroom-vrr > .right > .pair > .pc > p {
+  margin: 0;
+  font-size: 24px;
+  user-select: none;
 }
 .flex > .controls {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-self: start;
+}
+.flex > .controls > .logininfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 250px;
+}
+.flex > .controls > .logininfo p {
+  margin: 0;
+}
+.flex > .controls > .logininfo > .logintxt {
+  align-items: center;
+  margin: 0;
+}
+.flex > .controls > .logininfo > .logintxt > a {
+  color: var(--color-yellow);
+  text-decoration: underline;
+}
+.flex > .controls > .settings h1 {
+  margin: 0;
 }
 
 /*# sourceMappingURL=reservations.css.map */

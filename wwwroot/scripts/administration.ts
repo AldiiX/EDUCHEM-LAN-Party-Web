@@ -18,11 +18,8 @@ export const vue = new Vue({
         currentPage: null,
         vueLoaded: true,
         temp: {
-            ownSetup: false,
-            room: null,
         },
 
-        pcs: [],
         announcements: [],
     },
 
@@ -49,40 +46,23 @@ export const vue = new Vue({
             addAnnouncement(this, text, type, timeout);
         },
 
-        /*addPrefetchLink: function(url: string): void {
-             addPrefetchLink(url);
-        },*/
+        addPrefetchLink: function(url: string): void {
+            addPrefetchLink(url);
+        },
 
         copyToClipboard: function(text: string): void {
             copyToClipboard(text);
         },
 
-        setPCStyle: function(pcID: string): {} {
-            const _this = this as any;
-            const obj: any = {};
-            const selectedPC = _this.getComputer(pcID);
-
-            if(selectedPC == null) {
-                obj.backgroundColor = "#dcdcdc";
-            } else if(selectedPC?.reservedBy == null) {
-                obj.backgroundColor = "#a5d6a7";
-            } else if(selectedPC?.reservedByMe === true) {
-                obj.backgroundColor = "#80e1ff";
-            } else {
-                obj.backgroundColor = "#ff8a80";
+        generateRandomKey: function(length = 48): string {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let key = '';
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * chars.length);
+                key += chars[randomIndex];
             }
 
-            return obj;
-        },
-
-        getComputer: function(pcID: string): {} {
-            const _this = this as any;
-            return _this.pcs.find((x: any) => x.id === pcID);
-        },
-
-        saveRoomToLocalStorage: function(): void {
-            const _this = this as any;
-            localStorage.setItem('room', _this.temp.room)
+            return key;
         },
     },
 
