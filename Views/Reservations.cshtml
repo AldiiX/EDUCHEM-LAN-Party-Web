@@ -24,207 +24,57 @@
     <link rel="icon" href="/favicon_white.ico" type="image/x-icon" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-    <img class="wallpaper" src="/images/wave.svg" />
+    <img id="app-wallpaper" src="@Program.APP_WALLPAPER" />
 
     <div id="app">
         <div class="flex">
-        <div class="display">
-            <template v-if="temp.ownSetup">
+            <div class="display">
 
-            </template>
-
-            <template v-if="!temp.ownSetup">
-                <h1 class="selectroom-txt" v-if="temp.room === null">Vyber místnost</h1>
-
-                <h1 class="roomname" v-if="temp.room === 'vt3'">VT3</h1>
-                <h1 class="roomname" v-if="temp.room === 'vrr'">VRR</h1>
-
-                <!--    VT3    -->
-                <p v-if="temp.room === 'vt3'" class="tabule">(tabule)</p>
-                <div id="pcroom-vt3" v-if="temp.room === 'vt3'">
-                    <div class="left">
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC03" v-bind:style="setPCStyle('VT3_PC03')">
-                                <p>03</p>
-                            </div>
-                            <div class="pc" id="VT3_PC04" v-bind:style="setPCStyle('VT3_PC04')">
-                                <p>04</p>
-                            </div>
+                <!-- Možnosti při vlastním setupu -->
+                <template v-if="temp.ownSetup">
+                    <div class="rooms">
+                        <div class="room" v-for="(room, i) in rooms" :key="i" v-bind:style="setRoomStyle(room)">
+                            <h1>{{ room.id }}</h1>
+                            <p>{{ room.reservedBy?.length }}/{{ room.limitOfSeats }}</p>
                         </div>
+                    </div>
+                </template>
 
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC07" v-bind:style="setPCStyle('VT3_PC07')">
-                                <p>07</p>
-                            </div>
-                            <div class="pc" id="VT3_PC08" v-bind:style="setPCStyle('VT3_PC08')">
-                                <p>08</p>
-                            </div>
-                        </div>
+                <!-- Možnosti při výběru místnosti -->
+                <template v-if="!temp.ownSetup">
+                    <h1 class="selectroom-txt" v-if="temp.room === null">Vyber místnost</h1>
 
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC11" v-bind:style="setPCStyle('VT3_PC11')">
-                                <p>11</p>
-                            </div>
-                            <div class="pc" id="VT3_PC12" v-bind:style="setPCStyle('VT3_PC12')">
-                                <p>12</p>
-                            </div>
-                        </div>
+                    <h1 class="roomname" v-if="temp.room === 'vt3'">VT3</h1>
+                    <h1 class="roomname" v-if="temp.room === 'vrr'">VRR</h1>
 
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC15" v-bind:style="setPCStyle('VT3_PC15')">
-                                <p>15</p>
-                            </div>
-                            <div class="pc" id="VT3_PC16" v-bind:style="setPCStyle('VT3_PC16')">
-                                <p>16</p>
-                            </div>
-                        </div>
 
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC19" v-bind:style="setPCStyle('VT3_PC19')">
-                                <p>19</p>
-                            </div>
-                            <div class="pc" id="VT3_PC20" v-bind:style="setPCStyle('VT3_PC20')">
-                                <p>20</p>
-                            </div>
-                        </div>
+                    <!-- PC Učebny -->
+                    <div v-if="temp.room && static.pcrooms[temp.room]" class="room">
+                        <p class="label">{{ static.pcrooms[temp.room].label }}</p>
 
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC23" v-bind:style="setPCStyle('VT3_PC23')">
-                                <p>23</p>
-                            </div>
-                            <div class="pc" id="VT3_PC24" v-bind:style="setPCStyle('VT3_PC24')">
-                                <p>24</p>
-                            </div>
-                        </div>
+                        <div id="pcroom" class="pcroom">
+                            <div v-for="(row, rowIndex) in static.pcrooms[temp.room].pcs" :key="rowIndex" class="row">
+                                <div v-for="(pair, pairIndex) in row" :key="pairIndex" class="pair">
+                                    <div v-for="pc in pair" :id="`${temp.room.toUpperCase()}_PC${pc}`" class="pc" v-bind:style="setPCStyle(`${temp.room.toUpperCase()}_PC${pc}`)">
+                                        <p>{{ pc }}</p>
 
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC28" v-bind:style="setPCStyle('VT3_PC28')">
-                                <p>28</p>
-                            </div>
-                            <div class="pc" id="VT3_PC29" v-bind:style="setPCStyle('VT3_PC29')">
-                                <p>29</p>
+                                        <div class="info">
+                                            <p class="status" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`) == null">Nedostupný ({{ temp.room.toUpperCase() + '_PC' + pc }})</p>
+                                            <p class="status" v-else-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedBy == null">Volné ({{ temp.room.toUpperCase() + '_PC' + pc }})</p>
+                                            <p class="status" v-else-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByMe === true">Tvá rezervace ({{ temp.room.toUpperCase() + '_PC' + pc }})</p>
+                                            <p class="status" v-else>Rezervováno ({{ temp.room.toUpperCase() + '_PC' + pc }})</p>
+
+                                            <p class="name" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedBy != null && getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedBy != 'someone'">
+                                                {{ getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedBy }}<span v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByClass != null">, {{ getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedByClass }}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="right">
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC01" v-bind:style="setPCStyle('VT3_PC01')">
-                                <p>01</p>
-                            </div>
-                            <div class="pc" id="VT3_PC02" v-bind:style="setPCStyle('VT3_PC02')">
-                                <p>02</p>
-                            </div>
-                        </div>
-
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC05" v-bind:style="setPCStyle('VT3_PC05')">
-                                <p>05</p>
-                            </div>
-                            <div class="pc" id="VT3_PC06" v-bind:style="setPCStyle('VT3_PC06')">
-                                <p>06</p>
-                            </div>
-                        </div>
-
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC09" v-bind:style="setPCStyle('VT3_PC09')">
-                                <p>09</p>
-                            </div>
-                            <div class="pc" id="VT3_PC10" v-bind:style="setPCStyle('VT3_PC10')">
-                                <p>10</p>
-                            </div>
-                        </div>
-
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC13" v-bind:style="setPCStyle('VT3_PC13')">
-                                <p>13</p>
-                            </div>
-                            <div class="pc" id="VT3_PC14" v-bind:style="setPCStyle('VT3_PC14')">
-                                <p>14</p>
-                            </div>
-                        </div>
-
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC17" v-bind:style="setPCStyle('VT3_PC17')">
-                                <p>17</p>
-                            </div>
-                            <div class="pc" id="VT3_PC18" v-bind:style="setPCStyle('VT3_PC18')">
-                                <p>18</p>
-                            </div>
-                        </div>
-
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC21" v-bind:style="setPCStyle('VT3_PC21')">
-                                <p>21</p>
-                            </div>
-                            <div class="pc" id="VT3_PC22" v-bind:style="setPCStyle('VT3_PC22')">
-                                <p>22</p>
-                            </div>
-                        </div>
-
-                        <div class="pair">
-                            <div class="pc" id="VT3_PC26" v-bind:style="setPCStyle('VT3_PC26')">
-                                <p>26</p>
-                            </div>
-                            <div class="pc" id="VT3_PC27" v-bind:style="setPCStyle('VT3_PC27')">
-                                <p>27</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!--    VRR    -->
-                <p v-if="temp.room === 'vrr'" class="tabule">(okna)</p>
-                <div id="pcroom-vrr" v-if="temp.room === 'vrr'">
-                    <div class="left">
-                        <div class="pair">
-                            <div class="pc" id="VRR_PC01" v-bind:style="setPCStyle('VRR_PC01')">
-                                <p>01</p>
-                            </div>
-                            <div class="pc" id="VRR_PC10" v-bind:style="setPCStyle('VRR_PC10')">
-                                <p>10</p>
-                            </div>
-                        </div>
-
-                        <div class="pair">
-                            <div class="pc" id="VRR_PC02" v-bind:style="setPCStyle('VRR_PC02')">
-                                <p>02</p>
-                            </div>
-                            <div class="pc" id="VRR_PC09" v-bind:style="setPCStyle('VRR_PC09')">
-                                <p>09</p>
-                            </div>
-                        </div>
-
-                        <div class="pair">
-                            <div class="pc" id="VRR_PC03" v-bind:style="setPCStyle('VRR_PC03')">
-                                <p>03</p>
-                            </div>
-                            <div class="pc" id="VRR_PC08" v-bind:style="setPCStyle('VRR_PC08')">
-                                <p>08</p>
-                            </div>
-                        </div>
-
-                        <div class="pair">
-                            <div class="pc" id="VRR_PC04" v-bind:style="setPCStyle('VRR_PC04')">
-                                <p>04</p>
-                            </div>
-                            <div class="pc" id="VRR_PC07" v-bind:style="setPCStyle('VRR_PC07')">
-                                <p>07</p>
-                            </div>
-                        </div>
-
-                        <div class="pair">
-                            <div class="pc" id="VRR_PC05" v-bind:style="setPCStyle('VRR_PC05')">
-                                <p>05</p>
-                            </div>
-                            <div class="pc" id="VRR_PC06" v-bind:style="setPCStyle('VRR_PC06')">
-                                <p>06</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </template>
-        </div>
+                </template>
+            </div>
 
             <div class="controls">
                 <div class="settings">

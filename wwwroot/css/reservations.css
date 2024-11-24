@@ -4,20 +4,6 @@ body {
   background-repeat: no-repeat;
 }
 
-.wallpaper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  object-fit: cover;
-  object-position: center;
-  transform: scaleX(-1);
-  user-select: none;
-  pointer-events: none;
-}
-
 .flex {
   position: absolute;
   display: flex;
@@ -61,36 +47,119 @@ body {
   text-align: center;
   margin-top: 0;
 }
-.flex > .display #pcroom-vt3, .flex > .display #pcroom-vrr {
-  margin-top: 36px;
-  display: flex;
-  gap: 124px;
-  justify-content: center;
+.flex > .display > .room {
+  position: relative;
 }
-.flex > .display #pcroom-vt3 > .left, .flex > .display #pcroom-vt3 > .right, .flex > .display #pcroom-vrr > .left, .flex > .display #pcroom-vrr > .right {
+.flex > .display > .room > .label {
+  text-align: center;
+  margin-top: 0;
+  padding-bottom: 24px;
+}
+.flex > .display > .room .pcroom {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 36px;
 }
-.flex > .display #pcroom-vt3 > .left > .pair, .flex > .display #pcroom-vt3 > .right > .pair, .flex > .display #pcroom-vrr > .left > .pair, .flex > .display #pcroom-vrr > .right > .pair {
+.flex > .display > .room .pcroom > .row {
   display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 124px;
+}
+.flex > .display > .room .pcroom > .row > .pair {
+  display: flex;
+  flex-direction: row;
   gap: 12px;
-  flex-direction: row-reverse;
   background-color: rgb(255, 255, 255);
   padding: 12px;
   border-radius: 8px;
 }
-.flex > .display #pcroom-vt3 > .left > .pair > .pc, .flex > .display #pcroom-vt3 > .right > .pair > .pc, .flex > .display #pcroom-vrr > .left > .pair > .pc, .flex > .display #pcroom-vrr > .right > .pair > .pc {
-  background-color: #b2ff7e;
+.flex > .display > .room .pcroom > .row > .pair > .pc {
+  background-color: var(--bg);
   padding: 12px 24px;
   position: relative;
   margin-top: -36px;
   border-radius: 8px;
+  /*&:nth-child(1) >.info {
+      left: unset;
+      right: 80%;
+  }*/
 }
-.flex > .display #pcroom-vt3 > .left > .pair > .pc > p, .flex > .display #pcroom-vt3 > .right > .pair > .pc > p, .flex > .display #pcroom-vrr > .left > .pair > .pc > p, .flex > .display #pcroom-vrr > .right > .pair > .pc > p {
+.flex > .display > .room .pcroom > .row > .pair > .pc:hover {
+  transform: scale(1.1);
+  z-index: 2;
+}
+.flex > .display > .room .pcroom > .row > .pair > .pc > p {
   margin: 0;
   font-size: 24px;
   user-select: none;
+}
+.flex > .display > .room .pcroom > .row > .pair > .pc:hover > .info {
+  opacity: 1;
+  display: flex;
+}
+.flex > .display > .room .pcroom > .row > .pair > .pc > .info {
+  top: 25%;
+  left: 80%;
+  transform: translate(0, -25%);
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  position: absolute;
+  padding: 12px;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.5s;
+  background-color: white;
+  color: black;
+  z-index: 2;
+  box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.35);
+  cursor: auto;
+  pointer-events: var(--modal-pointer-events);
+}
+.flex > .display > .room .pcroom > .row > .pair > .pc > .info > .status {
+  font-size: 20px;
+  font-family: "Rajdhani", sans-serif;
+  width: max-content;
+  text-decoration: underline var(--bg);
+  margin: 0;
+}
+.flex > .display > .room .pcroom > .row > .pair > .pc > .info > .name {
+  margin: 0;
+  font-size: 16px;
+  width: max-content;
+}
+.flex > .display > .rooms {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  position: relative;
+}
+.flex > .display > .rooms > .room {
+  min-width: 80px;
+  min-height: 80px;
+  background-color: var(--bg);
+  border-radius: 8px;
+  padding: 16px;
+  user-select: none;
+  border-bottom: 10px solid white;
+}
+.flex > .display > .rooms > .room > h1 {
+  margin: 0;
+  text-align: center;
+}
+.flex > .display > .rooms > .room > p {
+  margin: 0;
+  text-align: center;
+}
+.flex > .display > .rooms > .room:hover {
+  transform: scale(1.1);
+  z-index: 2;
 }
 .flex > .controls {
   display: flex;

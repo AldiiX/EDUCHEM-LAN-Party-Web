@@ -12,6 +12,13 @@ public static class Program {
     public static IDictionary<string, string> ENV { get; private set; } = null!;
     public static ILogger Logger => App.Logger;
 
+
+
+    // random picovinky
+    public const string APP_WALLPAPER = "/images/wallpapers/two.jpg";
+
+
+
     
     #if DEBUG
         public const bool DEVELOPMENT_MODE = true;

@@ -12,6 +12,56 @@ export const vue = new Vue({
             ownSetup: false,
             room: null,
         },
+        static: {
+            pcrooms: {
+                vt3: {
+                    label: "(tabule)",
+                    pcs: [
+                        [
+                            ['04', '03'], ['02', '01']
+                        ],
+                        [
+                            ['08', '07'], ['06', '05']
+                        ],
+                        [
+                            ['12', '11'], ['10', '09']
+                        ],
+                        [
+                            ['16', '15'], ['14', '13']
+                        ],
+                        [
+                            ['20', '19'], ['18', '17']
+                        ],
+                        [
+                            ['24', '23'], ['22', '21']
+                        ],
+                        [
+                            ['29', '28'], ['27', '26']
+                        ]
+                    ],
+                },
+                vrr: {
+                    label: "(okna)",
+                    pcs: [
+                        [
+                            ['10', '01']
+                        ],
+                        [
+                            ['09', '02']
+                        ],
+                        [
+                            ['08', '03']
+                        ],
+                        [
+                            ['07', '04']
+                        ],
+                        [
+                            ['06', '05']
+                        ]
+                    ],
+                },
+            },
+        },
         pcs: [],
         rooms: [],
         announcements: [],
@@ -41,16 +91,37 @@ export const vue = new Vue({
             const obj = {};
             const selectedPC = _this.getComputer(pcID);
             if (selectedPC == null) {
-                obj.backgroundColor = "#dcdcdc";
+                obj['--bg'] = "#dcdcdc";
+                obj['--modal-pointer-events'] = "all";
             }
             else if (selectedPC?.reservedBy == null) {
-                obj.backgroundColor = "#a5d6a7";
+                obj['--bg'] = "#a5d6a7";
+                obj['--modal-pointer-events'] = "all";
             }
             else if (selectedPC?.reservedByMe === true) {
-                obj.backgroundColor = "#80e1ff";
+                obj['--bg'] = "#80e1ff";
+                obj['--modal-pointer-events'] = "all";
             }
             else {
-                obj.backgroundColor = "#ff8a80";
+                obj['--bg'] = "#ff8a80";
+                obj['--modal-pointer-events'] = "none";
+            }
+            return obj;
+        },
+        setRoomStyle: function (room) {
+            const _this = this;
+            const obj = {};
+            if (room?.reservedByMe === true) {
+                obj['--bg'] = "#80e1ff";
+                obj['--modal-pointer-events'] = "all";
+            }
+            else if (room?.reservedBy?.length >= room?.limitOfSeats) {
+                obj['--bg'] = "#ff8a80";
+                obj['--modal-pointer-events'] = "all";
+            }
+            else {
+                obj['--bg'] = "#a5d6a7";
+                obj['--modal-pointer-events'] = "all";
             }
             return obj;
         },
