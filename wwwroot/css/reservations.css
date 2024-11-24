@@ -115,6 +115,15 @@ body {
   color: var(--color-yellow);
   text-decoration: underline;
 }
+.flex > .controls > .info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 250px;
+}
+.flex > .controls > .info p {
+  margin: 0;
+}
 .flex > .controls > .settings h1 {
   margin: 0;
 }

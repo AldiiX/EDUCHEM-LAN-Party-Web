@@ -10,16 +10,18 @@ namespace EduchemLPR.Classes.Objects;
 public class User {
 
     [JsonConstructor]
-    private User(uint id, string displayName, string? @class, string authKey, string accountType) {
+    private User(uint id, string displayName, string? email, string? @class, string authKey, string accountType) {
         ID = id;
         DisplayName = displayName;
         Class = @class;
+        Email = email;
         AuthKey = authKey;
         AccountType = accountType;
     }
 
     public uint ID { get; private set; }
     public string DisplayName { get; private set; }
+    public string? Email { get; private set; }
     public string? Class { get; private set; }
     public string AuthKey { get; private set; }
     public string AccountType { get; private set; }
@@ -41,6 +43,7 @@ public class User {
         return new User(
             reader.GetUInt32("id"),
             reader.GetString("display_name"),
+            reader.GetObjectOrNull("email") as string,
             reader.GetObjectOrNull("class") as string,
             reader.GetString("auth_key"),
             reader.GetString("account_type")
@@ -62,6 +65,7 @@ public class User {
         var acc = new User(
             reader.GetUInt32("id"),
             reader.GetString("display_name"),
+            reader.GetObjectOrNull("email") as string,
             reader.GetObjectOrNull("class") as string,
             reader.GetString("auth_key"),
             reader.GetString("account_type")

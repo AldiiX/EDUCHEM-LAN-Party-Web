@@ -37,4 +37,7 @@ public class API : Controller {
 
         return Ok(array);
     }
+
+    [HttpGet("rooms")]
+    public IActionResult GetAllRooms() => Ok(Room.GetAll());
 }

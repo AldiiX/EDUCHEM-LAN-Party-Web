@@ -22,7 +22,9 @@
     <div class="center">
         <img src="/images/logo.svg"/>
         <p class="placeholder">KLÍČ</p>
-        <input type="password" name="key" form="authform">
+
+        <input type="text" name="username" form="authform" value="default" style="display: none">
+        <input type="password" name="key" form="authform" required minlength="12">
 
         @if (TempData["error"] != null) {
             <p class="errormsg" style="margin-top: 16px; color: red; text-align: center">@TempData["error"]</p>

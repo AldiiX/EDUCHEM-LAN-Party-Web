@@ -133,6 +133,17 @@
             }
         }
 
+        >.info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 250px;
+
+            p {
+                margin: 0;
+            }
+        }
+
         >.settings {
             h1 {
                 margin: 0;

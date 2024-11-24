@@ -23,6 +23,7 @@ export const vue = new Vue({
         },
 
         pcs: [],
+        rooms: [],
         announcements: [],
     },
 
@@ -36,6 +37,10 @@ export const vue = new Vue({
 
             fetch("/api/computers/").then(response => response.json()).then(data => {
                 _this.pcs = data;
+            });
+
+            fetch("/api/rooms/").then(response => response.json()).then(data => {
+                _this.rooms = data;
             });
 
             _this.temp.room = localStorage.getItem("room");
@@ -83,6 +88,24 @@ export const vue = new Vue({
         saveRoomToLocalStorage: function(): void {
             const _this = this as any;
             localStorage.setItem('room', _this.temp.room)
+        },
+
+        getRoomsMax: function (): number {
+            let max = 0;
+            const _this = this as any;
+
+            for(const room of _this.rooms) max += room.limitOfSeats;
+
+            return max;
+        },
+
+        getRoomsReserved: function (): number {
+            let reserved = 0;
+            const _this = this as any;
+
+            for(const room of _this.rooms) reserved += room.reservedBy.length;
+
+            return reserved;
         },
     },
 
