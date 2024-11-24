@@ -121,7 +121,7 @@ export const vue = new Vue({
             const selectedPC = _this.getComputer(pcID);
 
             if(selectedPC == null) {
-                obj['--bg'] = "#dcdcdc";
+                obj['--bg'] = "#c2c2c2";
                 obj['--modal-pointer-events'] = "all";
             } else if(selectedPC?.reservedBy == null) {
                 obj['--bg'] = "#a5d6a7";
@@ -141,7 +141,10 @@ export const vue = new Vue({
             const _this = this as any;
             const obj: any = {};
 
-            if(room?.reservedByMe === true) {
+            if(room == null) {
+                obj['--bg'] = "#c2c2c2";
+                obj['--modal-pointer-events'] = "all";
+            } else if(room?.reservedByMe === true) {
                 obj['--bg'] = "#80e1ff";
                 obj['--modal-pointer-events'] = "all";
             } else if(room?.reservedBy?.length >= room?.limitOfSeats) {
@@ -158,6 +161,38 @@ export const vue = new Vue({
         getComputer: function(pcID: string): {} {
             const _this = this as any;
             return _this.pcs.find((x: any) => x.id === pcID);
+        },
+
+        reserveComputer: function(pcID: string): void {
+            const _this = this as any;
+            const pc = _this.getComputer(pcID);
+
+            if(pc == null) {
+                console.error("Počítač nebyl nalezen!");
+                return;
+            }
+
+            if(pc.reservedBy != null) {
+                console.error("Počítač je již rezervován!");
+                return;
+            }
+
+            fetch(`/api/computers/reserve`, { method: "POST", body: `{ "id": "${pcID}" }`, headers: { "Content-Type": "application/json"} }).then(response => {
+                if(response.ok) {
+                    _this.addAnnouncement("Počítač byl úspěšně zarezervován!", "success");
+                    console.log("Počítač byl úspěšně zarezervován!");
+
+                    fetch("/api/computers/").then(response => response.json()).then(data => {
+                        _this.pcs = data;
+                    });
+
+                    fetch("/api/rooms/").then(response => response.json()).then(data => {
+                        _this.rooms = data;
+                    });
+                } else {
+                    console.error("Něco se nepovedlo!");
+                }
+            });
         },
 
         saveRoomToLocalStorage: function(): void {

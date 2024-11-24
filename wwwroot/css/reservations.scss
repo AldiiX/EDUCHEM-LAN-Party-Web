@@ -91,6 +91,7 @@
                             position: relative;
                             margin-top: -36px;
                             border-radius: 8px;
+                            width: 80px;
 
                             &:hover {
                                 transform: scale(1.1);
@@ -101,6 +102,8 @@
                                 margin: 0;
                                 font-size: 24px;
                                 user-select: none;
+                                font-family: "Rajdhani", sans-serif;
+                                text-align: center;
                             }
 
                             &:hover >.info {
@@ -114,9 +117,8 @@
                             }*/
 
                             >.info {
-                                top: 25%;
+                                top: -60%;
                                 left: 80%;
-                                transform: translate(0, -25%);
                                 display: none;
                                 flex-direction: column;
                                 gap: 6px;
@@ -145,6 +147,16 @@
                                     margin:0;
                                     font-size: 16px;
                                     width: max-content;
+                                }
+
+                                >button {
+                                    background-color: var(--bg);
+                                    transition-duration: 0.3s;
+
+                                    &:hover {
+                                        filter: brightness(0.9);
+                                        transition-duration: 0.3s;
+                                    }
                                 }
                             }
                         }

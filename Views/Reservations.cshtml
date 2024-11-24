@@ -67,6 +67,9 @@
                                             <p class="name" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedBy != null && getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedBy != 'someone'">
                                                 {{ getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedBy }}<span v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByClass != null">, {{ getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedByClass }}</span>
                                             </p>
+
+                                            <button class="button-primary" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedBy == null" v-on:click="reserveComputer(temp.room.toUpperCase() + '_PC' + pc)">Rezervovat</button>
+                                            <button class="button-primary" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByMe === true">Zrušit rezervaci</button>
                                         </div>
                                     </div>
                                 </div>

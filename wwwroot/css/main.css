@@ -20,6 +20,10 @@
   src: url("/fonts/Ubuntu-B.ttf");
 }
 @font-face {
+  font-family: "Ubuntu Medium";
+  src: url("/fonts/Ubuntu-M.ttf");
+}
+@font-face {
   font-family: "Ubuntu Regular";
   src: url("/fonts/Ubuntu-R.ttf");
 }
@@ -72,6 +76,10 @@ body {
   margin-bottom: 60px;
 }
 
+/*p > strong {
+    font-family: "Ubuntu Bold", sans-serif;
+    font-weight: lighter;
+}*/
 p, a, h4, h5, h6 {
   font-family: "Ubuntu Regular", sans-serif;
 }
@@ -91,6 +99,7 @@ h1, h2, h3 {
   transition: background-color 0.3s;
   text-align: center;
   text-decoration: none;
+  font-family: "Ubuntu Regular", sans-serif;
 }
 .button-primary:hover {
   background-color: var(--color-yellow-hover);

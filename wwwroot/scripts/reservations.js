@@ -91,7 +91,7 @@ export const vue = new Vue({
             const obj = {};
             const selectedPC = _this.getComputer(pcID);
             if (selectedPC == null) {
-                obj['--bg'] = "#dcdcdc";
+                obj['--bg'] = "#c2c2c2";
                 obj['--modal-pointer-events'] = "all";
             }
             else if (selectedPC?.reservedBy == null) {
@@ -111,7 +111,11 @@ export const vue = new Vue({
         setRoomStyle: function (room) {
             const _this = this;
             const obj = {};
-            if (room?.reservedByMe === true) {
+            if (room == null) {
+                obj['--bg'] = "#c2c2c2";
+                obj['--modal-pointer-events'] = "all";
+            }
+            else if (room?.reservedByMe === true) {
                 obj['--bg'] = "#80e1ff";
                 obj['--modal-pointer-events'] = "all";
             }
@@ -128,6 +132,33 @@ export const vue = new Vue({
         getComputer: function (pcID) {
             const _this = this;
             return _this.pcs.find((x) => x.id === pcID);
+        },
+        reserveComputer: function (pcID) {
+            const _this = this;
+            const pc = _this.getComputer(pcID);
+            if (pc == null) {
+                console.error("Počítač nebyl nalezen!");
+                return;
+            }
+            if (pc.reservedBy != null) {
+                console.error("Počítač je již rezervován!");
+                return;
+            }
+            fetch(`/api/computers/reserve`, { method: "POST", body: `{ "id": "${pcID}" }`, headers: { "Content-Type": "application/json" } }).then(response => {
+                if (response.ok) {
+                    _this.addAnnouncement("Počítač byl úspěšně zarezervován!", "success");
+                    console.log("Počítač byl úspěšně zarezervován!");
+                    fetch("/api/computers/").then(response => response.json()).then(data => {
+                        _this.pcs = data;
+                    });
+                    fetch("/api/rooms/").then(response => response.json()).then(data => {
+                        _this.rooms = data;
+                    });
+                }
+                else {
+                    console.error("Něco se nepovedlo!");
+                }
+            });
         },
         saveRoomToLocalStorage: function () {
             const _this = this;

@@ -81,6 +81,7 @@ body {
   position: relative;
   margin-top: -36px;
   border-radius: 8px;
+  width: 80px;
   /*&:nth-child(1) >.info {
       left: unset;
       right: 80%;
@@ -94,15 +95,16 @@ body {
   margin: 0;
   font-size: 24px;
   user-select: none;
+  font-family: "Rajdhani", sans-serif;
+  text-align: center;
 }
 .flex > .display > .room .pcroom > .row > .pair > .pc:hover > .info {
   opacity: 1;
   display: flex;
 }
 .flex > .display > .room .pcroom > .row > .pair > .pc > .info {
-  top: 25%;
+  top: -60%;
   left: 80%;
-  transform: translate(0, -25%);
   display: none;
   flex-direction: column;
   gap: 6px;
@@ -129,6 +131,14 @@ body {
   margin: 0;
   font-size: 16px;
   width: max-content;
+}
+.flex > .display > .room .pcroom > .row > .pair > .pc > .info > button {
+  background-color: var(--bg);
+  transition-duration: 0.3s;
+}
+.flex > .display > .room .pcroom > .row > .pair > .pc > .info > button:hover {
+  filter: brightness(0.9);
+  transition-duration: 0.3s;
 }
 .flex > .display > .rooms {
   display: flex;
