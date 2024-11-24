@@ -102,7 +102,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 250px;
+  min-width: 255px;
 }
 .flex > .controls > .logininfo p {
   margin: 0;
