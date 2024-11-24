@@ -246,8 +246,9 @@
                 </div>
 
                 <div class="info">
-                    <p v-cloak>Počet zabraných PC: <strong>{{ pcs?.filter(x => x.reservedBy != null)?.length ?? 0 }}/{{ pcs?.length ?? 0}}</strong></p>
+                    <p v-cloak>Počet zabraných PC: <strong>{{ pcs?.filter(x => x.reservedBy != null)?.length ?? "00" }}/{{ pcs?.length ?? "00" }}</strong></p>
                     <p v-cloak>Počet zabraných míst: <strong>{{ getRoomsReserved() }}/{{ getRoomsMax() }}</strong></p>
+                    <p v-cloak>Celkem rezervací: <strong>{{ getRoomsReserved() + (pcs?.filter(x => x.reservedBy != null)?.length ?? 0) }}</strong></p>
                 </div>
 
 
