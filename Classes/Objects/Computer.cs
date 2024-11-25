@@ -8,7 +8,7 @@ namespace EduchemLPR.Classes.Objects;
 
 public class Computer {
 
-    private Computer(string id, uint? reservedBy, string? reservedByName, string? reservedByClass) {
+    private Computer(string id, int? reservedBy, string? reservedByName, string? reservedByClass) {
         ID = id;
         ReservedBy = reservedBy;
         ReservedByName = reservedByName;
@@ -16,7 +16,7 @@ public class Computer {
     }
 
     public string ID { get; private set; }
-    public uint? ReservedBy { get; private set; }
+    public int? ReservedBy { get; private set; }
     public string? ReservedByName { get; private set; }
     public string? ReservedByClass { get; private set; }
 
@@ -39,7 +39,7 @@ public class Computer {
             computers.Add(
                 new Computer(
                     reader.GetString("id"),
-                    reader.GetObjectOrNull("reserved_by") as uint?,
+                    reader.GetObjectOrNull("reserved_by") as int?,
                     reader.GetObjectOrNull("reserved_by_name") as string,
                     reader.GetObjectOrNull("reserved_by_class") as string
                 )

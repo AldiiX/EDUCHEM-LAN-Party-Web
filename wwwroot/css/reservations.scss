@@ -41,6 +41,62 @@
             top: 0;
         }
 
+        >.rooms >.room >.info,
+        >.room >.pcroom >.row >.pair >.pc >.info {
+            top: -60%;
+            left: 80%;
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            position: absolute;
+            padding: 12px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            background-color: white;
+            color: black;
+            z-index: 2;
+            box-shadow: 0 0 35px 0 rgba(0, 0, 0, 0.35);
+            cursor: auto;
+            pointer-events: var(--modal-pointer-events);
+
+
+            >.status {
+                font-size: 20px;
+                font-family: "Rajdhani", sans-serif;
+                width: max-content;
+                text-decoration: underline var(--bg);
+                margin: 0;
+            }
+
+            >.logintxt {
+                margin: 0;
+                min-width: 160px;
+                font-size: 14px;
+
+                >a {
+                    color: var(--color-yellow);
+                    text-decoration: underline;
+                }
+            }
+
+            >.name {
+                margin:0;
+                font-size: 16px;
+                width: max-content;
+            }
+
+            >button {
+                background-color: var(--bg);
+                transition-duration: 0.3s;
+
+                &:hover {
+                    filter: brightness(0.9);
+                    transition-duration: 0.3s;
+                }
+            }
+        }
+
         >.selectroom-txt {
             margin: 0;
             text-align: center;
@@ -115,50 +171,6 @@
                                 left: unset;
                                 right: 80%;
                             }*/
-
-                            >.info {
-                                top: -60%;
-                                left: 80%;
-                                display: none;
-                                flex-direction: column;
-                                gap: 6px;
-                                position: absolute;
-                                padding: 12px;
-                                border-radius: 8px;
-                                opacity: 0;
-                                transition: opacity 0.5s;
-                                background-color: white;
-                                color: black;
-                                z-index: 2;
-                                box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.35);
-                                cursor: auto;
-                                pointer-events: var(--modal-pointer-events);
-
-
-                                >.status {
-                                    font-size: 20px;
-                                    font-family: "Rajdhani", sans-serif;
-                                    width: max-content;
-                                    text-decoration: underline var(--bg);
-                                    margin: 0;
-                                }
-
-                                >.name {
-                                    margin:0;
-                                    font-size: 16px;
-                                    width: max-content;
-                                }
-
-                                >button {
-                                    background-color: var(--bg);
-                                    transition-duration: 0.3s;
-
-                                    &:hover {
-                                        filter: brightness(0.9);
-                                        transition-duration: 0.3s;
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -181,22 +193,44 @@
                 background-color: var(--bg);
                 border-radius: 8px;
                 padding: 16px;
-                user-select: none;
                 border-bottom: 10px solid white;
 
                 >h1 {
                     margin: 0;
                     text-align: center;
+                    user-select: none;
                 }
 
                 >p {
                     margin: 0;
+                    user-select: none;
                     text-align: center;
                 }
 
                 &:hover {
                     transform: scale(1.1);
                     z-index: 2;
+
+                    >.info {
+                        opacity: 1;
+                        display: flex;
+                    }
+                }
+
+                >.info {
+                    top: 0;
+
+                    >.names {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        margin: 0;
+
+                        >p {
+                            margin: 0;
+                            width: max-content;
+                        }
+                    }
                 }
             }
         }

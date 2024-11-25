@@ -33,9 +33,19 @@
                 <!-- Možnosti při vlastním setupu -->
                 <template v-if="temp.ownSetup">
                     <div class="rooms">
-                        <div class="room" v-for="(room, i) in rooms" :key="i" v-bind:style="setRoomStyle(room)">
+                        <div class="room" v-for="(room, n) in rooms" :key="n + '_' + room" v-bind:style="setRoomStyle(room)">
                             <h1>{{ room.id }}</h1>
                             <p>{{ room.reservedBy?.length }}/{{ room.limitOfSeats }}</p>
+
+                            <div class="info">
+                                <p class="status" v-if="room.reservedBy == null">Volné</p>
+                                <p class="status" v-else-if="room.reservedByMe === true">Tvá rezervace</p>
+                                <p class="status" v-else>Rezervováno</p>
+
+                                <div class="names" v-if="room.reservedByClass !== null">
+                                    <p class="name" v-for="(name, i) in room.reservedBy" v-if="name !== 'someone'">{{ name }}<span v-if="room.reservedByClass?.[i] != null">, {{ room.reservedByClass?.[i] }}</span></p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </template>
@@ -55,6 +65,8 @@
                         <div id="pcroom" class="pcroom">
                             <div v-for="(row, rowIndex) in static.pcrooms[temp.room].pcs" :key="rowIndex" class="row">
                                 <div v-for="(pair, pairIndex) in row" :key="pairIndex" class="pair">
+
+                                    <!-- Jednotlivý PC -->
                                     <div v-for="pc in pair" :id="`${temp.room.toUpperCase()}_PC${pc}`" class="pc" v-bind:style="setPCStyle(`${temp.room.toUpperCase()}_PC${pc}`)">
                                         <p>{{ pc }}</p>
 
@@ -68,8 +80,12 @@
                                                 {{ getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedBy }}<span v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByClass != null">, {{ getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedByClass }}</span>
                                             </p>
 
-                                            <button class="button-primary" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedBy == null" v-on:click="reserveComputer(temp.room.toUpperCase() + '_PC' + pc)">Rezervovat</button>
-                                            <button class="button-primary" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByMe === true">Zrušit rezervaci</button>
+                                            @if (user != null) {
+                                                <button class="button-primary" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`) != null && getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedBy == null" v-on:click="reserveComputer(temp.room.toUpperCase() + '_PC' + pc)">Rezervovat</button>
+                                                <button class="button-primary" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByMe === true">Zrušit rezervaci</button>
+                                            } else {
+                                                <p class="logintxt" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`) != null && getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedBy == null">Pro rezervování <a href="/login?r=/rezervace">se musíš přihlásit</a>.</p>
+                                            }
                                         </div>
                                     </div>
                                 </div>
@@ -85,13 +101,13 @@
                     <p>
                         Mám vlastní setup:
                         <label class="switch">
-                            <input type="checkbox" v-model="temp.ownSetup">
+                            <input type="checkbox" v-model="temp.ownSetup" v-on:change="saveToLocalStorage('ownSetup', temp.ownSetup)">
                             <span class="slider round"></span>
                         </label>
                     </p>
                     <p v-if="!temp.ownSetup">
                         Místnost:
-                        <select v-model="temp.room" v-on:change="saveRoomToLocalStorage()">
+                        <select v-model="temp.room" v-on:change="saveToLocalStorage('room', temp.room)">
                             <option value="vt3">VT3</option>
                             <option value="vrr">VRR</option>
                         </select>
@@ -101,7 +117,7 @@
                 <div class="info">
                     <p v-cloak>Počet zabraných PC: <strong>{{ pcs?.filter(x => x.reservedBy != null)?.length ?? "00" }}/{{ pcs?.length ?? "00" }}</strong></p>
                     <p v-cloak>Počet zabraných míst: <strong>{{ getRoomsReserved() }}/{{ getRoomsMax() }}</strong></p>
-                    <p v-cloak>Celkem rezervací: <strong>{{ getRoomsReserved() + (pcs?.filter(x => x.reservedBy != null)?.length ?? 0) }}</strong></p>
+                    <p v-cloak>Celkem rezervací: <strong>{{ getRoomsReserved() + (pcs?.filter(x => x.reservedBy != null)?.length ?? 0) }}/{{ (pcs?.length ?? 0) + getRoomsMax() }}</strong></p>
                 </div>
 
 

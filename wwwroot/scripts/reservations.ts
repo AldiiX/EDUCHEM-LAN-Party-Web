@@ -29,6 +29,9 @@ export const vue = new Vue({
                     label: "(tabule)",
                     pcs: [
                         [
+                            ['25', ''], ['','']
+                        ],
+                        [
                             ['04', '03'], ['02', '01']
                         ],
                         [
@@ -56,20 +59,20 @@ export const vue = new Vue({
                     label: "(okna)",
                     pcs: [
                         [
-                            ['10','01']
+                            ['','09']
                         ],
                         [
-                            ['09','02']
+                            ['08','01']
                         ],
                         [
-                            ['08','03']
+                            ['07','02']
                         ],
                         [
-                            ['07','04']
+                            ['06','03']
                         ],
                         [
-                            ['06','05']
-                        ]
+                            ['05','04']
+                        ],
                     ],
                 },
             },
@@ -97,6 +100,7 @@ export const vue = new Vue({
             });
 
             _this.temp.room = localStorage.getItem("room");
+            //_this.temp.ownSetup = localStorage.getItem("ownSetup") ?? false;
         },
 
         scrollToElement(elementId: string): void {
@@ -119,8 +123,17 @@ export const vue = new Vue({
             const _this = this as any;
             const obj: any = {};
             const selectedPC = _this.getComputer(pcID);
+            function checkLastTwoChars(str: string): boolean {
+                const lastTwoChars: any = str.slice(-2);
+                const isNumber = !isNaN(lastTwoChars) && lastTwoChars.length === 2;
 
-            if(selectedPC == null) {
+                return isNumber;
+            }
+
+            if(selectedPC == null && !checkLastTwoChars(pcID)) {
+                obj.opacity = "0";
+                obj.pointerEvents = "none";
+            } else if(selectedPC == null) {
                 obj['--bg'] = "#c2c2c2";
                 obj['--modal-pointer-events'] = "all";
             } else if(selectedPC?.reservedBy == null) {
@@ -198,6 +211,11 @@ export const vue = new Vue({
         saveRoomToLocalStorage: function(): void {
             const _this = this as any;
             localStorage.setItem('room', _this.temp.room)
+        },
+
+        saveToLocalStorage: function(prop: string, value: any | null): void {
+            const _this = this as any;
+            localStorage.setItem(prop, value);
         },
 
         getRoomsMax: function (): number {

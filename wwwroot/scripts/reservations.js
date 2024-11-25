@@ -18,6 +18,9 @@ export const vue = new Vue({
                     label: "(tabule)",
                     pcs: [
                         [
+                            ['25', ''], ['', '']
+                        ],
+                        [
                             ['04', '03'], ['02', '01']
                         ],
                         [
@@ -44,20 +47,20 @@ export const vue = new Vue({
                     label: "(okna)",
                     pcs: [
                         [
-                            ['10', '01']
+                            ['', '09']
                         ],
                         [
-                            ['09', '02']
+                            ['08', '01']
                         ],
                         [
-                            ['08', '03']
+                            ['07', '02']
                         ],
                         [
-                            ['07', '04']
+                            ['06', '03']
                         ],
                         [
-                            ['06', '05']
-                        ]
+                            ['05', '04']
+                        ],
                     ],
                 },
             },
@@ -90,7 +93,16 @@ export const vue = new Vue({
             const _this = this;
             const obj = {};
             const selectedPC = _this.getComputer(pcID);
-            if (selectedPC == null) {
+            function checkLastTwoChars(str) {
+                const lastTwoChars = str.slice(-2);
+                const isNumber = !isNaN(lastTwoChars) && lastTwoChars.length === 2;
+                return isNumber;
+            }
+            if (selectedPC == null && !checkLastTwoChars(pcID)) {
+                obj.opacity = "0";
+                obj.pointerEvents = "none";
+            }
+            else if (selectedPC == null) {
                 obj['--bg'] = "#c2c2c2";
                 obj['--modal-pointer-events'] = "all";
             }
@@ -163,6 +175,10 @@ export const vue = new Vue({
         saveRoomToLocalStorage: function () {
             const _this = this;
             localStorage.setItem('room', _this.temp.room);
+        },
+        saveToLocalStorage: function (prop, value) {
+            const _this = this;
+            localStorage.setItem(prop, value);
         },
         getRoomsMax: function () {
             let max = 0;

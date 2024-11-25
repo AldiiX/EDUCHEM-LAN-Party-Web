@@ -30,6 +30,11 @@ public class AuthController : Controller {
             return RedirectToAction("Login");
         }
 
+        if(key.StartsWith("_")) {
+            TempData["error"] = "Účet s tímto klíčem je nedostupný.";
+            return RedirectToAction("Login");
+        }
+
         var account = EduchemLPR.Classes.Objects.User.Auth(key);
         if (account == null) {
             TempData["error"] = "Účet s tímto klíčem neexistuje.";
