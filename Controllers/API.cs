@@ -43,6 +43,85 @@ public class API : Controller {
         return Ok(array);
     }
 
+    [HttpPost("computers/reserve")]
+    public IActionResult ReservePC([FromBody] Dictionary<string, object?> data) { // TODO: Optimalizovat rychlost
+        var acc = Auth.ReAuthUser();
+        if (acc == null) return Unauthorized("Not logged in");
+
+        string? pcID = data.TryGetValue("id", out var _pcid) ? _pcid?.ToString() : null;
+        if (pcID == null) return BadRequest("Missing 'id' parameter");
+
+
+        using var conn = Database.GetConnection();
+        if(conn == null) return StatusCode(502, "Database connection error");
+
+        using var cmd = new MySqlCommand($@"
+            START TRANSACTION;
+
+            -- Odstranění rezervací z počítačů
+            UPDATE computers
+            SET reserved_by = NULL
+            WHERE reserved_by = @userId;
+
+            -- Odstranění uživatele z JSON seznamu rezervací v místnostech
+            UPDATE rooms
+            SET reserved_by = JSON_REMOVE(
+                reserved_by,
+                JSON_UNQUOTE(
+                    JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR))
+                )
+            )
+            WHERE JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR)) IS NOT NULL;
+
+
+            -- Přidání nové rezervace pro počítač
+            UPDATE computers
+            SET reserved_by = @userId
+            WHERE id = @pcid{(acc.AccountType is not "ADMIN" and "TEACHER" ? " AND reserved_by IS NULL" : "")};
+
+            COMMIT;
+        ", conn);
+
+        cmd.Parameters.AddWithValue("@userId", acc.ID);
+        cmd.Parameters.AddWithValue("@pcid", pcID);
+
+        var rows = cmd.ExecuteNonQuery();
+        if (rows == 0) return NotFound("Computer not found");
+
+
+
+        return Created();
+    }
+
+    [HttpDelete("computers/reserve")]
+    public IActionResult DeletePCReservation([FromBody] Dictionary<string, object?> data) {
+        var acc = Auth.ReAuthUser();
+        if (acc == null) return Unauthorized("Not logged in");
+
+        string? pcID = data.TryGetValue("id", out var _pcid) ? _pcid?.ToString() : null;
+        if (pcID == null) return BadRequest("Missing 'id' parameter");
+
+        using var conn = Database.GetConnection();
+        if(conn == null) return StatusCode(502, "Database connection error");
+
+        using var cmd = new MySqlCommand();
+        cmd.Connection = conn;
+        cmd.CommandText = @"
+            UPDATE computers
+            SET reserved_by = NULL
+            WHERE id = @pcid
+        ";
+        if(acc.AccountType is not "ADMIN" and "TEACHER") cmd.CommandText += " AND reserved_by = @userId";
+
+        cmd.Parameters.AddWithValue("@userId", acc.ID);
+        cmd.Parameters.AddWithValue("@pcid", pcID);
+
+        var rows = cmd.ExecuteNonQuery();
+        if (rows == 0) return NotFound("Computer not found or not reserved by you");
+
+        return NoContent();
+    }
+
     [HttpGet("rooms")]
     public IActionResult GetAllRooms() {
         var accTask = Auth.ReAuthUserAsync();
@@ -88,14 +167,13 @@ public class API : Controller {
         return Ok(array);
     }
 
-    [HttpPost("computers/reserve")]
-    public IActionResult ReservePC([FromBody] Dictionary<string, object?> data) { // TODO: Optimalizovat rychlost
+    [HttpPost("rooms/reserve")]
+    public IActionResult ReserveRoom([FromBody] Dictionary<string, object?> data) {
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
-        string? pcID = data.TryGetValue("id", out var _pcid) ? _pcid?.ToString() : null;
-        if (pcID == null) return BadRequest("Missing 'id' parameter");
-
+        string? roomID = data.TryGetValue("id", out var _roomid) ? _roomid?.ToString() : null;
+        if (roomID == null) return BadRequest("Missing 'id' parameter");
 
         using var conn = Database.GetConnection();
         if(conn == null) return StatusCode(502, "Database connection error");
@@ -108,7 +186,7 @@ public class API : Controller {
             SET reserved_by = NULL
             WHERE reserved_by = @userId;
 
-            -- Odstranění uživatele z JSON seznamu rezervací v místnostech
+            -- Odstranění rezervací z místností
             UPDATE rooms
             SET reserved_by = JSON_REMOVE(
                 reserved_by,
@@ -118,23 +196,60 @@ public class API : Controller {
             )
             WHERE JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR)) IS NOT NULL;
 
-
-            -- Přidání nové rezervace pro počítač
-            UPDATE computers
-            SET reserved_by = @userId
-            WHERE id = @pcid;
+            -- Přidání nové rezervace pro místnost
+            UPDATE rooms
+            SET reserved_by = JSON_ARRAY_APPEND(
+                reserved_by,
+                '$',
+                CAST(@userId AS CHAR)
+            )
+            WHERE id = @roomid;
 
             COMMIT;
         ", conn);
 
         cmd.Parameters.AddWithValue("@userId", acc.ID);
-        cmd.Parameters.AddWithValue("@pcid", pcID);
+        cmd.Parameters.AddWithValue("@roomid", roomID);
 
         var rows = cmd.ExecuteNonQuery();
-        if (rows == 0) return NotFound("Computer not found");
-
-
+        if (rows == 0) return NotFound("Room not found");
 
         return Created();
+    }
+
+    [HttpDelete("rooms/reserve")]
+    public IActionResult DeleteRoomReservation([FromBody] Dictionary<string, object?> data) {
+        var acc = Auth.ReAuthUser();
+        if (acc == null) return Unauthorized("Not logged in");
+
+        // příprava proměnných
+        string? roomID = data.TryGetValue("id", out var _roomid) ? _roomid?.ToString() : null;
+        if (roomID == null) return BadRequest("Missing 'id' parameter");
+
+        int userID = acc.ID;
+        if (acc.AccountType is "ADMIN" or "TEACHER")
+            userID = data.TryGetValue("userID", out var _userid) ? int.TryParse(_userid?.ToString(), out var parsed) ? parsed : acc.ID : acc.ID;
+
+
+
+        using var conn = Database.GetConnection();
+        if(conn == null) return StatusCode(502, "Database connection error");
+
+        using var cmd = new MySqlCommand(@"
+            UPDATE rooms
+            SET reserved_by = JSON_REMOVE(
+                reserved_by,
+                JSON_UNQUOTE(JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR)))
+            )
+            WHERE id = @roomid AND JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR)) IS NOT NULL
+        ", conn);
+
+        cmd.Parameters.AddWithValue("@userId", userID);
+        cmd.Parameters.AddWithValue("@roomid", roomID);
+
+        var rows = cmd.ExecuteNonQuery();
+        if (rows == 0) return NotFound("Room not found or not reserved by you");
+
+        return NoContent();
     }
 }

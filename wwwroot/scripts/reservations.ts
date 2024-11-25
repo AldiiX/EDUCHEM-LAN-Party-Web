@@ -20,6 +20,7 @@ export const vue = new Vue({
         temp: {
             ownSetup: false,
             room: null,
+            actionLoading: false,
         },
 
         static: {
@@ -91,6 +92,7 @@ export const vue = new Vue({
         main: function(): void {
             const _this = this as any;
 
+            _this.temp.actionLoading = true;
             fetch("/api/computers/").then(response => response.json()).then(data => {
                 _this.pcs = data;
             });
@@ -99,6 +101,7 @@ export const vue = new Vue({
                 _this.rooms = data;
             });
 
+            _this.temp.actionLoading = false;
             _this.temp.room = localStorage.getItem("room");
             //_this.temp.ownSetup = localStorage.getItem("ownSetup") ?? false;
         },
@@ -176,8 +179,13 @@ export const vue = new Vue({
             return _this.pcs.find((x: any) => x.id === pcID);
         },
 
+
+
+        // metody pro rezervaci (nenapadl me lepsi nazev nez „unreserve”)
         reserveComputer: function(pcID: string): void {
             const _this = this as any;
+            if(_this.temp.actionLoading) return;
+
             const pc = _this.getComputer(pcID);
 
             if(pc == null) {
@@ -190,6 +198,7 @@ export const vue = new Vue({
                 return;
             }
 
+            _this.temp.actionLoading = true;
             fetch(`/api/computers/reserve`, { method: "POST", body: `{ "id": "${pcID}" }`, headers: { "Content-Type": "application/json"} }).then(response => {
                 if(response.ok) {
                     _this.addAnnouncement("Počítač byl úspěšně zarezervován!", "success");
@@ -205,8 +214,99 @@ export const vue = new Vue({
                 } else {
                     console.error("Něco se nepovedlo!");
                 }
+
+                _this.temp.actionLoading = false;
             });
         },
+
+        unreserveComputer: function(pcID: string): void {
+            const _this = this as any;
+            if(_this.temp.actionLoading) return;
+
+            const pc = _this.getComputer(pcID);
+
+            if(pc == null) {
+                console.error("Počítač nebyl nalezen!");
+                return;
+            }
+
+            if(pc.reservedBy == null) {
+                console.error("Počítač není rezervován!");
+                return;
+            }
+
+            _this.temp.actionLoading = true;
+            fetch(`/api/computers/reserve`, { method: "DELETE", body: `{ "id": "${pcID}" }`, headers: { "Content-Type": "application/json"} }).then(response => {
+                if(response.ok) {
+                    _this.addAnnouncement("Počítač byl úspěšně odrezervován!", "success");
+                    console.log("Počítač byl úspěšně odrezervován!");
+
+                    fetch("/api/computers/").then(response => response.json()).then(data => {
+                        _this.pcs = data;
+                    });
+
+                    fetch("/api/rooms/").then(response => response.json()).then(data => {
+                        _this.rooms = data;
+                    });
+                } else {
+                    console.error("Něco se nepovedlo!");
+                }
+
+                _this.temp.actionLoading = false;
+            });
+        },
+
+        reserveRoom: function(roomID: string): void {
+            const _this = this as any;
+            if(_this.temp.actionLoading) return;
+
+            _this.temp.actionLoading = true;
+            fetch(`/api/rooms/reserve`, { method: "POST", body: `{ "id": "${roomID}" }`, headers: { "Content-Type": "application/json"} }).then(response => {
+                if(response.ok) {
+                    _this.addAnnouncement("Počítač byl úspěšně zarezervován!", "success");
+                    console.log("Počítač byl úspěšně zarezervován!");
+
+                    fetch("/api/computers/").then(response => response.json()).then(data => {
+                        _this.pcs = data;
+                    });
+
+                    fetch("/api/rooms/").then(response => response.json()).then(data => {
+                        _this.rooms = data;
+                    });
+                } else {
+                    console.error("Něco se nepovedlo!");
+                }
+
+                _this.temp.actionLoading = false;
+            });
+        },
+
+        unreserveRoom: function(roomID: string): void {
+            const _this = this as any;
+            if(_this.temp.actionLoading) return;
+
+            _this.temp.actionLoading = true;
+            fetch(`/api/rooms/reserve`, { method: "DELETE", body: `{ "id": "${roomID}" }`, headers: { "Content-Type": "application/json"} }).then(response => {
+                if(response.ok) {
+                    _this.addAnnouncement("Počítač byl úspěšně odrezervován!", "success");
+                    console.log("Počítač byl úspěšně odrezervován!");
+
+                    fetch("/api/computers/").then(response => response.json()).then(data => {
+                        _this.pcs = data;
+                    });
+
+                    fetch("/api/rooms/").then(response => response.json()).then(data => {
+                        _this.rooms = data;
+                    });
+                } else {
+                    console.error("Něco se nepovedlo!");
+                }
+
+                _this.temp.actionLoading = false;
+            });
+        },
+
+
 
         saveRoomToLocalStorage: function(): void {
             const _this = this as any;

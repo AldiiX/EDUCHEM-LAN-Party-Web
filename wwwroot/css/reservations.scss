@@ -30,6 +30,7 @@
         aspect-ratio: 16/9;
         max-height: 75vh;
         overflow-y: auto;
+        overflow-y: scroll;
         display: flex;
         flex-direction: column;
         flex-shrink: 0;
@@ -221,9 +222,9 @@
                     top: 0;
 
                     >.names {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 6px;
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 6px 24px;
                         margin: 0;
 
                         >p {
