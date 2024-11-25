@@ -77,7 +77,7 @@ public class API : Controller {
             -- Přidání nové rezervace pro počítač
             UPDATE computers
             SET reserved_by = @userId
-            WHERE id = @pcid{(acc.AccountType is not "ADMIN" and "TEACHER" ? " AND reserved_by IS NULL" : "")};
+            WHERE id = @pcid{(acc.AccountType is not ("ADMIN" or "TEACHER") ? " AND reserved_by IS NULL" : "")};
 
             COMMIT;
         ", conn);

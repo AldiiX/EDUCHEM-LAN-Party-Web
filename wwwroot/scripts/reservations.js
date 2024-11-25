@@ -74,14 +74,19 @@ export const vue = new Vue({
         main: function () {
             const _this = this;
             _this.temp.actionLoading = true;
+            _this.reloadDb();
+            setInterval(() => { _this.reloadDb(); }, 5 * 1000);
+            _this.temp.actionLoading = false;
+            _this.temp.room = localStorage.getItem("room");
+        },
+        reloadDb: function () {
+            const _this = this;
             fetch("/api/computers/").then(response => response.json()).then(data => {
                 _this.pcs = data;
             });
             fetch("/api/rooms/").then(response => response.json()).then(data => {
                 _this.rooms = data;
             });
-            _this.temp.actionLoading = false;
-            _this.temp.room = localStorage.getItem("room");
         },
         scrollToElement(elementId) {
             scrollToElement(elementId);
@@ -166,12 +171,7 @@ export const vue = new Vue({
                 if (response.ok) {
                     _this.addAnnouncement("Počítač byl úspěšně zarezervován!", "success");
                     console.log("Počítač byl úspěšně zarezervován!");
-                    fetch("/api/computers/").then(response => response.json()).then(data => {
-                        _this.pcs = data;
-                    });
-                    fetch("/api/rooms/").then(response => response.json()).then(data => {
-                        _this.rooms = data;
-                    });
+                    _this.reloadDb();
                 }
                 else {
                     console.error("Něco se nepovedlo!");
@@ -197,12 +197,7 @@ export const vue = new Vue({
                 if (response.ok) {
                     _this.addAnnouncement("Počítač byl úspěšně odrezervován!", "success");
                     console.log("Počítač byl úspěšně odrezervován!");
-                    fetch("/api/computers/").then(response => response.json()).then(data => {
-                        _this.pcs = data;
-                    });
-                    fetch("/api/rooms/").then(response => response.json()).then(data => {
-                        _this.rooms = data;
-                    });
+                    _this.reloadDb();
                 }
                 else {
                     console.error("Něco se nepovedlo!");
@@ -219,12 +214,7 @@ export const vue = new Vue({
                 if (response.ok) {
                     _this.addAnnouncement("Počítač byl úspěšně zarezervován!", "success");
                     console.log("Počítač byl úspěšně zarezervován!");
-                    fetch("/api/computers/").then(response => response.json()).then(data => {
-                        _this.pcs = data;
-                    });
-                    fetch("/api/rooms/").then(response => response.json()).then(data => {
-                        _this.rooms = data;
-                    });
+                    _this.reloadDb();
                 }
                 else {
                     console.error("Něco se nepovedlo!");
@@ -241,12 +231,7 @@ export const vue = new Vue({
                 if (response.ok) {
                     _this.addAnnouncement("Počítač byl úspěšně odrezervován!", "success");
                     console.log("Počítač byl úspěšně odrezervován!");
-                    fetch("/api/computers/").then(response => response.json()).then(data => {
-                        _this.pcs = data;
-                    });
-                    fetch("/api/rooms/").then(response => response.json()).then(data => {
-                        _this.rooms = data;
-                    });
+                    _this.reloadDb();
                 }
                 else {
                     console.error("Něco se nepovedlo!");
