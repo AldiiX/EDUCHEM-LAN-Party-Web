@@ -3,6 +3,7 @@
 @using EduchemLPR.Classes.Objects
 @{
     User? user = Utilities.GetLoggedAccountFromContextOrNull() ?? await Auth.ReAuthUserAsync();
+    //Console.WriteLine($"encrypted key - {user?.DisplayName}: {Convert.ToBase64String(user?.AuthKey.ToCharArray().Select(x => (byte)x).ToArray() ?? [] )}");
 }
 <!doctype html>
 <html lang="en">

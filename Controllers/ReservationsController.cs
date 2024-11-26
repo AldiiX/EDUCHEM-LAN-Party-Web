@@ -2,6 +2,10 @@
 
 namespace EduchemLPR.Controllers;
 
+
+
+
+
 public class ReservationsController : Controller {
 
     [HttpGet("/reservations"), HttpGet("/rezervace")]

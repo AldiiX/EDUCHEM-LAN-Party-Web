@@ -113,3 +113,23 @@ h1,h2,h3 {
         background-color: var(--color-yellow-hover);
     }
 }
+
+select {
+    font-family: "Ubuntu Regular", sans-serif;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 8px;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.3s;
+    border: 2px solid transparent;
+
+    &:focus-visible {
+        outline: none;
+    }
+
+    &:hover {
+        border-color: var(--color-yellow);
+        outline: none;
+    }
+}

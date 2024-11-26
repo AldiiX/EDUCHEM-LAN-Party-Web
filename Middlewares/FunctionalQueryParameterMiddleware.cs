@@ -1,4 +1,5 @@
-﻿using EduchemLPR.Classes;
+﻿using System.Text;
+using EduchemLPR.Classes;
 
 namespace EduchemLPR.Middlewares;
 
@@ -8,13 +9,16 @@ public class FunctionalQueryParameterMiddleware(RequestDelegate next) {
         var query = context.Request.Query.ToDictionary();
 
         if (query.TryGetValue("lg", out var _loginKey) && !string.IsNullOrEmpty(_loginKey)) {
-            var loginKey = Utilities.DecryptStringWithKey(_loginKey.ToString(), "Tak vážení, přátelé, prosimvás!");
+            var loginKeyBytes = Convert.FromBase64String(_loginKey.ToString());
+            string loginKey = Encoding.UTF8.GetString(loginKeyBytes);
+
             var path = context.Request.Path.Value ?? "/";
 
             Auth.AuthUser(loginKey);
             context.Response.Redirect(path);
         }
 
+        skip:
         await next(context);
     }
 }

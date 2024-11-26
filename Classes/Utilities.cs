@@ -81,6 +81,7 @@ public static class Utilities {
     public static string EncryptStringWithKey(string plainText, string key) {
         using Aes aes = Aes.Create();
         aes.Key = GenerateValidKey(key);
+        aes.Padding = PaddingMode.PKCS7;
         aes.IV = new byte[16];
 
         using var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
@@ -92,6 +93,7 @@ public static class Utilities {
     public static string DecryptStringWithKey(string encryptedText, string key) {
         using Aes aes = Aes.Create();
         aes.Key = GenerateValidKey(key);
+        aes.Padding = PaddingMode.PKCS7;
         aes.IV = new byte[16];
 
         using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
