@@ -95,12 +95,29 @@ export const vue = new Vue({
             _this.temp.actionLoading = true;
             _this.reloadDb();
 
-            // fetchnutí db v loopu
-            setInterval(() => { _this.reloadDb() }, 5 * 1000); // TODO: Udělat to jako SSE
+            // fetchnutí db pomocí websocketu
+            _this.connectToWebSocket();
 
             _this.temp.actionLoading = false;
             _this.temp.room = localStorage.getItem("room");
             //_this.temp.ownSetup = localStorage.getItem("ownSetup") ?? false;
+        },
+
+        connectToWebSocket: function(): void {
+            const _this = this as any;
+            const eventSource = new EventSource("/api/notifications");
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+
+                if(data.clientAction === "refresh") {
+                    _this.reloadDb();
+                }
+            };
+
+            eventSource.onerror = function(event) {
+                console.error("Nepodařilo se připojit k serverovým událostem!");
+            };
         },
 
         reloadDb: function(): void {

@@ -75,9 +75,22 @@ export const vue = new Vue({
             const _this = this;
             _this.temp.actionLoading = true;
             _this.reloadDb();
-            setInterval(() => { _this.reloadDb(); }, 5 * 1000);
+            _this.connectToWebSocket();
             _this.temp.actionLoading = false;
             _this.temp.room = localStorage.getItem("room");
+        },
+        connectToWebSocket: function () {
+            const _this = this;
+            const eventSource = new EventSource("/api/notifications");
+            eventSource.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                if (data.clientAction === "refresh") {
+                    _this.reloadDb();
+                }
+            };
+            eventSource.onerror = function (event) {
+                console.error("Nepodařilo se připojit k serverovým událostem!");
+            };
         },
         reloadDb: function () {
             const _this = this;

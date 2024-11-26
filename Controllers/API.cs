@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using EduchemLPR.Classes;
 using EduchemLPR.Classes.Objects;
+using EduchemLPR.Services;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
 
@@ -44,7 +45,7 @@ public class API : Controller {
     }
 
     [HttpPost("computers/reserve")]
-    public IActionResult ReservePC([FromBody] Dictionary<string, object?> data) { // TODO: Optimalizovat rychlost
+    public IActionResult ReservePC([FromBody] Dictionary<string, object?> data, [FromServices] WebSocketService ws) { // TODO: Optimalizovat rychlost
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
@@ -90,11 +91,16 @@ public class API : Controller {
 
 
 
+        // poslání notifikace clientům
+        _ = ws.NotifyClientsAsync(new { clientAction = "refresh", datetime = DateTime.Now });
+
+
+
         return Created();
     }
 
     [HttpDelete("computers/reserve")]
-    public IActionResult DeletePCReservation([FromBody] Dictionary<string, object?> data) {
+    public IActionResult DeletePCReservation([FromBody] Dictionary<string, object?> data, [FromServices] WebSocketService ws) {
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
@@ -118,6 +124,13 @@ public class API : Controller {
 
         var rows = cmd.ExecuteNonQuery();
         if (rows == 0) return NotFound("Computer not found or not reserved by you");
+
+
+
+        // poslání notifikace clientům
+        _ = ws.NotifyClientsAsync(new { clientAction = "refresh", datetime = DateTime.Now });
+
+
 
         return NoContent();
     }
@@ -168,7 +181,7 @@ public class API : Controller {
     }
 
     [HttpPost("rooms/reserve")]
-    public IActionResult ReserveRoom([FromBody] Dictionary<string, object?> data) {
+    public IActionResult ReserveRoom([FromBody] Dictionary<string, object?> data, [FromServices] WebSocketService ws) {
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
@@ -214,11 +227,18 @@ public class API : Controller {
         var rows = cmd.ExecuteNonQuery();
         if (rows == 0) return NotFound("Room not found");
 
+
+
+        // poslání notifikace clientům
+        _ = ws.NotifyClientsAsync(new { clientAction = "refresh", datetime = DateTime.Now });
+
+
+
         return Created();
     }
 
     [HttpDelete("rooms/reserve")]
-    public IActionResult DeleteRoomReservation([FromBody] Dictionary<string, object?> data) {
+    public IActionResult DeleteRoomReservation([FromBody] Dictionary<string, object?> data, [FromServices] WebSocketService ws) {
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
@@ -250,6 +270,13 @@ public class API : Controller {
         var rows = cmd.ExecuteNonQuery();
         if (rows == 0) return NotFound("Room not found or not reserved by you");
 
+
+
+        // poslání notifikace clientům
+        _ = ws.NotifyClientsAsync(new { clientAction = "refresh", datetime = DateTime.Now });
+
+
+        
         return NoContent();
     }
 }
