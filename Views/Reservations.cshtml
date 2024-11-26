@@ -27,6 +27,10 @@
     <img id="app-wallpaper" src="@Program.APP_WALLPAPER" />
 
     <div id="app">
+        <div class="websocket-error" v-if="temp.webSocketError === true" v-cloak>
+            <p>Chyba připojení k serveru. Obnov prosím stránku.</p>
+        </div>
+
         <div class="flex">
             <div class="display">
 

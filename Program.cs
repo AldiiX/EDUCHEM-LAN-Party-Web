@@ -1,5 +1,6 @@
 using dotenv.net;
 using EduchemLPR.Controllers;
+using EduchemLPR.Middlewares;
 using EduchemLPR.Services;
 using StackExchange.Redis;
 
@@ -104,6 +105,7 @@ public static class Program {
         App.UseRouting();
         App.UseAuthorization();
         //App.UseMiddleware<ErrorHandlingMiddleware>();
+        App.UseMiddleware<FunctionalQueryParameterMiddleware>();
         App.MapControllerRoute(name: "default", pattern: "/");
 
         

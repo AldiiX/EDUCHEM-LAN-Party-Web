@@ -19,7 +19,6 @@ public class NotificationServiceAPIController(WebSocketService ws) : Controller 
 
         cancellationToken.Register(() => ws.UnregisterClient(clientId));
 
-        // Čekáme, dokud klient neodpojí spojení
         await Task.Delay(Timeout.Infinite, cancellationToken);
     }
 

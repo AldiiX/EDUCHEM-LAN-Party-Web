@@ -6,6 +6,27 @@
     background-repeat: no-repeat;
 }
 
+.websocket-error {
+    position: fixed;
+    top: 1.5vw;
+    left: 1.5vw;
+    background-color: #ff8a80;
+    color: white;
+    text-align: center;
+    padding: 12px;
+    font-size: 24px;
+    font-family: "Rajdhani", sans-serif;
+    z-index: 100;
+    user-select: none;
+    border-radius: 8px;
+
+    p {
+        margin: 0;
+        font-size: 20px;
+        color: black;
+    }
+}
+
 .flex {
     position: absolute;
     display: flex;
@@ -280,6 +301,61 @@
         >.settings {
             h1 {
                 margin: 0;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 800px) {
+    .flex {
+        position: relative;
+        flex-direction: column-reverse;
+        gap: 12px;
+        width: 0100%;
+        margin: 0 auto;
+        left: unset;
+        padding: 5vw;
+        transform: unset;
+
+        >.display {
+            width: 100%;
+            max-height: unset;
+            aspect-ratio: unset;
+            overflow-y: auto;
+
+            >.rooms {
+                top: unset;
+                transform: unset;
+            }
+
+            >.room {
+                .pcroom {
+                    justify-content: flex-start;
+                    align-items: flex-start;
+
+                    >.row {
+                        gap: 64px;
+
+                        >.pair {
+                            >.pc {
+                                width: 65px;
+                                padding: 12px 16px;
+
+                                >p {
+                                    font-size: 20px;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        >.controls {
+            width: 100%;
+
+            >div {
+                width: 100%;
             }
         }
     }
