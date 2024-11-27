@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text.Json;
-using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using EduchemLPR.Classes;
 using EduchemLPR.Classes.Objects;
 using EduchemLPR.Services;
@@ -45,7 +43,7 @@ public class API : Controller {
     }
 
     [HttpPost("computers/reserve")]
-    public IActionResult ReservePC([FromBody] Dictionary<string, object?> data, [FromServices] WebSocketService ws) { // TODO: Optimalizovat rychlost
+    public IActionResult ReservePC([FromBody] Dictionary<string, object?> data, [FromServices] SSEService ws) {
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
@@ -100,7 +98,7 @@ public class API : Controller {
     }
 
     [HttpDelete("computers/reserve")]
-    public IActionResult DeletePCReservation([FromBody] Dictionary<string, object?> data, [FromServices] WebSocketService ws) {
+    public IActionResult DeletePCReservation([FromBody] Dictionary<string, object?> data, [FromServices] SSEService ws) {
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
@@ -181,7 +179,7 @@ public class API : Controller {
     }
 
     [HttpPost("rooms/reserve")]
-    public IActionResult ReserveRoom([FromBody] Dictionary<string, object?> data, [FromServices] WebSocketService ws) {
+    public IActionResult ReserveRoom([FromBody] Dictionary<string, object?> data, [FromServices] SSEService ws) {
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
@@ -238,7 +236,7 @@ public class API : Controller {
     }
 
     [HttpDelete("rooms/reserve")]
-    public IActionResult DeleteRoomReservation([FromBody] Dictionary<string, object?> data, [FromServices] WebSocketService ws) {
+    public IActionResult DeleteRoomReservation([FromBody] Dictionary<string, object?> data, [FromServices] SSEService ws) {
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 

@@ -6,8 +6,8 @@ namespace EduchemLPR.Controllers;
 
 
 [ApiController]
-[Route("api/notifications")]
-public class NotificationServiceAPIController(WebSocketService ws) : Controller {
+[Route("api/sse/main")]
+public class MainSSEAPIController(SSEService sse) : Controller {
 
     [HttpGet]
     public async Task Get(CancellationToken cancellationToken) {
@@ -15,9 +15,9 @@ public class NotificationServiceAPIController(WebSocketService ws) : Controller 
 
         var clientId = Guid.NewGuid();
         await using var writer = new StreamWriter(Response.Body);
-        ws.RegisterClient(writer);
+        sse.RegisterClient(writer);
 
-        cancellationToken.Register(() => ws.UnregisterClient(clientId));
+        cancellationToken.Register(() => sse.UnregisterClient(clientId));
 
         await Task.Delay(Timeout.Infinite, cancellationToken);
     }

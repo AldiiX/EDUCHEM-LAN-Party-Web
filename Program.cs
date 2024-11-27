@@ -1,5 +1,4 @@
 using dotenv.net;
-using EduchemLPR.Controllers;
 using EduchemLPR.Middlewares;
 using EduchemLPR.Services;
 using StackExchange.Redis;
@@ -77,7 +76,7 @@ public static class Program {
         #endif
 
         builder.Configuration.AddEnvironmentVariables();
-        builder.Services.AddSingleton<WebSocketService>();
+        builder.Services.AddSingleton<SSEService>();
 
         App = builder.Build();
         ENV = DotEnv.Read();

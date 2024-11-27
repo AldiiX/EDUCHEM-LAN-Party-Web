@@ -76,13 +76,14 @@ export const vue = new Vue({
             const _this = this;
             _this.temp.actionLoading = true;
             _this.reloadDb();
-            _this.connectToWebSocket();
+            _this.connectToSSE();
             _this.temp.actionLoading = false;
             _this.temp.room = localStorage.getItem("room");
         },
-        connectToWebSocket: function () {
+        connectToSSE: function () {
             const _this = this;
-            const eventSource = new EventSource("/api/notifications");
+            const eventSource = new EventSource("/api/sse/main");
+            _this.temp.webSocketError = false;
             eventSource.onmessage = function (event) {
                 const data = JSON.parse(event.data);
                 if (data.clientAction === "refresh") {
@@ -94,9 +95,9 @@ export const vue = new Vue({
                 _this.temp.webSocketError = true;
                 eventSource.close();
                 setTimeout(() => {
-                    _this.connectToWebSocket();
+                    _this.connectToSSE();
                     console.warn("Obnovuje se připojení k serverovým událostem...");
-                }, 5000);
+                }, 2500);
             };
         },
         reloadDb: function () {
