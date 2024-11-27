@@ -263,7 +263,7 @@ body {
   margin: 0;
 }
 
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 576px) {
   .flex > .display > .rooms > .room > .info > .status,
   .flex > .display > .room > .pcroom > .row > .pair > .pc > .info > .status {
     user-select: none;
@@ -307,6 +307,49 @@ body {
   }
   .flex > .controls > div {
     width: 100%;
+  }
+}
+@media screen and (min-width: 577px) and (max-width: 1574px) {
+  .flex > .display > .rooms > .room > .info > .status,
+  .flex > .display > .room > .pcroom > .row > .pair > .pc > .info > .status {
+    user-select: none;
+  }
+  .flex {
+    flex-wrap: wrap;
+    padding: 10vw;
+    position: relative;
+    top: unset;
+    left: unset;
+    transform: unset;
+    margin: 0 auto;
+    width: 100%;
+    flex-direction: column-reverse;
+  }
+  .flex > .controls {
+    flex-wrap: wrap;
+    flex-direction: row;
+    flex-grow: 1;
+    align-self: normal;
+  }
+  .flex > .controls > div {
+    flex-grow: 1;
+    min-width: unset !important;
+    display: flex;
+    flex-direction: column;
+  }
+  .flex > .display {
+    max-height: none;
+    aspect-ratio: unset;
+    width: 100%;
+    overflow-y: auto;
+    min-height: 400px;
+  }
+  .flex > .display > .rooms {
+    /*top: unset;
+    transform: unset;*/
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 

@@ -125,6 +125,7 @@ export const vue = new Vue({
                 eventSource.close();
                 setTimeout(() => {
                     _this.connectToSSE();
+                    _this.reloadDb();
                     console.warn("Obnovuje se připojení k serverovým událostem...");
                 }, 2500);
             };
