@@ -22,6 +22,7 @@ export const vue = new Vue({
             room: null,
             actionLoading: false,
             webSocketError: false,
+            webSocketErrorAttempts: 0,
         },
 
         static: {
@@ -106,6 +107,9 @@ export const vue = new Vue({
 
         connectToSSE: function(): void {
             const _this = this as any;
+            if(_this.temp.webSocketErrorAttempts >= 5) return;
+
+
             const eventSource = new EventSource("/api/sse/main");
             _this.temp.webSocketError = false;
 
@@ -121,13 +125,14 @@ export const vue = new Vue({
             eventSource.onerror = function(event) {
                 console.error("Nepodařilo se připojit k serverovým událostem!");
                 _this.temp.webSocketError = true;
+                _this.temp.webSocketErrorAttempts++;
 
                 eventSource.close();
                 setTimeout(() => {
                     _this.connectToSSE();
                     _this.reloadDb();
                     console.warn("Obnovuje se připojení k serverovým událostem...");
-                }, 2500);
+                }, 5000);
             };
         },
 
