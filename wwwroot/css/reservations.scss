@@ -308,6 +308,11 @@
 }
 
 @media screen and (max-width: 800px) {
+    .flex > .display > .rooms > .room > .info > .status,
+    .flex > .display > .room > .pcroom > .row > .pair > .pc > .info > .status {
+        user-select: none;
+    }
+
     .flex {
         position: relative;
         flex-direction: column-reverse;

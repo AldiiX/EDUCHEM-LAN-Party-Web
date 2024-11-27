@@ -92,6 +92,11 @@ export const vue = new Vue({
             eventSource.onerror = function (event) {
                 console.error("Nepodařilo se připojit k serverovým událostem!");
                 _this.temp.webSocketError = true;
+                eventSource.close();
+                setTimeout(() => {
+                    _this.connectToWebSocket();
+                    console.warn("Obnovuje se připojení k serverovým událostem...");
+                }, 5000);
             };
         },
         reloadDb: function () {
