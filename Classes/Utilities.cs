@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using EduchemLPR.Classes.Objects;
 using EduchemLPR.Services;
 
@@ -71,12 +72,18 @@ public static class Utilities {
         return HttpContextService.Current.Items["loggeduser"] is not User account ? null : account;
     }
 
-    /*public static string GenerateKey() {
-        var key = new byte[32];
-        using var rng = RNGCryptoServiceProvider.Create();
-        rng.GetBytes(key);
-        return Convert.ToBase64String(key);
-    }*/
+    public static string GenerateRandomKey(int length = 48) {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        var random = new Random();
+        var keyBuilder = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            var randomIndex = random.Next(chars.Length);
+            keyBuilder.Append(chars[randomIndex]);
+        }
+
+        return keyBuilder.ToString();
+    }
 
     public static string EncryptStringWithKey(string plainText, string key) {
         using Aes aes = Aes.Create();
@@ -106,4 +113,13 @@ public static class Utilities {
         using SHA256 sha256 = SHA256.Create();
         return sha256.ComputeHash(Encoding.UTF8.GetBytes(key));
     }
+
+    public static async Task<bool> AreReservationsEnabledAsync() {
+        var settings = JsonNode.Parse(Database.GetData("settings") as string ?? "{}");
+        var r = settings?["enableReservations"]?.GetValue<bool>() ?? false;
+
+        return r;
+    }
+
+    public static bool AreReservationsEnabled() => AreReservationsEnabledAsync().Result;
 }

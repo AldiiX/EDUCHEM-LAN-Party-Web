@@ -84,6 +84,7 @@ export const vue = new Vue({
         pcs: [],
         rooms: [],
         announcements: [],
+        settings: {},
     },
 
 
@@ -145,6 +146,10 @@ export const vue = new Vue({
 
             fetch("/api/rooms/").then(response => response.json()).then(data => {
                 _this.rooms = data;
+            });
+
+            fetch("/api/appsettings/").then(response => response.json()).then(data => {
+                _this.settings = data;
             });
         },
 

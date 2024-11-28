@@ -43,6 +43,8 @@ public static class Program {
 
         builder.Services.AddControllersWithViews();
         builder.Services.AddHttpContextAccessor();
+        builder.Services.AddRazorPages();
+        builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         builder.Services.AddStackExchangeRedisCache(options => {
             if (DEVELOPMENT_MODE) {
                 options.ConfigurationOptions = new ConfigurationOptions {

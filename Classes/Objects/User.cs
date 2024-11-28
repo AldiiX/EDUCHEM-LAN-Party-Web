@@ -10,13 +10,14 @@ namespace EduchemLPR.Classes.Objects;
 public class User {
 
     [JsonConstructor]
-    private User(int id, string displayName, string? email, string? @class, string authKey, string accountType) {
+    private User(int id, string displayName, string? email, string? @class, string authKey, string accountType, DateTime lastUpdated) {
         ID = id;
         DisplayName = displayName;
         Class = @class;
         Email = email;
         AuthKey = authKey;
         AccountType = accountType;
+        LastUpdated = lastUpdated;
     }
 
     public int ID { get; private set; }
@@ -25,6 +26,7 @@ public class User {
     public string? Class { get; private set; }
     public string AuthKey { get; private set; }
     public string AccountType { get; private set; }
+    public DateTime LastUpdated { get; private set; }
 
 
 
@@ -46,7 +48,8 @@ public class User {
             reader.GetObjectOrNull("email") as string,
             reader.GetObjectOrNull("class") as string,
             reader.GetString("auth_key"),
-            reader.GetString("account_type")
+            reader.GetString("account_type"),
+            reader.GetDateTime("last_updated")
         );
     }
 
@@ -68,7 +71,8 @@ public class User {
             reader.GetObjectOrNull("email") as string,
             reader.GetObjectOrNull("class") as string,
             reader.GetString("auth_key"),
-            reader.GetString("account_type")
+            reader.GetString("account_type"),
+            reader.GetDateTime("last_updated")
         );
 
         HttpContextService.Current.Session.SetObject("loggeduser", acc);
@@ -77,4 +81,31 @@ public class User {
     }
 
     public static User? Auth(in string key) => AuthAsync(key).Result;
+
+    public static async Task<List<User?>> GetAllAsync() {
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return new List<User?>();
+
+        await using var cmd = new MySqlCommand(@"SELECT * FROM users", conn);
+
+        await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
+        if (reader == null) return new List<User?>();
+
+        var list = new List<User?>();
+        while (await reader.ReadAsync()) {
+            list.Add(new User(
+                reader.GetInt32("id"),
+                reader.GetString("display_name"),
+                reader.GetObjectOrNull("email") as string,
+                reader.GetObjectOrNull("class") as string,
+                reader.GetString("auth_key"),
+                reader.GetString("account_type"),
+                reader.GetDateTime("last_updated")
+            ));
+        }
+
+        return list;
+    }
+
+    public static List<User?> GetAll() => GetAllAsync().Result;
 }

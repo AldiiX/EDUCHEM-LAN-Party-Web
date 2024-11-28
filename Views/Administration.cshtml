@@ -29,12 +29,43 @@
     <p>Vygenerovaný klíč: <span id="randomkey"></span></p>
     
     <h1>Vytvořit účet</h1>
-    <form method="post">
+    <form method="post" id="createaccount">
+        <input type="text" name="formName" hidden value="createUser">
         <input type="text" name="name" placeholder="Jméno">
         <input type="email" name="email" placeholder="Email">
         <input type="text" name="class" placeholder="Třída">
         <input type="submit">
     </form>
+
+    <h1>Účty</h1>
+    <table v-cloak>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Jméno</th>
+                <th>Email</th>
+                <th>Třída</th>
+                <th>Klíč</th>
+                <th>Poslední update</th>
+                <th>Role</th>
+                <th>Akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="user in users">
+                <td>{{ user.id }}</td>
+                <td>{{ user.displayName }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.class }}</td>
+                <td>{{ user.authKey }}</td>
+                <td>{{ new Date(user.lastUpdated).toLocaleString('cs-CZ') }}</td>
+                <td>{{ user.accountType }}</td>
+                <td>
+                    <button v-on:click="">Poslat klíč emailem</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 </body>
 <script type="module">

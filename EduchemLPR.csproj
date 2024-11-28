@@ -24,18 +24,22 @@
 
     <ItemGroup>
       <PackageReference Include="dotenv.net" Version="3.2.0" />
+      <PackageReference Include="MailKit" Version="4.8.0" />
       <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.10" />
+      <PackageReference Include="MimeKit" Version="4.8.0" />
       <PackageReference Include="MySql.Data" Version="9.1.0" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Models\" />
       <Folder Include="wwwroot\images\" />
     </ItemGroup>
 
     <ItemGroup>
       <None Remove=".env" />
       <Content Include=".env">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Update="Views\Emails\UserRegistered.cshtml">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>

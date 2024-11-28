@@ -10,14 +10,14 @@ export const vue = new Vue({
         vueLoaded: true,
         temp: {},
         announcements: [],
+        users: [],
     },
     methods: {
         main: function () {
             const _this = this;
-            fetch("/api/computers/").then(response => response.json()).then(data => {
-                _this.pcs = data;
+            fetch("/api/users/").then(response => response.json()).then(data => {
+                _this.users = data;
             });
-            _this.temp.room = localStorage.getItem("room");
         },
         scrollToElement(elementId) {
             scrollToElement(elementId);

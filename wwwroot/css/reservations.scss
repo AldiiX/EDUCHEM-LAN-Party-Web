@@ -93,6 +93,7 @@
             }
 
             >.logintxt {
+                user-select: none;
                 margin: 0;
                 min-width: 160px;
                 font-size: 14px;
@@ -296,6 +297,13 @@
 
             p {
                 margin: 0;
+            }
+
+            >.reservations-disabled {
+                margin: 12px auto;
+                margin-bottom: 0;
+                text-align: center;
+                color: var(--color-yellow-hover);
             }
         }
 

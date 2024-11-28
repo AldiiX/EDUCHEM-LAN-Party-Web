@@ -21,6 +21,7 @@ export const vue = new Vue({
         },
 
         announcements: [],
+        users: [],
     },
 
 
@@ -31,11 +32,9 @@ export const vue = new Vue({
         main: function(): void {
             const _this = this as any;
 
-            fetch("/api/computers/").then(response => response.json()).then(data => {
-                _this.pcs = data;
+            fetch("/api/users/").then(response => response.json()).then(data => {
+                _this.users = data;
             });
-
-            _this.temp.room = localStorage.getItem("room");
         },
 
         scrollToElement(elementId: string): void {

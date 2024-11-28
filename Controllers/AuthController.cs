@@ -35,7 +35,7 @@ public class AuthController : Controller {
             return RedirectToAction("Login");
         }
 
-        var account = EduchemLPR.Classes.Objects.User.Auth(key);
+        var account = Classes.Objects.User.Auth(key);
         if (account == null) {
             TempData["error"] = "Účet s tímto klíčem neexistuje.";
             return RedirectToAction("Login");

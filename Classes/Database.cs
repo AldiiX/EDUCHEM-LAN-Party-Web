@@ -34,6 +34,21 @@ public static class Database {
         return conn;
     }
 
+    public static async Task<object?> GetDataAsync(string property) {
+        await using var conn = await GetConnectionAsync();
+        if (conn == null) return null;
+
+        await using var cmd = new MySqlCommand($"SELECT value FROM data WHERE property = @prop", conn);
+        cmd.Parameters.AddWithValue("@prop", property);
+
+        await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
+        if (reader == null || !await reader.ReadAsync()) return null;
+
+        return reader.GetObjectOrNull("value");
+    }
+
+    public static object? GetData(in string property) => GetDataAsync(property).Result;
+
 
 
 

@@ -44,11 +44,17 @@ public class API : Controller {
 
     [HttpPost("computers/reserve")]
     public IActionResult ReservePC([FromBody] Dictionary<string, object?> data, [FromServices] SSEService ws) {
+        var reservationsEnabledTask = Utilities.AreReservationsEnabledAsync();
+
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
         string? pcID = data.TryGetValue("id", out var _pcid) ? _pcid?.ToString() : null;
         if (pcID == null) return BadRequest("Missing 'id' parameter");
+
+
+        // kontrola, zda je rezervace povolena
+        if(reservationsEnabledTask.Result == false) return new JsonResult(new { success = false, message = "Reservations are disabled" }) { StatusCode = 403 };
 
 
         using var conn = Database.GetConnection();
@@ -99,11 +105,20 @@ public class API : Controller {
 
     [HttpDelete("computers/reserve")]
     public IActionResult DeletePCReservation([FromBody] Dictionary<string, object?> data, [FromServices] SSEService ws) {
+        var reservationsEnabledTask = Utilities.AreReservationsEnabledAsync();
+
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
         string? pcID = data.TryGetValue("id", out var _pcid) ? _pcid?.ToString() : null;
         if (pcID == null) return BadRequest("Missing 'id' parameter");
+
+
+
+        // kontrola, zda je rezervace povolena
+        if(reservationsEnabledTask.Result == false) return new JsonResult(new { success = false, message = "Reservations are disabled" }) { StatusCode = 403 };
+
+
 
         using var conn = Database.GetConnection();
         if(conn == null) return StatusCode(502, "Database connection error");
@@ -180,11 +195,18 @@ public class API : Controller {
 
     [HttpPost("rooms/reserve")]
     public IActionResult ReserveRoom([FromBody] Dictionary<string, object?> data, [FromServices] SSEService ws) {
+        var reservationsEnabledTask = Utilities.AreReservationsEnabledAsync();
+
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
         string? roomID = data.TryGetValue("id", out var _roomid) ? _roomid?.ToString() : null;
         if (roomID == null) return BadRequest("Missing 'id' parameter");
+
+
+        // kontrola, zda je rezervace povolena
+        if(reservationsEnabledTask.Result == false) return new JsonResult(new { success = false, message = "Reservations are disabled" }) { StatusCode = 403 };
+
 
         using var conn = Database.GetConnection();
         if(conn == null) return StatusCode(502, "Database connection error");
@@ -237,6 +259,8 @@ public class API : Controller {
 
     [HttpDelete("rooms/reserve")]
     public IActionResult DeleteRoomReservation([FromBody] Dictionary<string, object?> data, [FromServices] SSEService ws) {
+        var reservationsEnabledTask = Utilities.AreReservationsEnabledAsync();
+
         var acc = Auth.ReAuthUser();
         if (acc == null) return Unauthorized("Not logged in");
 
@@ -248,6 +272,9 @@ public class API : Controller {
         if (acc.AccountType is "ADMIN" or "TEACHER")
             userID = data.TryGetValue("userID", out var _userid) ? int.TryParse(_userid?.ToString(), out var parsed) ? parsed : acc.ID : acc.ID;
 
+
+        // kontrola, zda je rezervace povolena
+        if(reservationsEnabledTask.Result == false) return new JsonResult(new { success = false, message = "Reservations are disabled" }) { StatusCode = 403 };
 
 
         using var conn = Database.GetConnection();
@@ -276,5 +303,24 @@ public class API : Controller {
 
         
         return NoContent();
+    }
+
+    [HttpGet("appsettings")]
+    public IActionResult GetAppSettings() {
+        var json = JsonNode.Parse(Database.GetData("settings") as string ?? "{}");
+        return new JsonResult(json);
+    }
+
+    [HttpGet("users")]
+    public IActionResult GetUsers() {
+        var acc = Auth.ReAuthUser();
+        if (acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Not logged in" });
+
+        if (acc.AccountType is not "ADMIN") return new UnauthorizedObjectResult(new { success = false, message = "Not an admin" });
+
+        var users = Classes.Objects.User.GetAll();
+        // var array = new JsonArray();
+
+        return new JsonResult(users);
     }
 }

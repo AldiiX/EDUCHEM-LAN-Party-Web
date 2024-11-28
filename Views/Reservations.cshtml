@@ -43,16 +43,21 @@
                             <p>{{ room.reservedBy?.length }}/{{ room.limitOfSeats }}</p>
 
                             <div class="info">
-                                <p class="status" v-if="room.reservedBy == null || !(room?.reservedBy?.length >= room?.limitOfSeats)">Volné</p>
-                                <p class="status" v-else-if="room.reservedByMe === true">Tvá rezervace</p>
+                                <p class="status" v-if="room.reservedByMe === true">Tvá rezervace</p>
+                                <p class="status" v-else-if="room.reservedBy == null || !(room?.reservedBy?.length >= room?.limitOfSeats)">Volné</p>
                                 <p class="status" v-else>Rezervováno</p>
 
-                                @if (user != null) {
-                                    <button class="button-primary" v-if="room != null && room.reservedBy?.length < room.limitOfSeats && room?.reservedByMe === false" v-on:click="reserveRoom(room.id)">Rezervovat</button>
-                                    <button class="button-primary" v-if="room?.reservedByMe === true" v-on:click="unreserveRoom(room.id)" style="width: 100%">Zrušit rezervaci</button>
-                                } else {
-                                    <p class="logintxt" v-if="room?.reservedBy?.length < room.limitOfSeats">Pro rezervování <a href="/login?r=/rezervace">se musíš přihlásit</a>.</p>
-                                }
+                                <template v-if="settings?.enableReservations === true">
+                                    @if (user != null) {
+                                        <button class="button-primary" v-if="room != null && room.reservedBy?.length < room.limitOfSeats && room?.reservedByMe === false" v-on:click="reserveRoom(room.id)">Rezervovat</button>
+                                        <button class="button-primary" v-if="room?.reservedByMe === true" v-on:click="unreserveRoom(room.id)" style="width: 100%">Zrušit rezervaci</button>
+                                    } else {
+                                        <p class="logintxt" v-if="room?.reservedBy?.length < room.limitOfSeats">Pro rezervování <a href="/login?r=/rezervace">se musíš přihlásit</a>.</p>
+                                    }
+                                </template>
+                                <template v-if="settings?.enableReservations === false && room != null && room.reservedBy?.length < room.limitOfSeats && room?.reservedByMe === false">
+                                    <p class="logintxt">Rezervace jsou momentálně zakázané.</p>
+                                </template>
 
                                 <div class="names" v-if="room.reservedBy?.[0] != 'someone'">
                                     <p class="name" v-for="(name, i) in room.reservedBy" v-if="name !== 'someone'">{{ name }}<span v-if="room.reservedByClass?.[i] != null">, {{ room.reservedByClass?.[i] }}</span></p>
@@ -88,16 +93,21 @@
                                             <p class="status" v-else-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByMe === true">Tvá rezervace ({{ temp.room.toUpperCase() + '_PC' + pc }})</p>
                                             <p class="status" v-else>Rezervováno ({{ temp.room.toUpperCase() + '_PC' + pc }})</p>
 
+                                            <template v-if="settings?.enableReservations === true">
+                                                @if (user != null) {
+                                                    <button class="button-primary" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`) != null && getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedBy == null" v-on:click="reserveComputer(temp.room.toUpperCase() + '_PC' + pc)">Rezervovat</button>
+                                                    <button class="button-primary" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByMe === true" v-on:click="unreserveComputer(temp.room.toUpperCase() + '_PC' + pc)">Zrušit rezervaci</button>
+                                                } else {
+                                                    <p class="logintxt" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`) != null && getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedBy == null">Pro rezervování <a href="/login?r=/rezervace">se musíš přihlásit</a>.</p>
+                                                }
+                                            </template>
+                                            <template v-if="settings?.enableReservations === false && getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedBy == null">
+                                                <p class="logintxt">Rezervace jsou momentálně zakázané.</p>
+                                            </template>
+
                                             <p class="name" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedBy != null && getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedBy != 'someone'">
                                                 {{ getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedBy }}<span v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByClass != null">, {{ getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedByClass }}</span>
                                             </p>
-
-                                            @if (user != null) {
-                                                <button class="button-primary" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`) != null && getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedBy == null" v-on:click="reserveComputer(temp.room.toUpperCase() + '_PC' + pc)">Rezervovat</button>
-                                                <button class="button-primary" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`)?.reservedByMe === true" v-on:click="unreserveComputer(temp.room.toUpperCase() + '_PC' + pc)">Zrušit rezervaci</button>
-                                            } else {
-                                                <p class="logintxt" v-if="getComputer(`${temp.room.toUpperCase()}_PC${pc}`) != null && getComputer(`${temp.room.toUpperCase()}_PC${pc}`).reservedBy == null">Pro rezervování <a href="/login?r=/rezervace">se musíš přihlásit</a>.</p>
-                                            }
                                         </div>
                                     </div>
                                 </div>
@@ -130,6 +140,9 @@
                     <p v-cloak>Počet zabraných PC: <strong>{{ pcs?.filter(x => x.reservedBy != null)?.length ?? "00" }}/{{ pcs?.length ?? "00" }}</strong></p>
                     <p v-cloak>Počet zabraných míst: <strong>{{ getRoomsReserved() }}/{{ getRoomsMax() }}</strong></p>
                     <p v-cloak>Celkem rezervací: <strong>{{ getRoomsReserved() + (pcs?.filter(x => x.reservedBy != null)?.length ?? 0) }}/{{ (pcs?.length ?? 0) + getRoomsMax() }}</strong></p>
+                    <p v-cloak v-if="settings?.enableReservations === false" class="reservations-disabled">
+                        Rezervace jsou momentálně zakázané
+                    </p>
                 </div>
 
 
