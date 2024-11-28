@@ -53,7 +53,7 @@ public static class EmailService {
             await client.SendAsync(message);
             await client.DisconnectAsync(quit: true);
 
-            Program.Logger.LogInformation("Email sent successfully.");
+            Program.Logger.LogDebug("Email sent successfully.");
         } catch (Exception ex) {
             Program.Logger.LogError(ex, "Error sending HTML email");
         }
