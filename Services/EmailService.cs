@@ -1,12 +1,5 @@
 using MimeKit;
 using MailKit.Net.Smtp;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using MimeKit.Text;
 
 namespace EduchemLPR.Services;
 

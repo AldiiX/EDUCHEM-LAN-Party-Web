@@ -39,7 +39,6 @@ public class AdministrationController : Controller {
 
         // odeslani emailu
         _ = EmailService.SendHTMLEmailAsync(email, "Registrace do Educhem LAN Party", "~/Views/Emails/UserRegistered.cshtml", new EmailUserRegisterModel(authKey, "https://lanparty.educhem.it/rezervace?lg=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(authKey))), HttpContext.RequestServices);
-        //_ = EmailService.SendPrimitiveEmailAsync(email, "EDUCHEM LAN Party: Registrace", $"Tvá registrace byla úspěšně založena. Pro rezervaci počítače/místa se prosím zde: https://lanparty.adminsphere.me/rezervace?lg={Convert.ToBase64String(Encoding.UTF8.GetBytes(authKey))}\n\nTvůj auth klíč je: {authKey}");
 
         return true;
     }
