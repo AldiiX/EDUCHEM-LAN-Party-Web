@@ -1,5 +1,6 @@
 using MimeKit;
 using MailKit.Net.Smtp;
+using MailKit.Security;
 
 namespace EduchemLPR.Services;
 
@@ -10,24 +11,29 @@ namespace EduchemLPR.Services;
 public static class EmailService {
 
 
-    public static async Task SendPrimitiveEmailAsync(string to, string subject, string body) {
-        var message = new MimeMessage();
-        message.From.Add(new MailboxAddress(name: "EDUCHEM LAN Party", address: Program.ENV["SMTP_EMAIL_USERNAME"]));
-        message.To.Add(new MailboxAddress(name: to, address: to));
-        message.Subject = subject;
+    public static async Task SendPlainTextEmailAsync(string to, string subject, string body) {
+        try {
 
-        message.Body = new TextPart("plain") {
-            Text = body
-        };
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(name: "EDUCHEM LAN Party", address: Program.ENV["SMTP_EMAIL_USERNAME"]));
+            message.To.Add(new MailboxAddress(name: to, address: to));
+            message.Subject = subject;
 
-        using var client = new SmtpClient();
-        await client.ConnectAsync(host: Program.ENV["SMTP_HOST"], port: int.Parse(Program.ENV["SMTP_PORT"]), useSsl: true);
-        await client.AuthenticateAsync(userName: Program.ENV["SMTP_EMAIL_USERNAME"], password: Program.ENV["SMTP_EMAIL_PASSWORD"]);
-        await client.SendAsync(message);
-        await client.DisconnectAsync(quit: true);
+            message.Body = new TextPart("plain") {
+                Text = body
+            };
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(host: Program.ENV["SMTP_HOST"], port: int.Parse(Program.ENV["SMTP_PORT"]), useSsl:true);
+            await client.AuthenticateAsync(userName: Program.ENV["SMTP_EMAIL_USERNAME"], password: Program.ENV["SMTP_EMAIL_PASSWORD"]);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(quit: true);
+        } catch (Exception ex) {
+            Program.Logger.LogError(ex, "Error sending plain text email");
+        }
     }
 
-    public static async Task SendHTMLEmailAsync<TModel>(string to, string subject, string razorViewName, TModel model, IServiceProvider? serviceProvider = null) {
+    public static async Task SendHTMLEmailAsync<TModel>(string to, string subject, string razorViewName, TModel model, IServiceProvider? serviceProvider = null, string? fallbackBody = null) {
         serviceProvider ??= HttpContextService.Current.RequestServices;
 
         try {
@@ -44,8 +50,18 @@ public static class EmailService {
             message.From.Add(new MailboxAddress(name: "EDUCHEM LAN Party", address: Program.ENV["SMTP_EMAIL_USERNAME"]));
             message.To.Add(new MailboxAddress(name: to, address: to));
             message.Subject = subject;
+            message.Headers.Add("MIME-Version", "1.0");
+            message.Headers.Add("Reply-To", Program.ENV["SMTP_EMAIL_USERNAME"]);
+            message.Headers.Add("X-Mailer", "EDUCHEM LAN Party");
+            message.Headers.Add("Return-Path", Program.ENV["SMTP_EMAIL_USERNAME"]);
+            message.Headers.Add("List-Unsubscribe", $"<mailto:unsubscribe@stanislavskudrna.cz>, <https://{Program.ROOT_DOMAIN}/unsubscribe>");
 
-            message.Body = new TextPart("html") { Text = body };
+            var bodyBuilder = new BodyBuilder { HtmlBody = body };
+            if(fallbackBody != null) bodyBuilder.TextBody = fallbackBody;
+
+            message.Body = bodyBuilder.ToMessageBody();
+
+
 
             using var client = new SmtpClient();
             await client.ConnectAsync(host: Program.ENV["SMTP_HOST"], port: int.Parse(Program.ENV["SMTP_PORT"]), useSsl: true);

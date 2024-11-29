@@ -38,7 +38,7 @@ public class AdministrationController : Controller {
         cmd.ExecuteNonQuery();
 
         // odeslani emailu
-        _ = EmailService.SendHTMLEmailAsync(email, "Registrace do Educhem LAN Party", "~/Views/Emails/UserRegistered.cshtml", new EmailUserRegisterModel(authKey, "https://lanparty.educhem.it/rezervace?lg=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(authKey))), HttpContext.RequestServices);
+        _ = EmailService.SendHTMLEmailAsync(email, "Registrace do Educhem LAN Party", "~/Views/Emails/UserRegistered.cshtml", new EmailUserRegisterModel(authKey, $"https://{Program.ROOT_DOMAIN}/rezervace?lg={Convert.ToBase64String(Encoding.UTF8.GetBytes(authKey))}"), HttpContext.RequestServices);
 
         return true;
     }

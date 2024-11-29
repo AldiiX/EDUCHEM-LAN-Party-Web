@@ -14,4 +14,7 @@ public class HomeController : Controller {
     public IActionResult Info() {
         return RedirectPermanent("/educhem_xmas_lan_2024.pdf");
     }
+
+    [Route("/unsubscribe")]
+    public IActionResult Unsubscribe() => Redirect("/");
 }

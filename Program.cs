@@ -17,6 +17,7 @@ public static class Program {
 
     // random picovinky
     public const string APP_WALLPAPER = "/images/wallpapers/two.jpg";
+    public const string ROOT_DOMAIN = "lanparty.educhem.it";//"lanparty.adminsphere.me";
 
 
 
