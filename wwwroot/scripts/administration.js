@@ -15,6 +15,10 @@ export const vue = new Vue({
     methods: {
         main: function () {
             const _this = this;
+            _this.fetchData();
+        },
+        fetchData: function () {
+            const _this = this;
             fetch("/api/users/").then(response => response.json()).then(data => {
                 _this.users = data;
             });
@@ -39,6 +43,20 @@ export const vue = new Vue({
                 key += chars[randomIndex];
             }
             return key;
+        },
+        sendKeyToEmail: function (userid) {
+            const _this = this;
+            fetch(`/api/users/resetkey`, { method: "POST", body: `{ "id": "${userid}" }`, headers: { "Content-Type": "application/json" } }).then(response => {
+                if (response.ok) {
+                    console.log("Key sent to email");
+                    this.addAnnouncement("Key sent to email", "success");
+                    _this.fetchData();
+                }
+                else {
+                    console.error("Failed to send key to email");
+                    this.addAnnouncement("Failed to send key to email", "error");
+                }
+            });
         },
     },
     computed: {},

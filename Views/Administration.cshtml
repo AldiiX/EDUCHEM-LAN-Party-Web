@@ -61,7 +61,7 @@
                 <td>{{ new Date(user.lastUpdated).toLocaleString('cs-CZ') }}</td>
                 <td>{{ user.accountType }}</td>
                 <td>
-                    <button v-on:click="">Poslat klíč emailem</button>
+                    <button v-on:click="sendKeyToEmail(user.id)">Poslat klíč emailem</button>
                 </td>
             </tr>
         </tbody>

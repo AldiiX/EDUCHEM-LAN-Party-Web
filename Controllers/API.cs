@@ -1,6 +1,8 @@
-﻿using System.Text.Json.Nodes;
+﻿using System.Text;
+using System.Text.Json.Nodes;
 using EduchemLPR.Classes;
 using EduchemLPR.Classes.Objects;
+using EduchemLPR.Models;
 using EduchemLPR.Services;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
@@ -322,5 +324,49 @@ public class API : Controller {
         // var array = new JsonArray();
 
         return new JsonResult(users);
+    }
+
+    [HttpPost("users/resetkey")]
+    public IActionResult ResetUserKey([FromBody] Dictionary<string, object?> data) {
+        var acc = Auth.ReAuthUser();
+        if (acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Not logged in" });
+
+        if (acc.AccountType is not "ADMIN") return new UnauthorizedObjectResult(new { success = false, message = "Not an admin" });
+
+        string? userID = data.TryGetValue("id", out var _userid) ? _userid?.ToString() : null;
+        if (userID == null) return new BadRequestObjectResult(new { success = false, message = "Missing 'id' parameter" });
+
+        using var conn = Database.GetConnection();
+        if(conn == null) return new StatusCodeResult(502);
+
+        using var cmd = new MySqlCommand(@"
+            START TRANSACTION;            
+
+            UPDATE users
+            SET auth_key = @newKey
+            WHERE id = @userId;
+
+            SELECT email FROM users WHERE id = @userId;
+
+            COMMIT;
+        ", conn);
+
+        var newKey = Utilities.GenerateRandomKey();
+        cmd.Parameters.AddWithValue("@newKey", newKey);
+        cmd.Parameters.AddWithValue("@userId", userID);
+
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read()) return new NotFoundObjectResult(new { success = false, message = "User not found" });
+
+
+
+
+        // poslání emailu
+        string? email = reader.GetObjectOrNull("email") as string ?? null;
+        if(email != null) _ = EmailService.SendHTMLEmailAsync(email, "Registrace do Educhem LAN Party", "~/Views/Emails/UserRegistered.cshtml", new EmailUserRegisterModel(newKey, "https://lanparty.educhem.it/rezervace?lg=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(newKey))), HttpContext.RequestServices);
+
+
+
+        return new OkObjectResult(new { success = true, message = "Key reset" });
     }
 }
