@@ -84,6 +84,24 @@ export const vue = new Vue({
                 }
             });
         },
+
+        resetKey: function(userid: number): void {
+            const _this = this as any;
+
+            fetch(`/api/users/resetkey`, { method: "POST", body: `{ "id": "${userid}", "sendToEmail": false }`,  headers: { "Content-Type": "application/json"}}).then(async response => {
+                if (response.ok) {
+                    let data = await response.json();
+                    console.log(data);
+                    console.log(data.emailMessage);
+                    //copyToClipboard(data.emailMessage);
+                    this.addAnnouncement("Key reset", "success");
+                    _this.fetchData();
+                } else {
+                    console.error("Failed to reset key");
+                    this.addAnnouncement("Failed to reset key", "error");
+                }
+            });
+        },
     },
 
     computed: {

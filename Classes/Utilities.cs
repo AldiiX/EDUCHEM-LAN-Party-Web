@@ -72,7 +72,7 @@ public static class Utilities {
         return HttpContextService.Current.Items["loggeduser"] is not User account ? null : account;
     }
 
-    public static string GenerateRandomKey(int length = 48) {
+    public static string GenerateRandomAuthKey(int length = 48) {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         var random = new Random();
         var keyBuilder = new StringBuilder(length);

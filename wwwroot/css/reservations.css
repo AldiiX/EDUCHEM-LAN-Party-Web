@@ -106,11 +106,24 @@ body {
 .flex > .display > .room > .pcroom > .row > .pair > .pc > .info > button {
   background-color: var(--bg);
   transition-duration: 0.3s;
+  animation: clicklock 0.25s 1;
+  pointer-events: all;
 }
 .flex > .display > .rooms > .room > .info > button:hover,
 .flex > .display > .room > .pcroom > .row > .pair > .pc > .info > button:hover {
   filter: brightness(0.9);
   transition-duration: 0.3s;
+}
+@keyframes clicklock {
+  0% {
+    pointer-events: none;
+  }
+  99% {
+    pointer-events: none;
+  }
+  100% {
+    pointer-events: all;
+  }
 }
 .flex > .display > .selectroom-txt {
   margin: 0;
@@ -266,7 +279,16 @@ body {
   text-align: center;
   color: var(--color-yellow-hover);
 }
+.flex > .controls > .settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .flex > .controls > .settings h1 {
+  margin: 0;
+  margin-bottom: 8px;
+}
+.flex > .controls > .settings p {
   margin: 0;
 }
 
@@ -314,6 +336,9 @@ body {
   }
   .flex > .controls > div {
     width: 100%;
+  }
+  .flex > .controls > .settings > h1 {
+    user-select: none;
   }
 }
 @media screen and (min-width: 577px) and (max-width: 1574px) {

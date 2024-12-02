@@ -59,13 +59,14 @@ public class User {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
 
-        await using var cmd = new MySqlCommand($"SELECT * FROM `users` WHERE `auth_key` = @key", conn);
+        const string query = "SELECT * FROM `users` WHERE `auth_key` = @key";
+        await using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@key", key);
 
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if (reader == null || !reader.Read()) return null;
 
-        var acc = new User(
+        var user = new User(
             reader.GetInt32("id"),
             reader.GetString("display_name"),
             reader.GetObjectOrNull("email") as string,
@@ -75,9 +76,15 @@ public class User {
             reader.GetDateTime("last_updated")
         );
 
-        HttpContextService.Current.Session.SetObject("loggeduser", acc);
-        HttpContextService.Current.Items["loggeduser"] = acc;
-        return acc;
+        // aktualizace posledního přihlášení
+        _ = UpdateLastLoggedInAsync(user.AuthKey);
+
+        // dalsi nastaveni
+        var httpContext = HttpContextService.Current;
+        httpContext.Session.SetObject("loggeduser", user);
+        httpContext.Items["loggeduser"] = user;
+
+        return user;
     }
 
     public static User? Auth(in string key) => AuthAsync(key).Result;
@@ -108,4 +115,15 @@ public class User {
     }
 
     public static List<User?> GetAll() => GetAllAsync().Result;
+
+    private static async Task UpdateLastLoggedInAsync(string authKey) {
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return;
+
+        const string updateQuery = "UPDATE users SET last_logged_in = @now WHERE auth_key = @authKey";
+        await using var cmd = new MySqlCommand(updateQuery, conn);
+        cmd.Parameters.AddWithValue("@now", DateTime.Now);
+        cmd.Parameters.AddWithValue("@authKey", authKey);
+        await cmd.ExecuteNonQueryAsync();
+    }
 }

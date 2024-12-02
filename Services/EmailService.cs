@@ -54,7 +54,7 @@ public static class EmailService {
             message.Headers.Add("Reply-To", Program.ENV["SMTP_EMAIL_USERNAME"]);
             message.Headers.Add("X-Mailer", "EDUCHEM LAN Party");
             message.Headers.Add("Return-Path", Program.ENV["SMTP_EMAIL_USERNAME"]);
-            message.Headers.Add("List-Unsubscribe", $"<mailto:unsubscribe@stanislavskudrna.cz>, <https://{Program.ROOT_DOMAIN}/unsubscribe>");
+            //message.Headers.Add("List-Unsubscribe", $"<mailto:unsubscribe@stanislavskudrna.cz>, <https://{Program.ROOT_DOMAIN}/unsubscribe>");
 
             var bodyBuilder = new BodyBuilder { HtmlBody = body };
             if(fallbackBody != null) bodyBuilder.TextBody = fallbackBody;

@@ -1,4 +1,8 @@
 ﻿@using EduchemLPR
+@using EduchemLPR.Classes
+@{
+    var userTask = Auth.ReAuthUserAsync();
+}
 <!doctype html>
 <html lang="en">
 <head>
@@ -37,6 +41,10 @@
         <div class="menu">
             <a href="/rezervace" class="pure-button">Rezervace</a>
             <a href="/info" class="pure-button" target="_blank">Informace</a>
+
+            @if ((await userTask)?.AccountType == "ADMIN") {
+                <a href="/administration" class="pure-button">Administrace</a>
+            }
         </div>
     </div>
 </body>

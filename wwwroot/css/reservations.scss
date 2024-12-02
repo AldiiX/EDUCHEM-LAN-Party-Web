@@ -113,10 +113,24 @@
             >button {
                 background-color: var(--bg);
                 transition-duration: 0.3s;
+                animation: clicklock 0.25s 1;
+                pointer-events: all;
 
                 &:hover {
                     filter: brightness(0.9);
                     transition-duration: 0.3s;
+                }
+
+                @keyframes clicklock {
+                    0% {
+                        pointer-events: none;
+                    }
+                    99% {
+                        pointer-events: none;
+                    }
+                    100% {
+                        pointer-events: all;
+                    }
                 }
             }
         }
@@ -308,7 +322,16 @@
         }
 
         >.settings {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
             h1 {
+                margin: 0;
+                margin-bottom: 8px;
+            }
+
+            p {
                 margin: 0;
             }
         }
@@ -370,6 +393,12 @@
 
             >div {
                 width: 100%;
+            }
+
+            >.settings {
+                >h1 {
+                    user-select: none;
+                }
             }
         }
     }

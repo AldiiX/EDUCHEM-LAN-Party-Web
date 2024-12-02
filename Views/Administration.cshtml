@@ -62,6 +62,7 @@
                 <td>{{ user.accountType }}</td>
                 <td>
                     <button v-on:click="sendKeyToEmail(user.id)">Poslat klíč emailem</button>
+                    <button v-on:click="resetKey(user.id)">Vygenerovat register zprávu</button>
                 </td>
             </tr>
         </tbody>

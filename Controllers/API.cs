@@ -334,6 +334,7 @@ public class API : Controller {
         if (acc.AccountType is not "ADMIN") return new UnauthorizedObjectResult(new { success = false, message = "Not an admin" });
 
         string? userID = data.TryGetValue("id", out var _userid) ? _userid?.ToString() : null;
+        bool sendToEmail = data.TryGetValue("sendToEmail", out var _sendToEmail) ? bool.TryParse(_sendToEmail?.ToString(), out var _parsed) ? _parsed : true : true;
         if (userID == null) return new BadRequestObjectResult(new { success = false, message = "Missing 'id' parameter" });
 
         using var conn = Database.GetConnection();
@@ -346,12 +347,12 @@ public class API : Controller {
             SET auth_key = @newKey
             WHERE id = @userId;
 
-            SELECT email FROM users WHERE id = @userId;
+            SELECT * FROM users WHERE id = @userId;
 
             COMMIT;
         ", conn);
 
-        var newKey = Utilities.GenerateRandomKey();
+        var newKey = Utilities.GenerateRandomAuthKey();
         cmd.Parameters.AddWithValue("@newKey", newKey);
         cmd.Parameters.AddWithValue("@userId", userID);
 
@@ -363,21 +364,26 @@ public class API : Controller {
 
         // poslání emailu
         string? email = reader.GetObjectOrNull("email") as string ?? null;
-        string fallbackBody = $@"
-            Ahoj, díky, že se účastníš LAN Party.
-            Pokud nemáš vlastní setup, rezervuj si počítač, na kterém po celou dobu budeš.
-            Pokud si bereš svůj vlastní setup, rezervuj místnost, kde svůj setup budeš mít. Nezapomeň si s sebou vzít i příslušenství včetně monitorů a prodlužováku.
-            Rezervuj si to co nejdříve, protože kapacita je omezená.
+        newKey = reader.GetObjectOrNull("auth_key") as string ?? newKey;
+
+        string fallbackBody =
+            $"""
+             
+             Ahoj, díky, že se účastníš LAN Party.
+             Pokud nemáš vlastní setup, rezervuj si počítač, na kterém po celou dobu budeš.
+             Pokud si bereš svůj vlastní setup, rezervuj místnost, kde svůj setup budeš mít. Nezapomeň si s sebou vzít i příslušenství včetně monitorů a prodlužováku.
+             Rezervuj si to co nejdříve, protože kapacita je omezená.
+     
+     
+             Tvůj autentizační klíč: {newKey}
+             Odkaz na stránku: https://{Program.ROOT_DOMAIN}/rezervace?lg={Convert.ToBase64String(Encoding.UTF8.GetBytes(newKey))}
+
+             """;
+
+        if(email != null && sendToEmail) _ = EmailService.SendHTMLEmailAsync(email, "Registrace do Educhem LAN Party", "~/Views/Emails/UserRegistered.cshtml", new EmailUserRegisterModel(newKey, $"https://{Program.ROOT_DOMAIN}/rezervace?lg={Convert.ToBase64String(Encoding.UTF8.GetBytes(newKey))}"), HttpContext.RequestServices, fallbackBody);
+        //if(email != null && sendToEmail) _ = EmailService.SendPlainTextEmailAsync(email, "EDUCHEM LAN Party: Registrace", fallbackBody);
 
 
-            Tvůj autentizační klíč: {newKey}
-            Odkaz na stránku: https://{Program.ROOT_DOMAIN}/rezervace?lg={Convert.ToBase64String(Encoding.UTF8.GetBytes(newKey))}
-        ";
-
-        if(email != null) _ = EmailService.SendHTMLEmailAsync(email, "Registrace do Educhem LAN Party", "~/Views/Emails/UserRegistered.cshtml", new EmailUserRegisterModel(newKey, $"https://{Program.ROOT_DOMAIN}/rezervace?lg={Convert.ToBase64String(Encoding.UTF8.GetBytes(newKey))}"), HttpContext.RequestServices, fallbackBody);
-        //if(email != null) _ = EmailService.SendPlainTextEmailAsync(email, "EDUCHEM LAN Party: Registrace", fallbackBody);
-
-
-        return new OkObjectResult(new { success = true, message = "Key reset" });
+        return new OkObjectResult(new { success = true, message = "Key reset", emailMessage = fallbackBody });
     }
 }

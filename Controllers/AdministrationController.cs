@@ -19,11 +19,11 @@ public class AdministrationController : Controller {
         if (acc is not { AccountType: "ADMIN" }) return false;
 
         string name = data["name"].ToString();
-        string email = data["email"].ToString();
+        string? email = data.TryGetValue("email", out var _emailVal) ? _emailVal.ToString() : null;
         string cls = data["class"].ToString();
-        string authKey = Utilities.GenerateRandomKey();
+        string authKey = Utilities.GenerateRandomAuthKey();
 
-        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(cls)) return false;
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(cls)) return false;
 
         // vytvoreni obj do databaze
         using var conn = Database.GetConnection();
@@ -38,7 +38,21 @@ public class AdministrationController : Controller {
         cmd.ExecuteNonQuery();
 
         // odeslani emailu
-        _ = EmailService.SendHTMLEmailAsync(email, "Registrace do Educhem LAN Party", "~/Views/Emails/UserRegistered.cshtml", new EmailUserRegisterModel(authKey, $"https://{Program.ROOT_DOMAIN}/rezervace?lg={Convert.ToBase64String(Encoding.UTF8.GetBytes(authKey))}"), HttpContext.RequestServices);
+        string fallbackBody =
+            $"""
+
+             Ahoj, díky, že se účastníš LAN Party.
+             Pokud nemáš vlastní setup, rezervuj si počítač, na kterém po celou dobu budeš.
+             Pokud si bereš svůj vlastní setup, rezervuj místnost, kde svůj setup budeš mít. Nezapomeň si s sebou vzít i příslušenství včetně monitorů a prodlužováku.
+             Rezervuj si to co nejdříve, protože kapacita je omezená.
+
+
+             Tvůj autentizační klíč: {authKey}
+             Odkaz na stránku: https://{Program.ROOT_DOMAIN}/rezervace?lg={Convert.ToBase64String(Encoding.UTF8.GetBytes(authKey))}
+
+             """;
+
+        if(email != null) _ = EmailService.SendHTMLEmailAsync(email, "Registrace do Educhem LAN Party", "~/Views/Emails/UserRegistered.cshtml", new EmailUserRegisterModel(authKey, $"https://{Program.ROOT_DOMAIN}/rezervace?lg={Convert.ToBase64String(Encoding.UTF8.GetBytes(authKey))}"), HttpContext.RequestServices, fallbackBody);
 
         return true;
     }
