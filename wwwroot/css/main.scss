@@ -21,6 +21,11 @@ html {
     scale: 1.05;
 }
 
+::selection {
+    background-color: var(--color-yellow);
+    color: white;
+}
+
 @font-face {
   font-family: "Ubuntu Bold";
   src: url("/fonts/Ubuntu-B.ttf");
