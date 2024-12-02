@@ -7,6 +7,10 @@ public class HomeController : Controller {
 
     [Route("/")]
     public IActionResult Index() {
+        if(Program.ENV.TryGetValue("WEBSITE_AVAILABLE", out var websiteAvailable) && websiteAvailable == "false") {
+            return View("/Views/WebsiteNotAvailable.cshtml");
+        }
+
         return View("/Views/Index.cshtml");
     }
 

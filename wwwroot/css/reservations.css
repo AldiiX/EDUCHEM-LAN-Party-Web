@@ -25,6 +25,18 @@ body {
   font-family: Rajdhani, sans-serif;
 }
 
+#app {
+  animation: appappear 0.5s ease-in;
+}
+@keyframes appappear {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 .flex {
   position: absolute;
   display: flex;
@@ -38,8 +50,8 @@ body {
 }
 .flex > .display, .flex > .controls > div {
   padding: 24px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
+  background-color: var(--default-element-background-color);
+  border-radius: 10px;
 }
 .flex > .display {
   flex-grow: 1;
@@ -261,7 +273,7 @@ body {
   margin: 0;
 }
 .flex > .controls > .logininfo > .logintxt > a {
-  color: var(--color-yellow);
+  color: var(--color-yellow-hover);
   text-decoration: underline;
 }
 .flex > .controls > .info {

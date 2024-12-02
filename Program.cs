@@ -16,7 +16,7 @@ public static class Program {
 
 
     // random picovinky
-    public const string APP_WALLPAPER = "/images/wallpapers/two.jpg";
+    public const string APP_WALLPAPER = "/images/wallpapers/xmas_day.png";
     public const string ROOT_DOMAIN = "lanparty.educhem.it";//"lanparty.adminsphere.me";
 
 
@@ -106,6 +106,8 @@ public static class Program {
         App.UseSession();
         App.UseRouting();
         App.UseAuthorization();
+        if(ENV.TryGetValue("WEBSITE_AVAILABLE", out var websiteAvailable) && websiteAvailable == "false")
+            App.UseMiddleware<WebsiteNotAvailableRedirectMiddleware>();
         //App.UseMiddleware<ErrorHandlingMiddleware>();
         App.UseMiddleware<FunctionalQueryParameterMiddleware>();
         App.MapControllerRoute(name: "default", pattern: "/");

@@ -28,6 +28,19 @@
     }
 }
 
+#app {
+    animation: appappear 0.5s ease-in;
+
+    @keyframes appappear {
+        0% {
+            opacity: 0;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+}
+
 .flex {
     position: absolute;
     display: flex;
@@ -41,8 +54,8 @@
 
     >.display, >.controls >div {
         padding: 24px;
-        background-color: rgba(255, 255, 255, 0.8);
-        border-radius: 8px;
+        background-color: var(--default-element-background-color);
+        border-radius: 10px;
         //backdrop-filter: blur(0.15vw);
         //border: solid 2px white;
     }
@@ -297,7 +310,7 @@
                 margin: 0;
 
                 >a {
-                    color: var(--color-yellow);
+                    color: var(--color-yellow-hover);
                     text-decoration: underline;
                 }
             }

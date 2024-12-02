@@ -1,0 +1,90 @@
+﻿@using EduchemLPR
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="EDUCHEM LAN Party">
+    <meta name="author" content="EDUCHEM">
+    <meta name="keywords" content="EDUCHEM, LAN, Party, EduchemLPR">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#2c3e50">
+    <link rel="stylesheet" href="/css/main.css">
+    <title>EDUCHEM LAN Party</title>
+    <style>
+        /* Základní styly pro celou stránku */
+        body {
+            background-color: #2c3e50;
+            background-size: cover;
+            background-position: center;
+            font-family: 'Roboto', sans-serif;
+            color: #000000;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        /* Kontejner */
+        .container {
+            max-width: 90vw;
+            padding: 60px 120px;
+            background: rgba(255, 255, 255, 1);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Nadpis */
+        h1 {
+            font-size: 48px;
+            margin: 0 0 20px;
+            color: #FFB303;
+        }
+
+        /* Odstavec s textem */
+        p {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        /* Animace pro text */
+        .animated-text {
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Odkaz */
+        a {
+            color: #FFB303;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        a:hover {
+            color: #e67e22;
+        }
+    </style>
+</head>
+<body>
+<img id="app-wallpaper" src="@Program.APP_WALLPAPER" />
+<div class="container">
+    <img src="/images/logo/alt_lt_cerna.svg" alt="EDUCHEM LAN Party" width="300">
+    <h1>EDUCHEM LAN Party</h1>
+    <p class="animated-text">@(Program.ENV.TryGetValue("WEBSITE_NOT_AVAILABLE_MESSAGE", out var text) ? text : "Web je momentálně nedostupný. Zkuste to později.")</p>
+</div>
+</body>
+</html>

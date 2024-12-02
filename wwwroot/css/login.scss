@@ -7,16 +7,27 @@
     overflow: hidden;
 }
 
+
 .center {
+    animation: appappear 0.5s;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: var(--default-element-background-color);
     padding: 32px;
     border-radius: 10px;
     display: flex;
     flex-direction: column;
+
+    @keyframes appappear {
+        0% {
+            opacity: 0;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
 
     >img {
         position: relative;

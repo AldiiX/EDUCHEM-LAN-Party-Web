@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+html {
+    --default-element-background-color: #e9e0e0;
+}
+
 #app-wallpaper {
     position: fixed;
     top: 0;
@@ -13,8 +17,8 @@
     object-position: center;
     user-select: none;
     pointer-events: none;
-    //transform: scaleX(-1);
-    //filter: hue-rotate(318deg);
+    filter: blur(0px);
+    scale: 1.05;
 }
 
 @font-face {
