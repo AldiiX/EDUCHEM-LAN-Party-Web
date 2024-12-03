@@ -20,10 +20,10 @@ public class AdministrationController : Controller {
 
         string name = data["name"].ToString();
         string? email = data.TryGetValue("email", out var _emailVal) ? _emailVal.ToString() : null;
-        string cls = data["class"].ToString();
+        string? cls = data.TryGetValue("class", out var _classVal) ? _classVal.ToString() : null;
         string authKey = Utilities.GenerateRandomAuthKey();
 
-        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(cls)) return false;
+        if (string.IsNullOrEmpty(name)) return false;
 
         // vytvoreni obj do databaze
         using var conn = Database.GetConnection();

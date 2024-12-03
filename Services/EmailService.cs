@@ -47,12 +47,14 @@ public static class EmailService {
 
             // odeslání emailu
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(name: "EDUCHEM LAN Party", address: Program.ENV["SMTP_EMAIL_USERNAME"]));
+            const string name = "LAN Party Educhem";
+            message.From.Add(new MailboxAddress(name: name, address: Program.ENV["SMTP_EMAIL_USERNAME"]));
             message.To.Add(new MailboxAddress(name: to, address: to));
             message.Subject = subject;
+            message.Date = DateTimeOffset.Now;
             message.Headers.Add("MIME-Version", "1.0");
             message.Headers.Add("Reply-To", Program.ENV["SMTP_EMAIL_USERNAME"]);
-            message.Headers.Add("X-Mailer", "EDUCHEM LAN Party");
+            //message.Headers.Add("X-Mailer", name);
             message.Headers.Add("Return-Path", Program.ENV["SMTP_EMAIL_USERNAME"]);
             //message.Headers.Add("List-Unsubscribe", $"<mailto:unsubscribe@stanislavskudrna.cz>, <https://{Program.ROOT_DOMAIN}/unsubscribe>");
 
