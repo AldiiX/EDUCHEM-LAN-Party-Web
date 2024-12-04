@@ -84,7 +84,7 @@ public class API : Controller {
             -- Přidání nové rezervace pro počítač
             UPDATE computers
             SET reserved_by = @userId
-            WHERE id = @pcid{(acc.AccountType is not ("ADMIN" or "TEACHER") ? " AND reserved_by IS NULL" : "")};
+            WHERE id = @pcid{(acc.AccountType is not ("ADMIN" or "TEACHER") ? " AND reserved_by IS NULL" : "")} AND enabled = 1;
 
             COMMIT;
         ", conn);
@@ -130,7 +130,7 @@ public class API : Controller {
         cmd.CommandText = @"
             UPDATE computers
             SET reserved_by = NULL
-            WHERE id = @pcid
+            WHERE id = @pcid AND enabled = 1
         ";
         if(acc.AccountType is not "ADMIN" and "TEACHER") cmd.CommandText += " AND reserved_by = @userId";
 

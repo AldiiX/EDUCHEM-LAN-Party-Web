@@ -31,6 +31,7 @@ public class Computer {
                    u.class AS reserved_by_class
             FROM computers c
             LEFT JOIN users u ON c.reserved_by = u.id
+            WHERE c.enabled = 1
         ", conn);
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if(reader == null) return computers;
