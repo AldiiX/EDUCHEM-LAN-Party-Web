@@ -251,7 +251,7 @@ export const vue = new Vue({
                     _this.addAnnouncement("Počítač byl úspěšně zarezervován!", "success");
                     console.log("Počítač byl úspěšně zarezervován!");
 
-                    _this.reloadDb();
+                    //_this.reloadDb(); -> zbytečné, protože se to udělá přes websocket
                 } else {
                     console.error("Něco se nepovedlo!");
                 }
@@ -282,7 +282,7 @@ export const vue = new Vue({
                     _this.addAnnouncement("Počítač byl úspěšně odrezervován!", "success");
                     console.log("Počítač byl úspěšně odrezervován!");
 
-                    _this.reloadDb();
+                    //_this.reloadDb(); -> zbytečné, protože se to udělá přes websocket
                 } else {
                     console.error("Něco se nepovedlo!");
                 }
@@ -301,7 +301,7 @@ export const vue = new Vue({
                     _this.addAnnouncement("Počítač byl úspěšně zarezervován!", "success");
                     console.log("Počítač byl úspěšně zarezervován!");
 
-                    _this.reloadDb();
+                    //_this.reloadDb(); -> zbytečné, protože se to udělá přes websocket
                 } else {
                     console.error("Něco se nepovedlo!");
                 }
@@ -320,7 +320,7 @@ export const vue = new Vue({
                     _this.addAnnouncement("Počítač byl úspěšně odrezervován!", "success");
                     console.log("Počítač byl úspěšně odrezervován!");
 
-                    _this.reloadDb();
+                    //_this.reloadDb();     -> zbytečné, protože se to udělá přes websocket
                 } else {
                     console.error("Něco se nepovedlo!");
                 }

@@ -28,23 +28,29 @@ public class Room {
         if (conn == null) return [];
 
         await using var cmd = new MySqlCommand(@"
-            SELECT
-                r.id AS room_id,
-                r.limit_of_seats,
-                r.reserved_by,
-                JSON_ARRAYAGG(u.display_name) AS reserved_by_display_names,
-                JSON_ARRAYAGG(u.class) AS reserved_by_classes
-            FROM
-                rooms r
-            LEFT JOIN JSON_TABLE(
-                r.reserved_by,
-                '$[*]' COLUMNS(user_id INT PATH '$')
-            ) AS reserved
-            ON TRUE
-            LEFT JOIN users u 
-            ON reserved.user_id = u.id
-            GROUP BY
-                r.id, r.limit_of_seats;
+            SELECT 
+                r.*,
+                GROUP_CONCAT(reserved_users.id ORDER BY reserved_users.created_at) AS reserved_by,
+                GROUP_CONCAT(reserved_users.display_name ORDER BY reserved_users.created_at) AS reserved_by_display_names,
+                GROUP_CONCAT(
+                    COALESCE(reserved_users.class, 'null')
+                    ORDER BY reserved_users.created_at
+                    SEPARATOR ','
+                ) AS reserved_by_classes
+            FROM rooms r
+            LEFT JOIN (
+                SELECT 
+                    rv.room_id,
+                    u.id,
+                    u.display_name,
+                    u.class,
+                    rv.created_at
+                FROM reservations rv
+                JOIN users u ON rv.user_id = u.id
+            ) AS reserved_users ON r.id = reserved_users.room_id
+            WHERE r.available = 1
+            GROUP BY r.id
+            ORDER BY r.id;
         ", conn);
 
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
@@ -52,17 +58,23 @@ public class Room {
 
         var rooms = new List<Room>();
         while (await reader.ReadAsync()) {
-            List<object> reservedByOriginal = reader.GetObjectOrNull("reserved_by") != null ? JsonSerializer.Deserialize<List<object>>(reader.GetString("reserved_by")) ?? [] : [];
             List<int> reservedBy = [];
-            foreach (var id in reservedByOriginal) if (int.TryParse(id.ToString(), out var parsedId)) reservedBy.Add(parsedId);
+            if (reader.GetObjectOrNull("reserved_by") != null)
+                reservedBy.AddRange(reader.GetString("reserved_by").Split(',').Select(int.Parse));
 
+            List<string> reservedByName = reader.GetObjectOrNull("reserved_by_display_names") != null ? reader.GetString("reserved_by_display_names").Split(',').ToList() : [];
+
+            List<string?> reservedByClass = (reader.GetObjectOrNull("reserved_by_classes") != null ? reader.GetString("reserved_by_classes").Split(',').ToList() : [])!;
+            for (var i = 0; i < reservedByClass.Count; i++) {
+                if (reservedByClass[i] == "null") reservedByClass[i] = null;
+            }
 
             rooms.Add(new Room(
-                reader.GetString("room_id"),
+                reader.GetString("id"),
                 reader.GetUInt16("limit_of_seats"),
                 reservedBy,
-                reader.GetObjectOrNull("reserved_by") != null ? JsonSerializer.Deserialize<List<string>>(reader.GetString("reserved_by_display_names")) ?? [] : [],
-                reader.GetObjectOrNull("reserved_by") != null ? JsonSerializer.Deserialize<List<string>>(reader.GetString("reserved_by_classes")) ?? [] : []
+                reservedByName,
+                reservedByClass
             ));
         }
 

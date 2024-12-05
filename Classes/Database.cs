@@ -38,7 +38,7 @@ public static class Database {
         await using var conn = await GetConnectionAsync();
         if (conn == null) return null;
 
-        await using var cmd = new MySqlCommand($"SELECT value FROM data WHERE property = @prop", conn);
+        await using var cmd = new MySqlCommand($"SELECT value FROM settings WHERE property = @prop", conn);
         cmd.Parameters.AddWithValue("@prop", property);
 
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;

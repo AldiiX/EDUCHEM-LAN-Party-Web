@@ -201,7 +201,6 @@ export const vue = new Vue({
                 if (response.ok) {
                     _this.addAnnouncement("Počítač byl úspěšně zarezervován!", "success");
                     console.log("Počítač byl úspěšně zarezervován!");
-                    _this.reloadDb();
                 }
                 else {
                     console.error("Něco se nepovedlo!");
@@ -227,7 +226,6 @@ export const vue = new Vue({
                 if (response.ok) {
                     _this.addAnnouncement("Počítač byl úspěšně odrezervován!", "success");
                     console.log("Počítač byl úspěšně odrezervován!");
-                    _this.reloadDb();
                 }
                 else {
                     console.error("Něco se nepovedlo!");
@@ -244,7 +242,6 @@ export const vue = new Vue({
                 if (response.ok) {
                     _this.addAnnouncement("Počítač byl úspěšně zarezervován!", "success");
                     console.log("Počítač byl úspěšně zarezervován!");
-                    _this.reloadDb();
                 }
                 else {
                     console.error("Něco se nepovedlo!");
@@ -261,7 +258,6 @@ export const vue = new Vue({
                 if (response.ok) {
                     _this.addAnnouncement("Počítač byl úspěšně odrezervován!", "success");
                     console.log("Počítač byl úspěšně odrezervován!");
-                    _this.reloadDb();
                 }
                 else {
                     console.error("Něco se nepovedlo!");

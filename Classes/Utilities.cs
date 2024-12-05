@@ -115,8 +115,7 @@ public static class Utilities {
     }
 
     public static async Task<bool> AreReservationsEnabledAsync() {
-        var settings = JsonNode.Parse(Database.GetData("settings") as string ?? "{}");
-        var r = settings?["enableReservations"]?.GetValue<bool>() ?? false;
+        bool r = bool.TryParse(await Database.GetDataAsync("enableReservations") as string, out bool result) && result;
 
         return r;
     }

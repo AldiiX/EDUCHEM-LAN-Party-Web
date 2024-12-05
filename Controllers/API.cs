@@ -29,6 +29,7 @@ public class API : Controller {
                 ["reservedBy"] = computer.ReservedByName == null ? null : "someone",
                 ["reservedByMe"] = false,
                 ["reservedByClass"] = null,
+                ["isTeacherPC"] = computer.IsTeacherPC,
             };
 
             else obj = new JsonObject {
@@ -36,6 +37,7 @@ public class API : Controller {
                 ["reservedBy"] = computer.ReservedByName,
                 ["reservedByMe"] = computer.ReservedByName == null ? false : computer.ReservedBy == acc.ID,
                 ["reservedByClass"] = acc.AccountType is "TEACHER" or "ADMIN" ? computer.ReservedByClass : null,
+                ["isTeacherPC"] = computer.IsTeacherPC,
             };
 
             array.Add(obj);
@@ -63,30 +65,9 @@ public class API : Controller {
         if(conn == null) return StatusCode(502, "Database connection error");
 
         using var cmd = new MySqlCommand($@"
-            START TRANSACTION;
-
-            -- Odstranění rezervací z počítačů
-            UPDATE computers
-            SET reserved_by = NULL
-            WHERE reserved_by = @userId;
-
-            -- Odstranění uživatele z JSON seznamu rezervací v místnostech
-            UPDATE rooms
-            SET reserved_by = JSON_REMOVE(
-                reserved_by,
-                JSON_UNQUOTE(
-                    JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR))
-                )
-            )
-            WHERE JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR)) IS NOT NULL;
-
-
-            -- Přidání nové rezervace pro počítač
-            UPDATE computers
-            SET reserved_by = @userId
-            WHERE id = @pcid{(acc.AccountType is not ("ADMIN" or "TEACHER") ? " AND reserved_by IS NULL" : "")} AND enabled = 1;
-
-            COMMIT;
+            INSERT INTO reservations (computer_id, user_id)
+            VALUES (@pcid, @userId)
+            ON DUPLICATE KEY UPDATE computer_id = @pcid, user_id = @userId, created_at = NOW(), room_id = NULL;
         ", conn);
 
         cmd.Parameters.AddWithValue("@userId", acc.ID);
@@ -128,11 +109,9 @@ public class API : Controller {
         using var cmd = new MySqlCommand();
         cmd.Connection = conn;
         cmd.CommandText = @"
-            UPDATE computers
-            SET reserved_by = NULL
-            WHERE id = @pcid AND enabled = 1
+            DELETE FROM reservations
+            WHERE user_id = @userId
         ";
-        if(acc.AccountType is not "ADMIN" and "TEACHER") cmd.CommandText += " AND reserved_by = @userId";
 
         cmd.Parameters.AddWithValue("@userId", acc.ID);
         cmd.Parameters.AddWithValue("@pcid", pcID);
@@ -198,8 +177,9 @@ public class API : Controller {
     [HttpPost("rooms/reserve")]
     public IActionResult ReserveRoom([FromBody] Dictionary<string, object?> data, [FromServices] SSEService ws) {
         var reservationsEnabledTask = Utilities.AreReservationsEnabledAsync();
+        var accTask = Auth.ReAuthUserAsync();
 
-        var acc = Auth.ReAuthUser();
+        var acc = accTask.Result;
         if (acc == null) return Unauthorized("Not logged in");
 
         string? roomID = data.TryGetValue("id", out var _roomid) ? _roomid?.ToString() : null;
@@ -214,33 +194,9 @@ public class API : Controller {
         if(conn == null) return StatusCode(502, "Database connection error");
 
         using var cmd = new MySqlCommand(@"
-            START TRANSACTION;
-
-            -- Odstranění rezervací z počítačů
-            UPDATE computers
-            SET reserved_by = NULL
-            WHERE reserved_by = @userId;
-
-            -- Odstranění rezervací z místností
-            UPDATE rooms
-            SET reserved_by = JSON_REMOVE(
-                reserved_by,
-                JSON_UNQUOTE(
-                    JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR))
-                )
-            )
-            WHERE JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR)) IS NOT NULL;
-
-            -- Přidání nové rezervace pro místnost
-            UPDATE rooms
-            SET reserved_by = JSON_ARRAY_APPEND(
-                reserved_by,
-                '$',
-                CAST(@userId AS CHAR)
-            )
-            WHERE id = @roomid;
-
-            COMMIT;
+            INSERT INTO reservations (room_id, user_id)
+            VALUES (@roomid, @userId)
+            ON DUPLICATE KEY UPDATE room_id = @roomid, user_id = @userId, created_at = NOW(), computer_id = NULL;
         ", conn);
 
         cmd.Parameters.AddWithValue("@userId", acc.ID);
@@ -283,12 +239,8 @@ public class API : Controller {
         if(conn == null) return StatusCode(502, "Database connection error");
 
         using var cmd = new MySqlCommand(@"
-            UPDATE rooms
-            SET reserved_by = JSON_REMOVE(
-                reserved_by,
-                JSON_UNQUOTE(JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR)))
-            )
-            WHERE id = @roomid AND JSON_SEARCH(reserved_by, 'one', CAST(@userId AS CHAR)) IS NOT NULL
+            DELETE FROM reservations
+            WHERE user_id = @userId;
         ", conn);
 
         cmd.Parameters.AddWithValue("@userId", userID);
@@ -309,8 +261,13 @@ public class API : Controller {
 
     [HttpGet("appsettings")]
     public IActionResult GetAppSettings() {
-        var json = JsonNode.Parse(Database.GetData("settings") as string ?? "{}");
-        return new JsonResult(json);
+        var enableReservationsTask = Database.GetDataAsync("enableReservations");
+
+        var obj = new JsonObject {
+            ["enableReservations"] = bool.TryParse(enableReservationsTask.Result?.ToString(), out var _parsed) && _parsed,
+        };
+
+        return new JsonResult(obj);
     }
 
     [HttpGet("users")]
