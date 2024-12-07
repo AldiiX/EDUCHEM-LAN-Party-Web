@@ -73,7 +73,7 @@
                                     <p class="logintxt">Rezervace jsou momentálně zakázané.</p>
                                 </template>
 
-                                <div class="names" v-if="room.reservedBy?.[0] != 'someone'">
+                                <div class="names" v-if="room.reservedBy != null && room.reservedBy.length != 0 && room.reservedBy?.[0] != 'someone'">
                                     <p class="name" v-for="(name, i) in room.reservedBy" v-if="name !== 'someone'">{{ name }}<span v-if="room.reservedByClass?.[i] != null">, {{ room.reservedByClass?.[i] }}</span></p>
                                 </div>
                             </div>
