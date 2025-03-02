@@ -5,6 +5,7 @@ import Home from './pages/Home.tsx';
 import {Reservations} from "./pages/app/Reservations.tsx";
 import {Attendance} from "./pages/app/Attendance.tsx";
 import './Main.scss';
+import {getCookie} from "./utils.ts";
 
 const RouteTitle = () => {
     const location = useLocation();
@@ -23,8 +24,31 @@ const RouteTitle = () => {
     return null;
 };
 
+const Theme = () => {
+    useEffect(() => {
+        // zjištění z cookies
+        let theme = "light";//getCookie("theme");
+        theme ??= window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
+
+
+        document.documentElement.classList.remove('darkmode', 'lightmode');
+
+        switch (theme) {
+            case "dark":
+                document.documentElement.classList.add('darkmode');
+                break;
+            default:
+                document.documentElement.classList.add('lightmode');
+                break;
+        }
+    }, []);
+
+    return null;
+}
+
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
+        <Theme />
         <Router>
             <RouteTitle />
             <Routes>

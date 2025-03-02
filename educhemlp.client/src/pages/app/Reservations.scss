@@ -1,10 +1,12 @@
 .map {
-    height: 100%;
     width: 100%;
+    height: 100%;
     position: relative;
-    background-color: white;
+    background-color: var(--element-bg);
     border-radius: 12px;
     overflow: hidden;
+    box-shadow: 0 0 6px rgba(0,0,0,0.025);
+
 
     >.zoomsettings {
         position: absolute;
@@ -29,9 +31,22 @@
         }*/
 
 
+        .pc {
+            fill: var(--accent-color);
+        }
+
+        .room {
+            fill: var(--room-available);
+        }
+
+
         circle {
+            transition-duration: 0.3s;
+            cursor: pointer;
+
             &:hover {
-                fill: red;
+                filter: brightness(0.7);
+                transition-duration: 0.3s;
             }
         }
     }
