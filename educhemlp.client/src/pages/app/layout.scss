@@ -1,0 +1,17 @@
+#app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+
+    >.left {
+        min-width: 200px;
+        height: 100vh;
+        background-color: red;
+    }
+
+    >.right {
+        flex: 1;
+        height: 100vh;
+        background-color: blue;
+    }
+}

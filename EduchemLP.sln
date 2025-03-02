@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "educhemlp.client", "educhemlp.client\educhemlp.client.esproj", "{F0DDA669-4B1A-5E7E-E5CC-7CC4125E2801}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EduchemLP.Server", "EduchemLP.Server\EduchemLP.Server.csproj", "{FB9EC6BF-6AAB-4111-A48A-1C936D9D1187}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F0DDA669-4B1A-5E7E-E5CC-7CC4125E2801}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0DDA669-4B1A-5E7E-E5CC-7CC4125E2801}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0DDA669-4B1A-5E7E-E5CC-7CC4125E2801}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{F0DDA669-4B1A-5E7E-E5CC-7CC4125E2801}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0DDA669-4B1A-5E7E-E5CC-7CC4125E2801}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0DDA669-4B1A-5E7E-E5CC-7CC4125E2801}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{FB9EC6BF-6AAB-4111-A48A-1C936D9D1187}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB9EC6BF-6AAB-4111-A48A-1C936D9D1187}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB9EC6BF-6AAB-4111-A48A-1C936D9D1187}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB9EC6BF-6AAB-4111-A48A-1C936D9D1187}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {203394F7-87E8-4BA4-BA9F-342572DE6D76}
+	EndGlobalSection
+EndGlobal
