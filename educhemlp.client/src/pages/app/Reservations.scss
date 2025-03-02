@@ -6,7 +6,7 @@
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 0 6px rgba(0,0,0,0.025);
-
+    
 
     >.zoomsettings {
         position: absolute;
@@ -16,7 +16,32 @@
         gap: 8px;
         z-index: 2;
     }
+    >.legend {
+        position: absolute;
+        bottom: 24px;
+        left: 24px;
+        z-index: 2;
+        background-color: var(--element-bg);
+        padding: 16px;
+        border-radius: 12px;
+        >h3{
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        >.legend-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
 
+            >div {
+                width: 16px;
+                height: 16px;
+                border-radius: 100%;
+            }
+        }
+    }
     >svg {
         position: absolute;
         transition-duration: 0.3s;

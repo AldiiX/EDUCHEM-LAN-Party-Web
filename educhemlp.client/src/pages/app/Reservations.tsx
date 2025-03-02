@@ -93,7 +93,27 @@ export const Reservations = () => {
                     <button onClick={() => forceZoom(0.1) }>Zoom In (+)</button>
                     <button onClick={() => forceZoom(-0.1) }>Zoom Out (−)</button>
                 </div>
-
+                
+                <div className="legend">
+                    <h3 >Legenda mapy:</h3>
+                    <div className="legend-item">
+                        <div style={{ backgroundColor: "var(--room-available)" }}></div>
+                        <p>Volná místnost pro vlastní setup</p>
+                    </div>
+                    <div className="legend-item">
+                        <div style={{ backgroundColor: "var(--pc-available)" }}></div>
+                        <p>Volný počítač</p>
+                    </div>
+                    <div className="legend-item">
+                        <div style={{ backgroundColor: "var(--pc-unavailable)" }}></div>
+                        <p>Obsazeno / Nedostupné </p>
+                    </div>
+                    <div className="legend-item">
+                        <div style={{ backgroundColor: "var(--pc-taken-by-you)" }}></div>
+                        <p>Tvoje místo</p>
+                    </div>
+                </div>
+                
                 <svg
                     id="spiral-upper"
                     width="1960"
