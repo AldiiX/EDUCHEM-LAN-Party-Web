@@ -1,10 +1,10 @@
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import './index.css';
 import Home from './pages/Home.tsx';
 import {Reservations} from "./pages/app/Reservations.tsx";
 import {Attendance} from "./pages/app/Attendance.tsx";
+import './Main.scss';
 
 const RouteTitle = () => {
     const location = useLocation();

@@ -1,0 +1,29 @@
+﻿* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'leaguespartan';
+    font-weight: normal;
+    margin: 0;
+}
+
+p,a,div,span,button,input,textarea,select,label,li,ul {
+    font-family: 'gabarito';
+    margin: 0;
+}
+
+@font-face {
+    font-family: 'gabarito';
+    src: url('../public/fonts/gabarito.ttf') format('opentype');
+}
+
+@font-face {
+    font-family: 'leaguespartan';
+    src: url('../public/fonts/leaguespartan-bold.ttf') format('opentype');
+    font-weight: 800;
+}

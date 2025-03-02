@@ -1,0 +1,10 @@
+header {
+    width: 100vw;
+    height: 64px;
+    background-color: blue;
+
+    &:is(.scrolled) {
+        position: fixed;
+        background-color: red;
+    }
+}

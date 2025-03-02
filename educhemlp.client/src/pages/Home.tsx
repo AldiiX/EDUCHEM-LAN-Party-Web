@@ -1,8 +1,49 @@
+import {Header} from "../components/Header.tsx";
+
 const Home = () => {
     return (
-        <div>
-            <h1>Home</h1>
-        </div>
+        <>
+            <Header />
+
+            <div>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+                <h1>Home</h1>
+            </div>
+        </>
+
     )
 }
 

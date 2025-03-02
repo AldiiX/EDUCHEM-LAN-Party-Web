@@ -11,8 +11,8 @@ namespace EduchemLP.Server.API;
 
 
 [ApiController]
-[Route("api")]
-public class API : Controller {
+[Route("api/v1")]
+public class APIv1 : Controller {
 
     [HttpGet("computers")]
     public IActionResult GetAllComputers() {
