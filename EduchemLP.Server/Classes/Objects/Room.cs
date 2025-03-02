@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
 
 namespace EduchemLP.Server.Classes.Objects;
 

@@ -104,6 +104,10 @@ public static class Program {
         App.UseHttpsRedirection();
         //App.UseStaticFiles();
         App.UseSession();
+        App.UseWebSockets(new WebSocketOptions {
+            KeepAliveInterval = TimeSpan.FromSeconds(30),
+        });
+        App.UseMiddleware<WebSocketMiddleware>();
         App.UseRouting();
         App.UseAuthorization();
         if(ENV.TryGetValue("WEBSITE_AVAILABLE", out var websiteAvailable) && websiteAvailable == "false")

@@ -27,6 +27,12 @@ export default defineConfig(({ command, mode }: any): any => {
                     '^/api/': {
                         target,
                         secure: false
+                    },
+
+                    '^/ws/': {
+                        target,
+                        secure: false,
+                        ws: true,
                     }
                 },
                 port: 3154,  // Port pro frontend
@@ -81,6 +87,11 @@ export default defineConfig(({ command, mode }: any): any => {
                 '^/openapi/': {
                     target,
                     secure: false
+                },
+                '^/ws/': {
+                    target,
+                    secure: false,
+                    ws: true,
                 }
             },
             port: 3154, // Port pro frontend

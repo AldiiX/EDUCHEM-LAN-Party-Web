@@ -1,6 +1,5 @@
 using MimeKit;
 using MailKit.Net.Smtp;
-using MailKit.Security;
 
 namespace EduchemLP.Server.Services;
 

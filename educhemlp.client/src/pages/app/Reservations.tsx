@@ -65,10 +65,10 @@ export const Reservations = () => {
 
     // pripojeni k websocketu
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8080");
+        const isLocalhost = window.location.hostname === "localhost";
+        const ws = new WebSocket(`wss://${window.location.host}/ws/reservations`);
         ws.onopen = () => {
             console.log("connected");
-            ws.send("hello");
         };
 
         ws.onmessage = (e) => {
