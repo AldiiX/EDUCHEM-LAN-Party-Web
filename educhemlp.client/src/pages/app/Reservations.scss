@@ -1,78 +1,115 @@
-.map {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    background-color: var(--element-bg);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 0 6px rgba(0,0,0,0.025);
-    
-
-    >.zoomsettings {
-        position: absolute;
-        top: 24px;
-        right: 24px;
-        display: flex;
-        gap: 8px;
-        z-index: 2;
-    }
-    >.legend {
-        position: absolute;
-        bottom: 24px;
-        left: 24px;
-        z-index: 2;
-        background-color: var(--element-bg);
-        padding: 16px;
-        border-radius: 12px;
-        >h3{
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-        >.legend-item {
+.reservations {
+    .right {
+        >.area-selector {
             display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 8px;
+            gap: 16px;
+            margin: 24px 0;
 
-            >div {
-                width: 16px;
-                height: 16px;
-                border-radius: 100%;
+            >p {
+                padding: 12px;
+                font-weight: 600;
+                border-radius: 8px;
+                color: var(--text-color-secondary);
+                background-color: var(--element-bg);
+                user-select: none;
+                cursor: pointer;
+                box-shadow: 0 0 6px rgba(0, 0, 0, 0.025);
+                transition-duration: 0.2s;
+
+                &:is(.active)  {
+                    background-color: var(--element-bg-colored);
+                    color: var(--accent-color);
+                    pointer-events: none;
+                    transition-duration: 0.2s;
+                    box-shadow: none;
+                }
+
             }
         }
     }
-    >svg {
-        position: absolute;
-        transition-duration: 0.3s;
-        top: 0;
-        left: 0;
+
+    .map {
         width: 100%;
         height: 100%;
-        z-index: 1;
+        position: relative;
+        background-color: var(--element-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 0 6px rgba(0,0,0,0.025);
 
-        /*.scaleTransition {
-            transition-duration: 0.3s;
-        }*/
 
-
-        .pc {
-            fill: var(--accent-color);
+        >.zoomsettings {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            gap: 8px;
+            z-index: 2;
         }
 
-        .room {
-            fill: var(--room-available);
+        >.legend {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            z-index: 2;
+            background-color: var(--element-bg);
+            padding: 16px;
+            border-radius: 12px;
+            pointer-events: none;
+            user-select: none;
+
+            >h3{
+                font-size: 16px;
+                font-weight: 500;
+                margin-bottom: 8px;
+            }
+            >.legend-item {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                margin-bottom: 8px;
+
+                >div {
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 100%;
+                }
+            }
         }
 
-
-        circle {
+        >svg {
+            position: absolute;
             transition-duration: 0.3s;
-            cursor: pointer;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
 
-            &:hover {
-                filter: brightness(0.7);
+            /*.scaleTransition {
                 transition-duration: 0.3s;
+            }*/
+
+
+            .pc {
+                fill: var(--accent-color);
+            }
+
+            .room {
+                fill: var(--room-available);
+            }
+
+
+            circle {
+                transition-duration: 0.3s;
+                cursor: pointer;
+
+                &:hover {
+                    filter: brightness(0.7);
+                    transition-duration: 0.3s;
+                }
             }
         }
     }
 }
+

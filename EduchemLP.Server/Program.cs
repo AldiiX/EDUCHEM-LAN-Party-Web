@@ -79,7 +79,6 @@ public static class Program {
         #endif
 
         builder.Configuration.AddEnvironmentVariables();
-        builder.Services.AddSingleton<SSEService>();
 
         App = builder.Build();
         ENV = DotEnv.Read();
@@ -104,6 +103,7 @@ public static class Program {
         App.UseHttpsRedirection();
         //App.UseStaticFiles();
         App.UseSession();
+        App.UseMiddleware<BeforeInitMiddleware>();
         App.UseWebSockets(new WebSocketOptions {
             KeepAliveInterval = TimeSpan.FromSeconds(30),
         });

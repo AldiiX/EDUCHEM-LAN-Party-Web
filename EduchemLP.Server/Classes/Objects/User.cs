@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using EduchemLP.Server.Services;
 using MySql.Data.MySqlClient;
 
@@ -125,5 +126,9 @@ public class User {
         cmd.Parameters.AddWithValue("@now", DateTime.Now);
         cmd.Parameters.AddWithValue("@authKey", authKey);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    public override string ToString() {
+        return JsonSerializer.Serialize(this, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
     }
 }

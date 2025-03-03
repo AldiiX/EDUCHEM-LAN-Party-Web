@@ -21,13 +21,14 @@ html:is(.darkmode) {
 html:is(.lightmode) {
     --accent-color: #ff8300;
     --element-bg: white;
-    --background-bg: #f1f2f8;
+    --element-bg-colored: #ffe8cc;
+    --background-bg: #f8f6f1;
     --text-color: #0c0c0c;
-    
+    --text-color-secondary: #606060;
+
     // pro mapu
     --pc-available: var(--accent-color);
     --room-available: #ff4d00;
-    
     --pc-unavailable: #797676;
     --pc-taken-by-you: #ffd500;
 }

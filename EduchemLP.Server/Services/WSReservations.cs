@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
+using MySql.Data.MySqlClient;
 
 namespace EduchemLP.Server.Services;
 
@@ -60,7 +61,14 @@ public static class WSReservations {
         // zpracovani prijmutych zprav
         while (webSocket.State == WebSocketState.Open) {
             var buffer = new byte[1024 * 4];
-            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            WebSocketReceiveResult result;
+
+            try {
+                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            } catch (WebSocketException) {
+                break;
+            }
+
             if (result.MessageType == WebSocketMessageType.Close) {
                 lock (ConnectedUsers) {
                     ConnectedUsers.Remove(client);
@@ -132,8 +140,66 @@ public static class WSReservations {
     }
 
     private static async Task<bool> SendFullReservationInfoAsync(this Client client) {
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return false;
+
+        var loggedUser = Utilities.GetLoggedAccountFromContextOrNull();
+
+        var command = new MySqlCommand(
+        """
+                SELECT 
+                    res.*, 
+                    usr.id AS user_id, 
+                    usr.display_name AS user_display_name, 
+                    usr.class AS user_class,
+                    COALESCE(room.id, NULL) AS room_id, 
+                    COALESCE(room.limit_of_seats, NULL) AS room_limit, 
+                    COALESCE(room.available, NULL) AS room_available,
+                    COALESCE(comp.id, NULL) AS computer_id,
+                    COALESCE(comp.is_teachers_pc, NULL) AS computer_is_teachers_pc,
+                    COALESCE(comp.available, NULL) AS computer_available
+                FROM reservations res
+                LEFT JOIN users usr ON res.user_id = usr.id
+                LEFT JOIN rooms room ON res.room_id = room.id
+                LEFT JOIN computers comp ON res.computer_id = comp.id;
+                """, conn
+        );
+
+        await using var reader = await command.ExecuteReaderAsync() as MySqlDataReader;
+        if (reader == null) return false;
+
+        var array = new JsonArray();
+        while (await reader.ReadAsync()) {
+            var obj = new JsonObject {
+                ["user"] = loggedUser != null ? reader.GetValueOrNull<int>("user_id") != null ? new JsonObject() {
+                    ["id"] = reader.GetValueOrNull<int>("user_id"),
+                    ["displayName"] = reader.GetStringOrNull("user_display_name"),
+                    ["class"] = reader.GetStringOrNull("user_class")
+                } : null : "unknown",
+
+                ["room"] = reader.GetValueOrNull<int>("room_id") != null ? new JsonObject() {
+                    ["id"] = reader.GetValueOrNull<int>("room_id"),
+                    ["limit"] = reader.GetValueOrNull<int>("room_limit"),
+                    ["available"] = reader.GetValueOrNull<bool>("room_available")
+                } : null,
+
+                ["computer"] = reader.GetValueOrNull<int>("computer_id") != null ? new JsonObject() {
+                    ["id"] = reader.GetValueOrNull<int>("computer_id"),
+                    ["isTeachersPC"] = reader.GetValueOrNull<bool>("computer_is_teachers_pc"),
+                    ["available"] = reader.GetValueOrNull<bool>("computer_available")
+                } : null,
+
+                ["note"] = reader.GetStringOrNull("note"),
+                ["createdAt"] = reader.GetDateTime("created_at"),
+            };
+
+            array.Add(obj);
+        }
+        
+        
         var payload = new {
-            action = "fetchAll"
+            action = "fetchAll",
+            data = array
         };
 
         var message = JsonSerializer.SerializeToUtf8Bytes(payload);

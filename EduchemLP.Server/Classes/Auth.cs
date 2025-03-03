@@ -32,6 +32,7 @@ public static class Auth {
         }
 
         HttpContextService.Current.Session.SetObject("loggeduser", acc);
+        HttpContextService.Current.Items["loggeduser"] = acc;
         return acc;
     }
 

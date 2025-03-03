@@ -5,9 +5,6 @@ namespace EduchemLP.Server.Middlewares;
 
 public class WebSocketMiddleware(RequestDelegate next) {
     public async Task InvokeAsync(HttpContext context) {
-
-        Console.WriteLine("asdassafd");
-
         // reservations websocket
         if (context.Request.Path == "/ws/reservations") {
             if (context.WebSockets.IsWebSocketRequest) {

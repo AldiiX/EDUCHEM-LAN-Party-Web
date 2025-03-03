@@ -1,0 +1,95 @@
+#app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background-color: var(--background-bg);
+    overflow: hidden;
+
+    >.left {
+        display: flex;
+        flex-direction: column;
+        min-width: 250px;
+        height: 100vh;
+        background-color: var(--element-bg);
+        border-radius: 0 48px 0 0;
+        padding: 48px;
+        box-shadow: 0 0 6px rgba(0,0,0,0.025);
+
+        >h1 {
+            text-align: center;
+        }
+
+        >.title {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+
+            >.logo {
+                width: 80px;
+                aspect-ratio: 1/1;
+                mask-image: url("../../../public/images/logo/logo.svg");
+                background-color: var(--accent-color);
+            }
+
+            >h1 {
+                color: var(--accent-color);
+                line-height: 32px;
+            }
+        }
+
+        >.logo {
+            width: 80px;
+            aspect-ratio: 1/1;
+            margin: 0 auto;
+            background-image: url("../../../public/images/logo/logo.svg");
+        }
+
+        >.menu {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 80px;
+            user-select: none;
+
+            >a {
+                text-decoration: none;
+                padding: 12px 24px;
+                border-radius: 48px;
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                transition-duration: 0.3s;
+
+                >div {
+                    width: 20px;
+                    height: 20px;
+                    mask-repeat: no-repeat;
+                    mask-position: left;
+                    mask-size: cover;
+                    background-color: var(--text-color);
+                    transition-duration: 0.3s;
+                }
+
+                &:is(.active) {
+                    background-color: var(--element-bg-colored);
+                    color: var(--accent-color);
+                    transition-duration: 0.3s;
+                    //font-weight: 500;
+
+                    >div {
+                        transition-duration: 0.3s;
+                        background-color: var(--accent-color);
+                    }
+                }
+            }
+        }
+    }
+
+    >.right {
+        position: relative;
+        flex: 1;
+        padding: 48px;
+        display: flex;
+        flex-direction: column;
+    }
+}

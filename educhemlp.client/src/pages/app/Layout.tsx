@@ -1,22 +1,57 @@
 import {Link, useLocation} from "react-router-dom";
 import "./Layout.scss";
 import {useEffect, useState} from "react";
+import {useStore} from "../../store.tsx";
 
-export const AppLayout = ({ children }: { children: React.ReactNode}) => {
+export const AppLayout = ({ children, className }: { children: React.ReactNode, className?: string }) => {
     const location = useLocation();
-    let [currentPage, setCurrentPage] = useState<string>("");
+    const [currentPage, setCurrentPage] = useState<string>("");
+    const { loggedUser } = useStore();
 
     useEffect(() => {
         setCurrentPage(location.pathname);
     }, [location]);
 
     return (
-        <div id="app">
+        <div id="app" className={className}>
             <div className={"left"}>
-                <h1>EduchemLP</h1>
+
+
+                {/*<h1>Educhem<br/>LAN Party</h1>*/}
+                <div className="title">
+                    <div className="logo"></div>
+                    <h1>Educhem<br/>LAN Party</h1>
+                </div>
+
+
                 <div className={"menu"}>
-                    <Link to={"/app/reservations"} className={currentPage === "/app/reservations" ? "active" : ""}>Rezervace</Link>
-                    <Link to={"/app/attendance"} className={currentPage === "/app/attendance" ? "active" : ""}>Příchody/Odchody</Link>
+                    <Link to={"/app/announcements"} className={currentPage === "/app/announcements" ? "active" : ""}>
+                        <div style={{ maskImage: 'url(../../../public/images/icons/bell.svg)' }}></div>
+                        Oznámení
+                    </Link>
+
+                    <Link to={"/app/reservations"} className={currentPage === "/app/reservations" ? "active" : ""}>
+                        <div style={{ maskImage: 'url(../../../public/images/icons/calc.svg)' }}></div>
+                        Rezervace
+                    </Link>
+
+                    <Link to={"/app/attendance"} className={currentPage === "/app/attendance" ? "active" : ""}>
+                        <div style={{ maskImage: 'url(../../../public/images/icons/user_in_building.svg)' }}></div>
+                        Příchody / Odchody
+                    </Link>
+
+                    <Link to={"/app/tournaments"} className={currentPage === "/app/tournaments" ? "active" : ""}>
+                        <div style={{ maskImage: 'url(../../../public/images/icons/trophy_star.svg)' }}></div>
+                        Turnaje
+                    </Link>
+
+                    { loggedUser?.accountType === "ADMIN" ?
+                        <Link to={"/app/administration"} className={currentPage === "/app/administration" ? "active" : ""}>
+                            <div style={{ maskImage: 'url(../../../public/images/icons/user_with_shield.svg)' }}></div>
+                            Administrace
+                        </Link> : null
+                    }
+
                 </div>
             </div>
 
