@@ -12,10 +12,18 @@ html, body {
 }
 
 html:is(.darkmode) {
-    --accent-color: #ff8100;
+    --accent-color: #ffb303;
     --element-bg: #1e1e1e;
-    --background-bg: #141414;
+    --element-bg-colored: #312d27;
+    --background-bg: #171716;
     --text-color: #f3f3f3;
+    --text-color-secondary: #e0e0e0;
+
+    // pro mapu
+    --pc-available: var(--accent-color);
+    --room-available: #ff4d00;
+    --pc-unavailable: #797676;
+    --pc-taken-by-you: #ffd500;
 }
 
 html:is(.lightmode) {

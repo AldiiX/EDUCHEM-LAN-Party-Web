@@ -11,9 +11,15 @@ type LoggedUser = {
 type Store = {
     loggedUser: LoggedUser | null,
     setLoggedUser: (user: LoggedUser) => void,
+
+    userAuthed: boolean,
+    setUserAuthed: (authed: boolean) => void,
 };
 
 export const useStore = create<Store | any>((set: any) => ({
     loggedUser: null,
     setLoggedUser: (user: LoggedUser) => set({ loggedUser: user }),
+
+    userAuthed: false,
+    setUserAuthed: (authed: boolean) => set({ userAuthed: authed }),
 }));

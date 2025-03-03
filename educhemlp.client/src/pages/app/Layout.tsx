@@ -7,10 +7,14 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
     const location = useLocation();
     const [currentPage, setCurrentPage] = useState<string>("");
     const { loggedUser } = useStore();
+    const { userAuthed, setUserAuthed } = useStore();
 
     useEffect(() => {
         setCurrentPage(location.pathname);
     }, [location]);
+
+
+    if (!userAuthed) return <></>;
 
     return (
         <div id="app" className={className}>
@@ -34,6 +38,20 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                         <div style={{ maskImage: 'url(../../../public/images/icons/calc.svg)' }}></div>
                         Rezervace
                     </Link>
+
+                    <Link to={"/app/forum"} className={currentPage === "/app/forum" ? "active" : ""}>
+                        <div style={{ maskImage: 'url(../../../public/images/icons/forum.svg)' }}></div>
+                        Forum
+                    </Link>
+
+                    {
+                        loggedUser !== null
+                            ? <Link to={"/app/chat"} className={currentPage === "/app/chat" ? "active" : ""}>
+                                <div style={{ maskImage: 'url(../../../public/images/icons/chat.svg)' }}></div>
+                                Chat
+                            </Link>
+                            : null
+                    }
 
                     <Link to={"/app/attendance"} className={currentPage === "/app/attendance" ? "active" : ""}>
                         <div style={{ maskImage: 'url(../../../public/images/icons/user_in_building.svg)' }}></div>
