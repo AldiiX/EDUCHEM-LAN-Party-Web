@@ -113,7 +113,10 @@ public static class WSReservations {
                     ConnectedUsers.Remove(user);
                 }
 
-                BroadcastMessageAsync(user, "status").Wait();
+                var message = JsonSerializer.Serialize(new {
+                    action = "status"
+                });
+                BroadcastMessageAsync(user, message).Wait();
             }
         }
 
@@ -136,7 +139,8 @@ public static class WSReservations {
         var buffer = Encoding.UTF8.GetBytes(message);
         var tasks = new List<Task>();
 
-        client.WebSocket.SendAsync(new ArraySegment<byte>(buffer, 0, buffer.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+        if (client.WebSocket?.State != WebSocketState.Open) return;
+        client.WebSocket?.SendAsync(new ArraySegment<byte>(buffer, 0, buffer.Length), WebSocketMessageType.Text, true, CancellationToken.None);
     }
 
     private static async Task<bool> SendFullReservationInfoAsync(this Client client) {
@@ -144,6 +148,8 @@ public static class WSReservations {
         if (conn == null) return false;
 
         var loggedUser = Utilities.GetLoggedAccountFromContextOrNull();
+        var computers = Computer.GetAllAsync();
+        var rooms = Room.GetAllAsync();
 
         var command = new MySqlCommand(
         """
@@ -183,8 +189,8 @@ public static class WSReservations {
                     ["available"] = reader.GetValueOrNull<bool>("room_available")
                 } : null,
 
-                ["computer"] = reader.GetValueOrNull<int>("computer_id") != null ? new JsonObject() {
-                    ["id"] = reader.GetValueOrNull<int>("computer_id"),
+                ["computer"] = reader.GetStringOrNull("computer_id") != null ? new JsonObject() {
+                    ["id"] = reader.GetStringOrNull("computer_id"),
                     ["isTeachersPC"] = reader.GetValueOrNull<bool>("computer_is_teachers_pc"),
                     ["available"] = reader.GetValueOrNull<bool>("computer_available")
                 } : null,
@@ -199,10 +205,12 @@ public static class WSReservations {
         
         var payload = new {
             action = "fetchAll",
-            data = array
+            reservations = array,
+            computers = computers.Result,
+            rooms = rooms.Result,
         };
 
-        var message = JsonSerializer.SerializeToUtf8Bytes(payload);
+        var message = JsonSerializer.SerializeToUtf8Bytes(payload, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         await client.WebSocket.SendAsync(new ArraySegment<byte>(message), WebSocketMessageType.Text, true, CancellationToken.None);
 
         return true;

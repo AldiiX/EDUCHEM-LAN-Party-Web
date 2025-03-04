@@ -17,13 +17,12 @@ export const Reservations = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [startPos, setStartPos] = useState({ x: 0, y: 0 });
     const [selectedArea, setSelectedArea] = useState<string>(areas[0].id);
+    const [computers, setComputers] = useState<any[]>([]);
+    const [reservations, setReservations] = useState<any[]>([]);
+    const [rooms, setRooms] = useState<any[]>([]);
     const { loggedUser } = useStore();
-
-    // Ref pro kontejner .map
     const mapRef = useRef<HTMLDivElement>(null);
 
-    // Při načtení se změří velikost .map a spočítá se scale, aby se SVG (1960×1216) vešlo do něj,
-    // a navíc se nastaví translation tak, aby byl obsah vycentrovaný.
     useEffect(() => {
         if (mapRef.current) {
             const { clientWidth, clientHeight } = mapRef.current;
@@ -91,7 +90,55 @@ export const Reservations = () => {
     const handleMouseUp = () => {
         setIsDragging(false);
     };
+
+    const receiveSocketMessage = (message: string) => {
+        const object = JSON.parse(message);
+
+        if(object.action === "fetchAll") {
+            setComputers(object.computers as any[])
+            setReservations(object.reservations as any[]);
+
+            setCirclesStyle();
+        }
+    }
+
+    const setCirclesStyle = () => {
+        console.log(computers, reservations)
+
+        // compy
+        for(let computer of computers) {
+            computer = computer as any;
+            const id = String(computer.id).toUpperCase();
+            const element = document.getElementById(id);
+            if (!element) continue;
+
+            element.classList.add("available");
+        }
+
+        // rezervace
+        for(let reservation of reservations) {
+            reservation = reservation as any[];
+
+            // v pripade ze si uzivatel rezerovoval pc
+            if (reservation.computer !== null) {
+                const id = String(reservation.computer?.id).toUpperCase();
+                const element = document.getElementById(id);
+                if (!element) continue;
+
+                element.classList.remove("available");
+                if (reservation.user?.id === loggedUser?.id) {
+                    element.classList.add("taken-by-you");
+                } else {
+                    element.classList.add("unavailable");
+                }
+            }
+
+            // v pripade ze si uzivatel rezervoval mistnost
+        }
+    }
     // endregion
+
+
 
     // připojení k websocketu
     useEffect(() => {
@@ -104,7 +151,7 @@ export const Reservations = () => {
         };
 
         ws.onmessage = (e) => {
-            console.log(e.data);
+            receiveSocketMessage(e.data);
         };
 
         ws.onclose = () => {
@@ -115,6 +162,12 @@ export const Reservations = () => {
             ws.close();
         };
     }, []);
+
+    useEffect(() => {
+        setCirclesStyle();
+    }, [selectedArea]);
+
+
 
     return (
         <AppLayout className="reservations">

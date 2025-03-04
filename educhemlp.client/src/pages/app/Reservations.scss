@@ -92,7 +92,19 @@
 
 
             .pc {
-                fill: var(--accent-color);
+                fill: var(--pc-unavailable);
+
+                &:is(.unavailable) {
+                    fill: var(--pc-unavailable);
+                }
+
+                &:is(.taken-by-you) {
+                    fill: var(--pc-taken-by-you);
+                }
+
+                &:is(.available) {
+                    fill: var(--pc-available);
+                }
             }
 
             .room {
