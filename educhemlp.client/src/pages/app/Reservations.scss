@@ -45,6 +45,26 @@
             display: flex;
             gap: 8px;
             z-index: 2;
+            >.zoom-in{
+                width: 48px;
+                aspect-ratio: 1/1;
+                mask-repeat: no-repeat;
+                mask-size: contain;
+                mask-image: url("/images/zoom-in.svg");
+                background-color: var(--text-color);
+                cursor: pointer;
+                transition-duration: 0.2s; 
+            }
+            >.zoom-out {
+                width: 48px;
+                aspect-ratio: 1/1;
+                mask-repeat: no-repeat;
+                mask-size: contain;
+                mask-image: url("/images/zoom-out.svg");
+                cursor: pointer;
+                background-color: var(--text-color);
+                transition-duration: 0.2s;
+            }
         }
 
         >.legend {

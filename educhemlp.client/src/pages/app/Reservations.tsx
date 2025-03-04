@@ -61,7 +61,7 @@ export const Reservations = () => {
     };
 
     const forceZoom = (delta: number) => {
-        setScale(scale + delta);
+        setScale(prevScale => Math.min(1.5, Math.max(0.7, prevScale + delta)));
     };
 
     const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -187,8 +187,8 @@ export const Reservations = () => {
 
             <div className="map" ref={mapRef}>
                 <div className="zoomsettings" style={{ marginBottom: "1rem" }}>
-                    <button onClick={() => forceZoom(0.1)}>Zoom In (+)</button>
-                    <button onClick={() => forceZoom(-0.1)}>Zoom Out (−)</button>
+                    <div className="zoom-in" onClick={() => forceZoom(0.1)}></div>
+                    <div className="zoom-out" onClick={() => forceZoom(-0.1)}></div>
                 </div>
 
                 <div className="legend">
