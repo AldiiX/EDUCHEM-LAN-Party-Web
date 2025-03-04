@@ -1,4 +1,5 @@
 import {AppLayout} from "./Layout";
+import "./Attendance.scss";
 
 export const Attendance = () => {
     return (
@@ -7,3 +8,5 @@ export const Attendance = () => {
         </AppLayout>
     )
 }
+
+export default Attendance;

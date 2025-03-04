@@ -7,3 +7,5 @@ export const Tournaments = () => {
         </AppLayout>
     )
 }
+
+export default Tournaments;

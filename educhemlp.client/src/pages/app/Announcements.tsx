@@ -7,3 +7,5 @@ export const Announcements = () => {
         </AppLayout>
     )
 }
+
+export default Announcements;

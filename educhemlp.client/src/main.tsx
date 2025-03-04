@@ -1,19 +1,20 @@
 import { StrictMode, useEffect, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import Home from './pages/Home.tsx';
-import {Reservations} from "./pages/app/Reservations.tsx";
-import {Attendance} from "./pages/app/Attendance.tsx";
 import "./assets/pure.css";
 import './Main.scss';
 import {getCookie} from "./utils.ts";
-import {Announcements} from "./pages/app/Announcements.tsx";
 import {useStore} from "./store.tsx";
-import {Tournaments} from "./pages/app/Tournaments.tsx";
-import {Login} from "./pages/Login.tsx";
-import Administration from "./pages/app/Administration.tsx";
-import {Chat} from "./pages/app/Chat.tsx";
-import {Forum} from "./pages/app/Forum.tsx";
+
+const Home = lazy(() => import('./pages/Home.tsx'));
+const Login = lazy(() => import('./pages/Login.tsx'));
+const Reservations = lazy(() => import('./pages/app/Reservations.tsx'));
+const Attendance = lazy(() => import('./pages/app/Attendance.tsx'));
+const Administration = lazy(() => import('./pages/app/Administration.tsx'));
+const Announcements = lazy(() => import('./pages/app/Announcements.tsx'));
+const Tournaments = lazy(() => import('./pages/app/Tournaments.tsx'));
+const Chat = lazy(() => import('./pages/app/Chat.tsx'));
+const Forum = lazy(() => import('./pages/app/Forum.tsx'));
 
 
 const RouteTitle = () => {
@@ -41,7 +42,7 @@ const RouteTitle = () => {
 const Theme = () => {
     useEffect(() => {
         // zjištění z cookies
-        let theme = "light";//getCookie("theme");
+        let theme = getCookie("theme");
         theme ??= window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
 
 

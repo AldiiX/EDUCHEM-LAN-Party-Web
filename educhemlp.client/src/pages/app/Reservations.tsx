@@ -4,6 +4,7 @@ import "./Reservations.scss";
 import { SpiralUpper } from "../../components/reservation_areas/SpiralUpper.tsx";
 import { SpiralLower } from "../../components/reservation_areas/SpiralLower.tsx";
 import { useStore } from "../../store.tsx";
+import {PieChart} from "../../components/PieChart.tsx";
 
 export const Reservations = () => {
     const areas = [
@@ -20,6 +21,7 @@ export const Reservations = () => {
     const [computers, setComputers] = useState<any[]>([]);
     const [reservations, setReservations] = useState<any[]>([]);
     const [rooms, setRooms] = useState<any[]>([]);
+    const [occupiedPercent, setOccupiedPercent] = useState(0);
     const { loggedUser } = useStore();
     const mapRef = useRef<HTMLDivElement>(null);
 
@@ -97,14 +99,11 @@ export const Reservations = () => {
         if(object.action === "fetchAll") {
             setComputers(object.computers as any[])
             setReservations(object.reservations as any[]);
-
-            setCirclesStyle();
+            setRooms(object.rooms as any[]);
         }
     }
 
     const setCirclesStyle = () => {
-        console.log(computers, reservations)
-
         // compy
         for(let computer of computers) {
             computer = computer as any;
@@ -126,7 +125,7 @@ export const Reservations = () => {
                 if (!element) continue;
 
                 element.classList.remove("available");
-                if (reservation.user?.id === loggedUser?.id) {
+                if (loggedUser?.id && reservation.user?.id === loggedUser?.id) {
                     element.classList.add("taken-by-you");
                 } else {
                     element.classList.add("unavailable");
@@ -164,8 +163,18 @@ export const Reservations = () => {
     }, []);
 
     useEffect(() => {
-        setCirclesStyle();
-    }, [selectedArea]);
+        if (computers.length > 0 && reservations.length > 0) {
+            setCirclesStyle();
+
+            let roomsAllSeats = 0;
+            for(let room of rooms) {
+                room = room as any;
+                roomsAllSeats += room.limitOfSeats;
+            }
+
+            setOccupiedPercent(Math.round(reservations.length / (computers.length + roomsAllSeats) * 100));
+        }
+    }, [computers, reservations, selectedArea]);
 
 
 
@@ -208,6 +217,14 @@ export const Reservations = () => {
                     <div className="legend-item">
                         <div style={{ backgroundColor: "var(--pc-taken-by-you)" }}></div>
                         <p>Tvoje místo</p>
+                    </div>
+                </div>
+
+                <div className="chart">
+                    <PieChart value={occupiedPercent} width={100} height={100} />
+                    <div className="texts">
+                        <h1>{ occupiedPercent }%</h1>
+                        <p>Naplněné kapacity</p>
                     </div>
                 </div>
 

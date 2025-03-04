@@ -45,6 +45,7 @@
             display: flex;
             gap: 8px;
             z-index: 2;
+
             >.zoom-in{
                 width: 48px;
                 aspect-ratio: 1/1;
@@ -55,6 +56,7 @@
                 cursor: pointer;
                 transition-duration: 0.2s; 
             }
+
             >.zoom-out {
                 width: 48px;
                 aspect-ratio: 1/1;
@@ -80,14 +82,20 @@
 
             >h3{
                 font-size: 16px;
-                font-weight: 500;
+                //font-weight: 500;
                 margin-bottom: 8px;
+                color: var(--accent-color);
             }
+
             >.legend-item {
                 display: flex;
                 gap: 8px;
                 align-items: center;
                 margin-bottom: 8px;
+
+                >p {
+                    color: var(--text-color-secondary);
+                }
 
                 >div {
                     width: 16px;
@@ -95,6 +103,33 @@
                     border-radius: 100%;
                 }
             }
+        }
+
+        >.chart {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            z-index: 2;
+            background-color: var(--element-bg);
+            padding: 16px;
+            border-radius: 12px;
+            pointer-events: none;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+
+            >.texts {
+                >h1{
+                    color: var(--accent-color);
+                }
+
+                >p {
+                    font-size: 16px;
+                    color: var(--text-color-secondary);
+                }
+            }
+
         }
 
         >svg {
@@ -129,6 +164,26 @@
 
             .room {
                 fill: var(--room-available);
+            }
+
+            line {
+                stroke: var(--line-color);
+            }
+
+            rect {
+                fill: var(--shapes-color);
+            }
+
+            .table {
+                fill: var(--table-color);
+            }
+
+            .text {
+                fill: var(--text-color);
+            }
+
+            .lighttext {
+                fill: var(--shapes-color);
             }
 
 

@@ -48,3 +48,5 @@ export const Login = () => {
         </form>
     );
 };
+
+export default Login;

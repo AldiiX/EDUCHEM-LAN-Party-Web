@@ -13,17 +13,21 @@ html, body {
 
 html:is(.darkmode) {
     --accent-color: #ffb303;
-    --element-bg: #1e1e1e;
-    --element-bg-colored: #312d27;
-    --background-bg: #171716;
+    --element-bg: #171717;
+    --element-bg-colored: #26241e;
+    --background-bg: #101010;
     --text-color: #f3f3f3;
     --text-color-secondary: #e0e0e0;
+    --text-color-3: #2a2a2a;
 
     // pro mapu
     --pc-available: var(--accent-color);
     --room-available: #ff4d00;
-    --pc-unavailable: #797676;
-    --pc-taken-by-you: #ffd500;
+    --pc-unavailable: #595959;
+    --pc-taken-by-you: #f7ff00;
+    --shapes-color: #1c1c1c;
+    --table-color: #212121;
+    --line-color: #464646;
 }
 
 html:is(.lightmode) {
@@ -33,12 +37,16 @@ html:is(.lightmode) {
     --background-bg: #f8f6f1;
     --text-color: #0c0c0c;
     --text-color-secondary: #606060;
+    --text-color-3: #e3e3e3;
 
     // pro mapu
     --pc-available: var(--accent-color);
     --room-available: #ff4d00;
     --pc-unavailable: #96826b;
     --pc-taken-by-you: #ffd500;
+    --shapes-color: #f4f4f4;
+    --table-color: #d9d9d9;
+    --line-color: #585858;
 }
 
 h1, h2, h3, h4, h5, h6 {

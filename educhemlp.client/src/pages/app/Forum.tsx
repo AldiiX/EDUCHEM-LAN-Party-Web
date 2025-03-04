@@ -7,3 +7,5 @@ export const Forum = () => {
         </AppLayout>
     )
 }
+
+export default  Forum;

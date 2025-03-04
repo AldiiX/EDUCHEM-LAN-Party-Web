@@ -25,3 +25,5 @@ export const Chat = () => {
         </AppLayout>
     )
 }
+
+export default Chat;
