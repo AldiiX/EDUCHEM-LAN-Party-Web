@@ -9,9 +9,11 @@ namespace EduchemLP.Server.Classes.Objects;
 
 
 public class User {
+    public enum UserGender { MALE, FEMALE, OTHER}
+
 
     [JsonConstructor]
-    private User(int id, string displayName, string? email, string? @class, string authKey, string accountType, DateTime lastUpdated) {
+    private User(int id, string displayName, string? email, string? @class, string authKey, string accountType, DateTime lastUpdated/*, UserGender? gender*/) {
         ID = id;
         DisplayName = displayName;
         Class = @class;
@@ -19,7 +21,9 @@ public class User {
         AuthKey = authKey;
         AccountType = accountType;
         LastUpdated = lastUpdated;
+        //Gender = gender;
     }
+
 
     public int ID { get; private set; }
     public string DisplayName { get; private set; }
@@ -28,6 +32,7 @@ public class User {
     public string AuthKey { get; private set; }
     public string AccountType { get; private set; }
     public DateTime LastUpdated { get; private set; }
+    public UserGender? Gender { get; private set; }
 
 
 
@@ -51,6 +56,7 @@ public class User {
             reader.GetString("auth_key"),
             reader.GetString("account_type"),
             reader.GetDateTime("last_updated")
+            //Enum.TryParse<UserGender>(reader.GetObjectOrNull("gender") as string, out var _gender) ? _gender : null
         );
     }
 

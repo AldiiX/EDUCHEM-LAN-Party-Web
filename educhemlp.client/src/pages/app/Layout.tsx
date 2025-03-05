@@ -13,6 +13,11 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
         setCurrentPage(location.pathname);
     }, [location]);
 
+    
+    const normalizeText = (text: string) => {
+        return text[0].toUpperCase() + text.slice(1).toLowerCase();
+    }
+
 
     if (!userAuthed) return <></>;
 
@@ -74,6 +79,18 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
             </div>
 
             <div className={"right"}>
+                {
+                    loggedUser !== null ?
+                    <div className="loggeduser">
+                        <div className="texts">
+                            <p>{ loggedUser?.accountType === "STUDENT" ? "Přihlášen jako" : normalizeText(loggedUser?.accountType) }</p>
+                            <h2>{ loggedUser?.displayName }</h2>
+                        </div>
+                        <div className="avatar" style={{ backgroundImage: `url(${loggedUser?.avatar})`, '--letter': `'${loggedUser?.displayName[0]}'`}}></div>
+                    </div>
+                    : null
+                }
+
                 {children}
             </div>
         </div>

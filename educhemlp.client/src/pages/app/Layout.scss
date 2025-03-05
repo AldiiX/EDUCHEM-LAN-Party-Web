@@ -92,5 +92,52 @@
         padding: 48px;
         display: flex;
         flex-direction: column;
+
+        >.loggeduser {
+            position: absolute;
+            top: 32px;
+            right: 48px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            user-select: none;
+            cursor: pointer;
+            transition-duration: 0.3s;
+            
+            &:hover {
+                transition-duration: 0.3s;
+                filter: brightness(0.7);
+            }
+
+            >.texts {
+                * {
+                    text-align: right;
+                }
+
+                >h2 {
+                    font-size: 20px;
+                    color: var(--accent-color);
+                }
+            }
+
+            >.avatar {
+                width: 44px;
+                aspect-ratio: 1/1;
+                background-color: var(--accent-color);
+                border-radius: 100%;
+                position: relative;
+
+                &:before {
+                    content: var(--letter);
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: white;
+                    font-weight: bolder;
+                    font-size: 20px;
+                }
+            }
+        }
     }
 }
