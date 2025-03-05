@@ -80,6 +80,7 @@ public static class Program {
 
         builder.Configuration.AddEnvironmentVariables();
 
+
         App = builder.Build();
         ENV = DotEnv.Read();
         
@@ -100,7 +101,7 @@ public static class Program {
 
         
         
-        App.UseHttpsRedirection();
+        //App.UseHttpsRedirection();
         //App.UseStaticFiles();
         App.UseSession();
         App.UseMiddleware<BeforeInitMiddleware>();

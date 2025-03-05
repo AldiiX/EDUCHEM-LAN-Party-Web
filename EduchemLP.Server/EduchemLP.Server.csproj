@@ -8,7 +8,7 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <SpaRoot>..\educhemlp.client</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
-    <SpaProxyServerUrl>https://localhost:59511</SpaProxyServerUrl>
+    <SpaProxyServerUrl>https://localhost:3154</SpaProxyServerUrl>
   </PropertyGroup>
 
   <ItemGroup>

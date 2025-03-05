@@ -7,10 +7,10 @@ import child_process from 'child_process';
 import { env } from 'process';
 
 const target = env.ASPNETCORE_HTTPS_PORT
-    ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}`
+    ? `http://localhost:${env.ASPNETCORE_HTTPS_PORT}`
     : env.ASPNETCORE_URLS
         ? env.ASPNETCORE_URLS.split(';')[0]
-        : 'https://localhost:7055';
+        : 'http://localhost:7055';
 
 export default defineConfig(({ command, mode }: any): any => {
     // Produkční konfigurace: vypínáme HTTPS (a tedy ani generování certifikátů)
@@ -96,10 +96,10 @@ export default defineConfig(({ command, mode }: any): any => {
             },
             port: 3154, // Port pro frontend
             host: '0.0.0.0', // Naslouchá na všech IP
-            https: {
+            https: false, /*{
                 key: fs.readFileSync(keyFilePath),
                 cert: fs.readFileSync(certFilePath),
-            }
+            }*/
         }
     };
 });

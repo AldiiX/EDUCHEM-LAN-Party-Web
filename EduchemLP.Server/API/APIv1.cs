@@ -9,6 +9,13 @@ namespace EduchemLP.Server.API;
 [Route("api/v1")]
 public class APIv1 : Controller {
 
+
+    [HttpGet]
+    public IActionResult Test() {
+        return new JsonResult(new { success = true, message = "API v1" });
+    }
+
+
     [HttpGet("loggeduser")]
     public IActionResult GetLoggedUser() {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();

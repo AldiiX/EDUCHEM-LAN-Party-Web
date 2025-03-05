@@ -141,9 +141,8 @@ export const Reservations = () => {
 
     // připojení k websocketu
     useEffect(() => {
-        const isLocalhost = false;
         const ws = new WebSocket(
-            `${isLocalhost ? "ws" : "wss"}://${window.location.host}/ws/reservations`
+            `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/reservations`
         );
         ws.onopen = () => {
             console.log("connected");
@@ -163,7 +162,7 @@ export const Reservations = () => {
     }, []);
 
     useEffect(() => {
-        if (computers.length > 0 && reservations.length > 0) {
+        if (computers.length > 0 && rooms.length > 0) {
             setCirclesStyle();
 
             let roomsAllSeats = 0;
