@@ -131,10 +131,32 @@
             user-select: none;
             cursor: pointer;
             transition-duration: 0.3s;
+            z-index: 3;
+
+
+            >.popover {
+                display: none;
+                position: absolute;
+                flex-direction: column;
+                background-color: var(--background-bg);
+                border: 1px solid var(--text-color-3);
+                padding: 24px;
+                border-radius: 8px;
+                top: calc(100%);
+                right: 0;
+            }
             
             &:hover {
                 transition-duration: 0.3s;
-                filter: invert(0.3);
+
+                .texts, .avatar {
+                    transition-duration: 0.3s;
+                    opacity: 0.5;
+                }
+
+                >.popover {
+                    display: flex;
+                }
             }
 
             >.texts {

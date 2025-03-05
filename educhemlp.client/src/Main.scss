@@ -19,6 +19,9 @@ html:is(.darkmode) {
     --text-color: #f3f3f3;
     --text-color-secondary: #e0e0e0;
     --text-color-3: #2a2a2a;
+    --error-color: #ff0000;
+    --error-color-2: #6c0000;
+    --error-background: #2c1717;
 
     // pro mapu
     --pc-available: var(--accent-color);
@@ -38,6 +41,9 @@ html:is(.lightmode) {
     --text-color: #0c0c0c;
     --text-color-secondary: #606060;
     --text-color-3: #e3e3e3;
+    --error-color: #ff0000;
+    --error-color-2: #6c0000;
+    --error-background: #ffb7b7;
 
     // pro mapu
     --pc-available: var(--accent-color);

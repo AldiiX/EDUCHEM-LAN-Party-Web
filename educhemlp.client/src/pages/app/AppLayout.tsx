@@ -1,5 +1,5 @@
 import {Link, useLocation} from "react-router-dom";
-import "./Layout.scss";
+import "./AppLayout.scss";
 import {CSSProperties, useEffect, useState} from "react";
 import {useStore} from "../../store.tsx";
 
@@ -92,6 +92,11 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                             <h2>{ loggedUser?.displayName }</h2>
                         </div>
                         <div className="avatar" style={{ backgroundImage: `url(${loggedUser?.avatar})`, '--letter': `'${loggedUser?.displayName[0]}'`} as CSSProperties }></div>
+
+                        <div className={"popover"}>
+                            <p>Změnit theme</p>
+                            <p>Odhlásit se</p>
+                        </div>
                     </div>
                     : null
                 }

@@ -35,17 +35,19 @@ export const Login = () => {
     }, [loggedUser, navigate]);
 
     return (
-        <form onSubmit={login}>
-            <input
-                type="text"
-                value={key}
-                onChange={(e) => setKey(e.target.value)}
-                placeholder="Enter key"
-                required
-            />
-            <button type="submit">Login</button>
-            <p>{ error }</p>
-        </form>
+        <>
+            <form onSubmit={login}>
+                <input
+                    type="text"
+                    value={key}
+                    onChange={(e) => setKey(e.target.value)}
+                    placeholder="Enter key"
+                    required
+                />
+                <button type="submit">Login</button>
+                <p>{ error }</p>
+            </form>
+        </>
     );
 };
 

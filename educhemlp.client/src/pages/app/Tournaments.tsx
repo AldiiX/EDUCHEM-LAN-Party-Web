@@ -1,4 +1,4 @@
-import {AppLayout} from "./Layout";
+import {AppLayout} from "./AppLayout.tsx";
 
 export const Tournaments = () => {
     return (

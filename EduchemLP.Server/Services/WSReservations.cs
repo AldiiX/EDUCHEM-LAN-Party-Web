@@ -18,12 +18,16 @@ public static class WSReservations {
     public class Client {
         public int ID { get; set; }
         public string DisplayName { get; set; }
+        public string? Class { get; set; }
         public WebSocket WebSocket { get; set; }
+        public string AccountType { get; set; }
 
-        public Client(int id, string displayName, WebSocket webSocket) {
+        public Client(int id, string displayName, WebSocket webSocket, string accountType, string? @class) {
             ID = id;
             DisplayName = displayName;
             WebSocket = webSocket;
+            Class = @class;
+            AccountType = accountType;
         }
     }
 
@@ -45,8 +49,10 @@ public static class WSReservations {
 
         var client = new Client(
             sessionAccount?.ID ?? new Random().Next(10000, int.MaxValue),
-            sessionAccount?.DisplayName ?? "Unknown",
-            webSocket
+            sessionAccount?.DisplayName ?? "Guest",
+            webSocket,
+            sessionAccount?.AccountType ?? "GUEST",
+            sessionAccount?.Class
         );
 
 
@@ -69,17 +75,16 @@ public static class WSReservations {
                 break;
             }
 
-            if (result.MessageType == WebSocketMessageType.Close) {
-                lock (ConnectedUsers) {
-                    ConnectedUsers.Remove(client);
-                }
-
-                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
-                return;
-            }
-
             // zpracovani zpravy
-            var messageJson = JsonNode.Parse(Encoding.UTF8.GetString(buffer, 0, result.Count));
+            string messageString = Encoding.UTF8.GetString(buffer, 0, result.Count);
+            if (string.IsNullOrWhiteSpace(messageString)) continue;
+
+            JsonNode? messageJson;
+            try {
+                messageJson = JsonNode.Parse(messageString);
+            } catch (JsonException) {
+                continue;
+            }
 
             var action = messageJson?["action"]?.ToString();
             if (action == null) continue;
@@ -113,9 +118,27 @@ public static class WSReservations {
                     ConnectedUsers.Remove(user);
                 }
 
+                // connectedUsers zasifrovani dat
+                var connectedUsers = new JsonArray();
+                foreach (var client in cu) {
+                    if (user.AccountType == "GUEST") {
+                        connectedUsers.Add("unknown");
+                        continue;
+                    }
+
+                    connectedUsers.Add(new JsonObject {
+                        ["id"] = client.ID,
+                        ["displayName"] = client.DisplayName,
+                        ["class"] = user.AccountType != "USER" ?  client.Class : null,
+                    });
+                }
+
+
                 var message = JsonSerializer.Serialize(new {
-                    action = "status"
-                });
+                    action = "status",
+                    connectedUsers = connectedUsers,
+                }, JsonSerializerOptions.Web);
+
                 BroadcastMessageAsync(user, message).Wait();
             }
         }
@@ -136,10 +159,12 @@ public static class WSReservations {
     }
 
     private static async Task BroadcastMessageAsync(Client client, string message) {
+        if (client.WebSocket is not { State: WebSocketState.Open }) return;
+
+
         var buffer = Encoding.UTF8.GetBytes(message);
         var tasks = new List<Task>();
 
-        if (client.WebSocket?.State != WebSocketState.Open) return;
         client.WebSocket?.SendAsync(new ArraySegment<byte>(buffer, 0, buffer.Length), WebSocketMessageType.Text, true, CancellationToken.None);
     }
 

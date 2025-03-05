@@ -38,7 +38,7 @@ export default defineConfig(({ command, mode }: any): any => {
                 port: 3154,  // Port pro frontend
                 host: '0.0.0.0', // Naslouchá na všech IP
                 https: false
-            }
+            },
         };
     }
 
@@ -100,6 +100,6 @@ export default defineConfig(({ command, mode }: any): any => {
                 key: fs.readFileSync(keyFilePath),
                 cert: fs.readFileSync(certFilePath),
             }*/
-        }
+        },
     };
 });

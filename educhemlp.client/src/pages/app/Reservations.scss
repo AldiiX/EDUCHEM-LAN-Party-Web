@@ -154,6 +154,118 @@
 
         }
 
+        >.rightbottom {
+            display: flex;
+            gap: 16px;
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2;
+
+            >.viewers {
+                background-color: var(--element-bg-colored);
+                //border: 1px solid var(--accent-color);
+                padding: 8px;
+                border-radius: 8px;
+                user-select: none;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                >p {
+                    color: var(--accent-color);
+                    font-size: 16px;
+                }
+
+                >.logo {
+                    width: 16px;
+                    aspect-ratio: 1/1;
+                    background-color: var(--accent-color);
+                    mask-image: url("../../../public/images/icons/eye.svg");
+                    mask-size: cover;
+                    mask-repeat: no-repeat;
+                    mask-position: center;
+                }
+            }
+
+            >.serverstatus {
+                background-color: var(--element-bg);
+                border: 1px solid var(--text-color-3);
+                padding: 8px;
+                border-radius: 8px;
+                user-select: none;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                &:is(.disconnected) {
+                    border: 1px solid var(--error-color-2);
+                    animation: dsjfoidsgof 1s infinite ease-in-out;
+
+                    >p {
+                        color: var(--text-color-secondary);
+                    }
+
+                    >.icon {
+                        mask-image: url("../../../public/images/icons/disconnected.svg");
+                    }
+
+                    @keyframes dsjfoidsgof {
+                        0% {
+                            background-color: var(--element-bg);
+                        }
+                        50% {
+                            background-color: var(--error-background);
+                        }
+                        100% {
+                            background-color: var(--element-bg);
+                        }
+                    }
+                }
+
+                &:is(.connected) {
+                    opacity: 0;
+                    pointer-events: none;
+                    display: none;
+                    animation: pisodjfdpjdf 2s ease-in-out;
+
+                    >.icon {
+                        mask-image: url("../../../public/images/icons/successmark.svg");
+                    }
+
+                    @keyframes pisodjfdpjdf {
+                        0% {
+                            opacity: 1;
+                            display: flex;
+                        }
+                        70% {
+                            display: flex;
+                            opacity: 1;
+                        }
+                        100% {
+                            display: none;
+                            opacity: 0;
+                        }
+                    }
+                }
+
+                >p {
+                    color: var(--text-color);
+                    font-size: 16px;
+                }
+
+                >.icon {
+                    width: 16px;
+                    aspect-ratio: 1/1;
+                    background-color: var(--text-color);
+                    mask-image: url("../../../public/images/icons/spinner.svg");
+                    mask-size: cover;
+                    mask-repeat: no-repeat;
+                    mask-position: center;
+                }
+            }
+        }
+
         >svg {
             position: absolute;
             transition-duration: 0.3s;

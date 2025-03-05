@@ -1,4 +1,4 @@
-import { AppLayout } from "./Layout";
+import { AppLayout } from "./AppLayout.tsx";
 import { useEffect, useRef, useState } from "react";
 import "./Reservations.scss";
 import { SpiralUpper } from "../../components/reservation_areas/SpiralUpper.tsx";
@@ -22,6 +22,8 @@ export const Reservations = () => {
     const [reservations, setReservations] = useState<any[]>([]);
     const [rooms, setRooms] = useState<any[]>([]);
     const [occupiedPercent, setOccupiedPercent] = useState(0);
+    const [clientsCount, setClientsCount] = useState<string>("?");
+    const [socketStatus, setSocketStatus] = useState<string | null>(null);
     const { loggedUser } = useStore();
     const mapRef = useRef<HTMLDivElement>(null);
 
@@ -93,13 +95,21 @@ export const Reservations = () => {
         setIsDragging(false);
     };
 
-    const receiveSocketMessage = (message: string) => {
+    const receiveSocketMessage = async (message: string) => {
         const object = JSON.parse(message);
 
-        if(object.action === "fetchAll") {
-            setComputers(object.computers as any[])
-            setReservations(object.reservations as any[]);
-            setRooms(object.rooms as any[]);
+        switch (object.action) {
+            case "fetchAll": {
+                setComputers(object.computers as any[])
+                setReservations(object.reservations as any[]);
+                setRooms(object.rooms as any[]);
+                setSocketStatus("connected");
+            } break;
+
+            case "status": {
+                setSocketStatus("connected");
+                setClientsCount(object.connectedUsers.length.toString());
+            } break;
         }
     }
 
@@ -154,10 +164,12 @@ export const Reservations = () => {
 
         ws.onclose = () => {
             console.log("disconnected");
+            setSocketStatus("disconnected");
         };
 
         return () => {
             ws.close();
+            setSocketStatus(null);
         };
     }, []);
 
@@ -194,7 +206,7 @@ export const Reservations = () => {
             </div>
 
             <div className="map" ref={mapRef}>
-                <div className="zoomsettings" style={{ marginBottom: "1rem" }}>
+                <div className="zoomsettings">
                     <div className="zoom-in" onClick={() => forceZoom(0.1)}></div>
                     <div className="zoom-out" onClick={() => forceZoom(-0.1)}></div>
                 </div>
@@ -227,6 +239,36 @@ export const Reservations = () => {
                     </div>
                 </div>
 
+                <div className={"rightbottom"}>
+                    <div className={
+                        socketStatus === "connected"
+                            ? "serverstatus connected"
+                            : socketStatus === "disconnected"
+                            ? "serverstatus disconnected"
+                            : "serverstatus"
+                    }>
+                        <div className="icon"></div>
+                        <p className="text">
+                            { socketStatus === null
+                                ? "Připojování k serveru..."
+                                : socketStatus === "connected"
+                                ? "Připojeno k serveru"
+                                : socketStatus === "disconnected"
+                                ? "Chyba připojení k serveru, restartuj stránku"
+                                : null
+                            }
+                        </p>
+                    </div>
+
+                    <div className="viewers" title="Připojení uživatelé">
+                        <p>{ clientsCount }</p>
+                        <div className={"logo"}></div>
+                    </div>
+                </div>
+
+
+
+                {/*mapka*/}
                 <svg
                     id="spiral-upper"
                     width="1960"

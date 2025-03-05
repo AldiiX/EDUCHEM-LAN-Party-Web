@@ -1,4 +1,4 @@
-import {AppLayout} from "./Layout";
+import {AppLayout} from "./AppLayout.tsx";
 import {useNavigate} from "react-router-dom";
 import {useStore} from "../../store.tsx";
 import {useEffect} from "react";
