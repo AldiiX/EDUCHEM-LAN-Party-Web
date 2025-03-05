@@ -1,6 +1,6 @@
 import {Link, useLocation} from "react-router-dom";
 import "./Layout.scss";
-import {useEffect, useState} from "react";
+import {CSSProperties, useEffect, useState} from "react";
 import {useStore} from "../../store.tsx";
 
 export const AppLayout = ({ children, className }: { children: React.ReactNode, className?: string }) => {
@@ -76,6 +76,11 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                     }
 
                 </div>
+
+                <div className="footer">
+                    <p>© { new Date().getFullYear() } Educhem LAN Party</p>
+                    <p>Vytvořili: <a href="https://stanislavskudrna.cz" target="_blank">Stanislav Škudrna</a>, <a href="https://github.com/WezeAnonymm" target="_blank">Serhii Yavorskyi</a></p>
+                </div>
             </div>
 
             <div className={"right"}>
@@ -86,7 +91,7 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                             <p>{ loggedUser?.accountType === "STUDENT" ? "Přihlášen jako" : normalizeText(loggedUser?.accountType) }</p>
                             <h2>{ loggedUser?.displayName }</h2>
                         </div>
-                        <div className="avatar" style={{ backgroundImage: `url(${loggedUser?.avatar})`, '--letter': `'${loggedUser?.displayName[0]}'`}}></div>
+                        <div className="avatar" style={{ backgroundImage: `url(${loggedUser?.avatar})`, '--letter': `'${loggedUser?.displayName[0]}'`} as CSSProperties }></div>
                     </div>
                     : null
                 }

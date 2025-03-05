@@ -50,6 +50,7 @@
             gap: 4px;
             margin-top: 80px;
             user-select: none;
+            flex-grow: 1;
 
             >a {
                 text-decoration: none;
@@ -60,6 +61,16 @@
                 align-items: center;
                 background-color: transparent;
                 transition-duration: 0.3s;
+
+                &:hover {
+                    color: var(--text-color-secondary);
+                    transition-duration: 0.3s;
+
+                    >div {
+                        background-color: var(--text-color-secondary);
+                        transition-duration: 0.3s;
+                    }
+                }
 
                 >div {
                     width: 20px;
@@ -84,6 +95,23 @@
                 }
             }
         }
+
+        >.footer {
+            p, a {
+                font-size: 14px;
+                text-align: center;
+                color: var(--text-color-3);
+                text-decoration: none;
+                transition-duration: 0.3s;
+                text-align: center;
+            }
+
+    
+            a:hover {
+                color: var(--text-color-secondary);
+                transition-duration: 0.3s;
+            }
+        }
     }
 
     >.right {
@@ -106,7 +134,7 @@
             
             &:hover {
                 transition-duration: 0.3s;
-                filter: brightness(0.7);
+                filter: invert(0.3);
             }
 
             >.texts {
