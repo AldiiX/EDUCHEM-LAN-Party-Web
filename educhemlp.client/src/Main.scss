@@ -11,7 +11,7 @@ html, body {
     color: white;
 }
 
-html:is(.darkmode) {
+html:is(.theme-dark) {
     --accent-color: #ffb303;
     --accent-color-darker: #d39706;
     --element-bg: #171717;
@@ -35,7 +35,7 @@ html:is(.darkmode) {
     --line-color: #464646;
 }
 
-html:is(.lightmode) {
+html:is(.theme-light) {
     --accent-color: #ff8300;
     --accent-color-darker: #d96f01;
     --element-bg: white;

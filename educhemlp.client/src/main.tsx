@@ -42,18 +42,18 @@ const RouteTitle = () => {
 const Theme = () => {
     useEffect(() => {
         // zjištění z cookies
-        let theme = getCookie("theme");
-        theme ??= window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
+        let cookieTheme = getCookie("theme");
+        cookieTheme ??= window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
 
 
-        document.documentElement.classList.remove('darkmode', 'lightmode');
+        document.documentElement.classList.remove('theme-dark', 'theme-light');
 
-        switch (theme) {
+        switch (cookieTheme) {
             case "dark":
-                document.documentElement.classList.add('darkmode');
+                document.documentElement.classList.add('theme-dark');
                 break;
             default:
-                document.documentElement.classList.add('lightmode');
+                document.documentElement.classList.add('theme-light');
                 break;
         }
     }, []);

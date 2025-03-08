@@ -8,6 +8,7 @@
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
+
     >.left-side {
         border-radius: 0 48px 0 0;
         display: flex;
@@ -19,10 +20,12 @@
         justify-content: center;
         align-items: center;
         box-shadow: 0 0 6px rgba(0,0,0,0.025);
+
         >.title {
             display: flex;
             align-items: center;
             gap: 16px;
+            margin-bottom: 12px;
 
             >.logo {
                 width: 80px;
@@ -36,35 +39,44 @@
                 line-height: 32px;
             }
         }
+
         >.login-container{
             display: grid;
             position: relative; 
             width: fit-content;
             height: fit-content;
+
             >.login-form{
                 position: relative;
                 display: grid;
                 grid-template-columns: 1fr;
                 grid-gap: 12px;
                 padding: 16px;
+
                 >.email, >.password{
                     width: 100%;
                     justify-self: center;
+
                     .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
                         border-color: var(--accent-color) !important;
                     }
+
                     fieldset{
                         border-radius: 5px;
                         border-color: var(--text-color-3) !important;
                     }
+
                     input{
                         color: var(--text-color);
+                        font-family: 'gabarito';
                     }
+
                     label{
                         color:  var(--text-color);
                         font-family: 'gabarito';
                         // font-weight: bold;
                     }
+
                     >.password{
                         
                     }
@@ -76,7 +88,7 @@
                     border-radius: 5px;
                     border: none;
                     background-color: var(--accent-color) !important;
-                    color: var(--text-color-3) !important;
+                    color: white;
                     font-family: 'gabarito';
                     font-weight: bold;
                     justify-self: center;

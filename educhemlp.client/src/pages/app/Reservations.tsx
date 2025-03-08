@@ -6,6 +6,7 @@ import { SpiralLower } from "../../components/reservation_areas/SpiralLower.tsx"
 import { useStore } from "../../store.tsx";
 import {PieChart} from "../../components/PieChart.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
+import {Skeleton} from "@mui/material";
 
 
 export const Reservations = () => {
@@ -351,35 +352,59 @@ export const Reservations = () => {
                 </div>
 
                 <div className={"stats"}>
-                    <div className={"block"}>
+                    <div className={"block mainstats"}>
                         <h1>Statistiky</h1>
                         <p>Počet rezervovaných PC: <span>{reservations.filter(r => r.computer !== null).length}/{computers.length}</span></p>
                         <p>Počet rezervovaných míst: <span>{reservations.filter(r => r.room !== null).length}/{roomsCapacity}</span></p>
                         <p>Celkem rezervací: <span>{reservations.length}/{computers.length + roomsCapacity}</span></p>
                     </div>
 
-                    <div className={"block reservations"}>
-                        <h1>Seznam rezervací</h1>
+                    { loggedUser !== null ?
+                        <div className={"block reservations"}>
+                            <h1>Seznam rezervací</h1>
 
-                        <div className={"reservations-parent"}>
-                            { reservations.sort((a,b) => {
-                                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                            }).map((reservation, index) => {
-                                reservation = reservation as any;
-                                return (
-                                    <div key={index} className={"reservation"}>
-                                        <Avatar size={"40px"} backgroundColor={"var(--accent-color)"} src={reservation.user?.avatar} letter={reservation.user?.displayName?.split(" ")[0][0] + "" + reservation.user?.displayName?.split(" ")[1]?.[0]} />
+                            <div className={"reservations-parent"}>
+                                {
+                                    reservations.length === 0 ?
+                                        [0,1,2,3,4].map((index) => {
+                                            return (
+                                                <div key={index} className={"reservation"}>
+                                                    <Skeleton width={40} height={40} variant={"circular"} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
 
-                                        <div>
-                                            <p className={"name"}>{reservation.user?.displayName}</p>
-                                            <p className={"id"}>{reservation.computer?.id ?? reservation.room?.label}</p>
-                                            <p className={"date"}>{new Date(reservation.createdAt).toLocaleString("cs-CZ" )}</p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                                    <div className={"texts"}>
+                                                        <Skeleton width={"30%"} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
+                                                        <Skeleton width={100} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
+                                                        <Skeleton width={"80%"} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                        :
+                                        reservations.sort((a,b) => {
+                                            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                                        }).map((reservation, index) => {
+                                            reservation = reservation as any;
+                                            return (
+                                                <div key={index} className={"reservation"}>
+                                                    <Avatar size={"40px"} backgroundColor={"var(--accent-color)"} src={reservation.user?.avatar} letter={reservation.user?.displayName?.split(" ")[0][0] + "" + reservation.user?.displayName?.split(" ")[1]?.[0]} />
+
+                                                    <div className="texts">
+                                                        <p className={"name"}>{reservation.user?.displayName} <span>{reservation.user?.class}</span></p>
+                                                        <p className={"id"}>{reservation.computer?.id ?? reservation.room?.label}</p>
+                                                        <p className={"date"}>{new Date(reservation.createdAt).toLocaleString("cs-CZ" )}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                }
+                            </div>
                         </div>
-                    </div>
+                        : <div className={"block"}>
+                            <p>Pro zobrazení rezervací <a href={"/login"}>se přihlaš</a>.</p>
+                        </div>
+                    }
+
+
                 </div>
             </div>
 

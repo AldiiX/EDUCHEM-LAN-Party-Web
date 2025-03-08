@@ -52,9 +52,10 @@ export const Login = () => {
                         sx={{'& > :not(style)': {m: 1, width: '25ch'}}}
                         noValidate
                         autoComplete="off"
+                        onSubmit={login}
                     >
-                        <TextField className={"email"} id="email" label="E-mail" variant="outlined"/>
-                        <TextField className={"password"} id="password" label="Heslo" variant="outlined"/>
+                        <TextField className={"email"} id="email" label="E-mail" variant="outlined" type="email" name={"email"}/>
+                        <TextField className={"password"} id="password" label="Heslo" variant="outlined" type="password" name={"password"}/>
                         <button className={"submit-button"} type="submit">Login</button>
                         <p>{error}</p>
                     </Box>

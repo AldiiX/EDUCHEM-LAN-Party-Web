@@ -3,6 +3,7 @@
     aspect-ratio: 1/1;
     border-radius: 100%;
     position: relative;
+    flex-shrink: 0;
     
     >p {
         font-size: calc(var(--size) / 2.3);

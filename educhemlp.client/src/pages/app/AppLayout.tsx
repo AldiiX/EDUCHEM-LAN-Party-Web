@@ -3,6 +3,7 @@ import "./AppLayout.scss";
 import {CSSProperties, useEffect, useState} from "react";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
+import {toggleWebTheme} from "../../utils.ts";
 
 export const AppLayout = ({ children, className }: { children: React.ReactNode, className?: string }) => {
     const location = useLocation();
@@ -96,7 +97,7 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                         <Avatar size={"40px"} src={loggedUser?.avatar} backgroundColor={"var(--accent-color)"}  letter={loggedUser?.displayName?.split(" ")[0][0] + "" + loggedUser?.displayName?.split(" ")[1]?.[0]} className={"avatar"} />
 
                         <div className={"popover"}>
-                            <p>Změnit theme</p>
+                            <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
                             <p>Odhlásit se</p>
                         </div>
                     </div>
