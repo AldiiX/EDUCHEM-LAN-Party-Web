@@ -2,6 +2,7 @@ import {Link, useLocation} from "react-router-dom";
 import "./AppLayout.scss";
 import {CSSProperties, useEffect, useState} from "react";
 import {useStore} from "../../store.tsx";
+import {Avatar} from "../../components/Avatar.tsx";
 
 export const AppLayout = ({ children, className }: { children: React.ReactNode, className?: string }) => {
     const location = useLocation();
@@ -91,7 +92,8 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                             <p>{ loggedUser?.accountType === "STUDENT" ? "Přihlášen jako" : normalizeText(loggedUser?.accountType) }</p>
                             <h2>{ loggedUser?.displayName }</h2>
                         </div>
-                        <div className="avatar" style={{ backgroundImage: `url(${loggedUser?.avatar})`, '--letter': `'${loggedUser?.displayName[0]}'`} as CSSProperties }></div>
+
+                        <Avatar size={"40px"} src={loggedUser?.avatar} backgroundColor={"var(--accent-color)"}  letter={loggedUser?.displayName?.split(" ")[0][0] + "" + loggedUser?.displayName?.split(" ")[1]?.[0]} className={"avatar"} />
 
                         <div className={"popover"}>
                             <p>Změnit theme</p>

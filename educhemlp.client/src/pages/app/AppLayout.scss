@@ -120,6 +120,7 @@
         padding: 48px;
         display: flex;
         flex-direction: column;
+        overflow-y: auto;
 
         >.loggeduser {
             position: absolute;

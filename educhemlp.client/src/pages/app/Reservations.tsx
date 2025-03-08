@@ -5,9 +5,12 @@ import { SpiralUpper } from "../../components/reservation_areas/SpiralUpper.tsx"
 import { SpiralLower } from "../../components/reservation_areas/SpiralLower.tsx";
 import { useStore } from "../../store.tsx";
 import {PieChart} from "../../components/PieChart.tsx";
+import {Avatar} from "../../components/Avatar.tsx";
+
 
 export const Reservations = () => {
     const areas = [
+        // { id: "havran-kulturni-dum", name: "Kulturní dům Havraň" },
         { id: "spiral-upper", name: "Spirála - Horní patro" },
         { id: "spiral-lower", name: "Spirála - Dolní patro" },
     ];
@@ -21,6 +24,7 @@ export const Reservations = () => {
     const [computers, setComputers] = useState<any[]>([]);
     const [reservations, setReservations] = useState<any[]>([]);
     const [rooms, setRooms] = useState<any[]>([]);
+    const [roomsCapacity, setRoomsCapacity] = useState<number>(0);
     const [occupiedPercent, setOccupiedPercent] = useState(0);
     const [clientsCount, setClientsCount] = useState<string>("?");
     const [socketStatus, setSocketStatus] = useState<string | null>(null);
@@ -103,6 +107,14 @@ export const Reservations = () => {
                 setComputers(object.computers as any[])
                 setReservations(object.reservations as any[]);
                 setRooms(object.rooms as any[]);
+
+                let roomsCapac = 0;
+                for(let room of object.rooms) {
+                    room = room as any;
+                    roomsCapac += room.limitOfSeats;
+                }
+
+                setRoomsCapacity(roomsCapac);
                 setSocketStatus("connected");
             } break;
 
@@ -114,11 +126,27 @@ export const Reservations = () => {
     }
 
     const setCirclesStyle = () => {
+        // reset room.reservedSpaces
+        for(let room of rooms) {
+            room = room as any;
+            room.reservedSpaces = 0;
+        }
+
         // compy
         for(let computer of computers) {
             computer = computer as any;
             const id = String(computer.id).toUpperCase();
             const element = document.getElementById(id);
+            if (!element) continue;
+
+            element.classList.add("available");
+        }
+
+        // roomky
+        for(let room of rooms) {
+            room = room as any;
+            const id = String(room.id).toUpperCase();
+            const element = document.getElementById("ROOM_" + id);
             if (!element) continue;
 
             element.classList.add("available");
@@ -140,6 +168,32 @@ export const Reservations = () => {
                 } else {
                     element.classList.add("unavailable");
                 }
+            }
+
+            // v pripade ze si uzivatel rezervoval mistnost
+            else if (reservation.room !== null) {
+                const room = rooms.find((room) => room.id === reservation.room?.id);
+                if (!room) continue;
+                room.reservedSpaces ??= 0;
+                room.reservedSpaces++;
+
+                const id = String(room.id).toUpperCase();
+                const element = document.getElementById("ROOM_" + id);
+                if (!element) continue;
+
+                element.classList.remove("available");
+                if (loggedUser?.id && reservation.user?.id === loggedUser?.id) {
+                    element.classList.add("taken-by-you");
+                }
+
+                else if(room.reservedSpaces < room.limitOfSeats) {
+                    element.classList.add("available");
+                }
+
+                else {
+                    element.classList.add("unavailable");
+                }
+
             }
 
             // v pripade ze si uzivatel rezervoval mistnost
@@ -185,7 +239,7 @@ export const Reservations = () => {
 
             setOccupiedPercent(Math.round(reservations.length / (computers.length + roomsAllSeats) * 100));
         }
-    }, [computers, reservations, selectedArea]);
+    }, [computers, rooms, reservations, selectedArea]);
 
 
 
@@ -205,95 +259,131 @@ export const Reservations = () => {
                 ))}
             </div>
 
-            <div className="map" ref={mapRef}>
-                <div className="zoomsettings">
-                    <div className="zoom-in" onClick={() => forceZoom(0.1)}></div>
-                    <div className="zoom-out" onClick={() => forceZoom(-0.1)}></div>
-                </div>
+            <div className={"map-wrapper"}>
+                <div className="map" ref={mapRef}>
+                    <div className="zoomsettings">
+                        <div className="zoom-in" onClick={() => forceZoom(0.1)}></div>
+                        <div className="zoom-out" onClick={() => forceZoom(-0.1)}></div>
+                    </div>
 
-                <div className="legend">
-                    <h3>Legenda mapy:</h3>
-                    <div className="legend-item">
-                        <div style={{ backgroundColor: "var(--room-available)" }}></div>
-                        <p>Volná místnost pro vlastní setup</p>
+                    <div className="legend">
+                        <h3>Legenda mapy:</h3>
+                        <div className="legend-item">
+                            <div style={{ backgroundColor: "var(--room-available)" }}></div>
+                            <p>Volná místnost pro vlastní setup</p>
+                        </div>
+                        <div className="legend-item">
+                            <div style={{ backgroundColor: "var(--pc-available)" }}></div>
+                            <p>Volný počítač</p>
+                        </div>
+                        <div className="legend-item">
+                            <div style={{ backgroundColor: "var(--pc-unavailable)" }}></div>
+                            <p>Obsazeno / Nedostupné</p>
+                        </div>
+                        <div className="legend-item">
+                            <div style={{ backgroundColor: "var(--pc-taken-by-you)" }}></div>
+                            <p>Tvá rezervace</p>
+                        </div>
                     </div>
-                    <div className="legend-item">
-                        <div style={{ backgroundColor: "var(--pc-available)" }}></div>
-                        <p>Volný počítač</p>
-                    </div>
-                    <div className="legend-item">
-                        <div style={{ backgroundColor: "var(--pc-unavailable)" }}></div>
-                        <p>Obsazeno / Nedostupné</p>
-                    </div>
-                    <div className="legend-item">
-                        <div style={{ backgroundColor: "var(--pc-taken-by-you)" }}></div>
-                        <p>Tvoje místo</p>
-                    </div>
-                </div>
 
-                <div className="chart">
-                    <PieChart value={occupiedPercent} width={100} height={100} />
-                    <div className="texts">
-                        <h1>{ occupiedPercent }%</h1>
-                        <p>Naplněné kapacity</p>
+                    <div className="chart">
+                        <PieChart value={occupiedPercent} width={100} height={100} />
+                        <div className="texts">
+                            <h1>{ occupiedPercent }%</h1>
+                            <p>Naplněné kapacity</p>
+                        </div>
                     </div>
-                </div>
 
-                <div className={"rightbottom"}>
-                    <div className={
-                        socketStatus === "connected"
-                            ? "serverstatus connected"
-                            : socketStatus === "disconnected"
-                            ? "serverstatus disconnected"
-                            : "serverstatus"
-                    }>
-                        <div className="icon"></div>
-                        <p className="text">
-                            { socketStatus === null
-                                ? "Připojování k serveru..."
-                                : socketStatus === "connected"
-                                ? "Připojeno k serveru"
+                    <div className={"rightbottom"}>
+                        <div className={
+                            socketStatus === "connected"
+                                ? "serverstatus connected"
                                 : socketStatus === "disconnected"
-                                ? "Chyba připojení k serveru, restartuj stránku"
-                                : null
-                            }
-                        </p>
+                                    ? "serverstatus disconnected"
+                                    : "serverstatus"
+                        }>
+                            <div className="icon"></div>
+                            <p className="text">
+                                { socketStatus === null
+                                    ? "Připojování k serveru..."
+                                    : socketStatus === "connected"
+                                        ? "Připojeno k serveru"
+                                        : socketStatus === "disconnected"
+                                            ? "Chyba připojení k serveru, restartuj stránku"
+                                            : null
+                                }
+                            </p>
+                        </div>
+
+                        <div className="viewers" title="Připojení uživatelé">
+                            <p>{ clientsCount }</p>
+                            <div className={"logo"}></div>
+                        </div>
                     </div>
 
-                    <div className="viewers" title="Připojení uživatelé">
-                        <p>{ clientsCount }</p>
-                        <div className={"logo"}></div>
-                    </div>
+
+
+                    {/*mapka*/}
+                    <svg
+                        id="spiral-upper"
+                        width="1960"
+                        height="1216"
+                        viewBox="0 0 1960 1216"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        onWheel={handleZoom}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
+                        onMouseLeave={handleMouseUp}
+                        style={{ cursor: isDragging ? "grabbing" : "grab" }}
+                    >
+                        <g transform={`translate(${translate.x}, ${translate.y}) scale(${scale})`}>
+                            <g className="scaleTransition">
+                                {selectedArea === "spiral-upper" ? (
+                                    <SpiralUpper />
+                                ) : selectedArea === "spiral-lower" ? (
+                                    <SpiralLower />
+                                ) : null}
+                            </g>
+                        </g>
+                    </svg>
                 </div>
 
+                <div className={"stats"}>
+                    <div className={"block"}>
+                        <h1>Statistiky</h1>
+                        <p>Počet rezervovaných PC: <span>{reservations.filter(r => r.computer !== null).length}/{computers.length}</span></p>
+                        <p>Počet rezervovaných míst: <span>{reservations.filter(r => r.room !== null).length}/{roomsCapacity}</span></p>
+                        <p>Celkem rezervací: <span>{reservations.length}/{computers.length + roomsCapacity}</span></p>
+                    </div>
 
+                    <div className={"block reservations"}>
+                        <h1>Seznam rezervací</h1>
 
-                {/*mapka*/}
-                <svg
-                    id="spiral-upper"
-                    width="1960"
-                    height="1216"
-                    viewBox="0 0 1960 1216"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    onWheel={handleZoom}
-                    onMouseDown={handleMouseDown}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
-                    style={{ cursor: isDragging ? "grabbing" : "grab" }}
-                >
-                    <g transform={`translate(${translate.x}, ${translate.y}) scale(${scale})`}>
-                        <g className="scaleTransition">
-                            {selectedArea === "spiral-upper" ? (
-                                <SpiralUpper />
-                            ) : selectedArea === "spiral-lower" ? (
-                                <SpiralLower />
-                            ) : null}
-                        </g>
-                    </g>
-                </svg>
+                        <div className={"reservations-parent"}>
+                            { reservations.sort((a,b) => {
+                                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                            }).map((reservation, index) => {
+                                reservation = reservation as any;
+                                return (
+                                    <div key={index} className={"reservation"}>
+                                        <Avatar size={"40px"} backgroundColor={"var(--accent-color)"} src={reservation.user?.avatar} letter={reservation.user?.displayName?.split(" ")[0][0] + "" + reservation.user?.displayName?.split(" ")[1]?.[0]} />
+
+                                        <div>
+                                            <p className={"name"}>{reservation.user?.displayName}</p>
+                                            <p className={"id"}>{reservation.computer?.id ?? reservation.room?.label}</p>
+                                            <p className={"date"}>{new Date(reservation.createdAt).toLocaleString("cs-CZ" )}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
             </div>
+
+
         </AppLayout>
     );
 };

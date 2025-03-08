@@ -18,6 +18,7 @@ html:is(.darkmode) {
     --element-bg-colored: #26241e;
     --background-bg: #101010;
     --text-color: #f3f3f3;
+    --text-color-darker: #afafaf;
     --text-color-secondary: #e0e0e0;
     --text-color-3: #2a2a2a;
     --error-color: #ff0000;
@@ -41,6 +42,7 @@ html:is(.lightmode) {
     --element-bg-colored: #ffe8cc;
     --background-bg: #f8f6f1;
     --text-color: #0c0c0c;
+    --text-color-darker: #afafaf;
     --text-color-secondary: #606060;
     --text-color-3: #e3e3e3;
     --error-color: #ff0000;

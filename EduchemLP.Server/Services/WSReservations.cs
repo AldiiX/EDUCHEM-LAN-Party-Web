@@ -186,13 +186,15 @@ public static class WSReservations {
                     COALESCE(room.id, NULL) AS room_id, 
                     COALESCE(room.limit_of_seats, NULL) AS room_limit, 
                     COALESCE(room.available, NULL) AS room_available,
+                    COALESCE(room.label, NULL) AS room_label,
                     COALESCE(comp.id, NULL) AS computer_id,
                     COALESCE(comp.is_teachers_pc, NULL) AS computer_is_teachers_pc,
                     COALESCE(comp.available, NULL) AS computer_available
                 FROM reservations res
                 LEFT JOIN users usr ON res.user_id = usr.id
                 LEFT JOIN rooms room ON res.room_id = room.id
-                LEFT JOIN computers comp ON res.computer_id = comp.id;
+                LEFT JOIN computers comp ON res.computer_id = comp.id 
+                WHERE comp.available = 1 OR room.available = 1;
                 """, conn
         );
 
@@ -208,8 +210,9 @@ public static class WSReservations {
                     ["class"] = reader.GetStringOrNull("user_class")
                 } : null : "unknown",
 
-                ["room"] = reader.GetValueOrNull<int>("room_id") != null ? new JsonObject() {
-                    ["id"] = reader.GetValueOrNull<int>("room_id"),
+                ["room"] = reader.GetStringOrNull("room_id") != null ? new JsonObject() {
+                    ["id"] = reader.GetString("room_id"),
+                    ["label"] = reader.GetStringOrNull("room_label") ?? reader.GetString("room_id"),
                     ["limit"] = reader.GetValueOrNull<int>("room_limit"),
                     ["available"] = reader.GetValueOrNull<bool>("room_available")
                 } : null,
@@ -235,8 +238,8 @@ public static class WSReservations {
             rooms = rooms.Result,
         };
 
-        var message = JsonSerializer.SerializeToUtf8Bytes(payload, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-        await client.WebSocket.SendAsync(new ArraySegment<byte>(message), WebSocketMessageType.Text, true, CancellationToken.None);
+        var message = JsonSerializer.Serialize(payload, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        BroadcastMessageAsync(client, message).Wait();
 
         return true;
     }
