@@ -13,6 +13,7 @@ html, body {
 
 html:is(.darkmode) {
     --accent-color: #ffb303;
+    --accent-color-darker: #d39706;
     --element-bg: #171717;
     --element-bg-colored: #26241e;
     --background-bg: #101010;
@@ -35,6 +36,7 @@ html:is(.darkmode) {
 
 html:is(.lightmode) {
     --accent-color: #ff8300;
+    --accent-color-darker: #d96f01;
     --element-bg: white;
     --element-bg-colored: #ffe8cc;
     --background-bg: #f8f6f1;

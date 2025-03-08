@@ -1,0 +1,97 @@
+.parent{
+    position: relative;
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--background-bg);
+    background-image: url('../../../public/images/backgrounds/island3.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    >.left-side {
+        border-radius: 0 48px 0 0;
+        display: flex;
+        flex-direction: column;
+        width: 40%;
+        max-width: 500px;
+        height: 100%;
+        background-color: var(--element-bg);
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 6px rgba(0,0,0,0.025);
+        >.title {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+
+            >.logo {
+                width: 80px;
+                aspect-ratio: 1/1;
+                mask-image: url("../../../public/images/logo/logo.svg");
+                background-color: var(--accent-color);
+            }
+
+            >h1 {
+                color: var(--accent-color);
+                line-height: 32px;
+            }
+        }
+        >.login-container{
+            display: grid;
+            position: relative; 
+            width: fit-content;
+            height: fit-content;
+            >.login-form{
+                position: relative;
+                display: grid;
+                grid-template-columns: 1fr;
+                grid-gap: 12px;
+                padding: 16px;
+                >.email, >.password{
+                    width: 100%;
+                    justify-self: center;
+                    .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+                        border-color: var(--accent-color) !important;
+                    }
+                    fieldset{
+                        border-radius: 5px;
+                        border-color: var(--text-color-3) !important;
+                    }
+                    input{
+                        color: var(--text-color);
+                    }
+                    label{
+                        color:  var(--text-color);
+                        font-family: 'gabarito';
+                        // font-weight: bold;
+                    }
+                    >.password{
+                        
+                    }
+                }
+                >.submit-button{
+                    width: 100%;
+                    height: fit-content;
+                    padding: 8px;
+                    border-radius: 5px;
+                    border: none;
+                    background-color: var(--accent-color) !important;
+                    color: var(--text-color-3) !important;
+                    font-family: 'gabarito';
+                    font-weight: bold;
+                    justify-self: center;
+                    cursor: pointer;
+                    &:hover{
+                        background-color: var(--accent-color-darker) !important;
+                    }
+                }
+            }
+        }
+    }
+    >.right-side {
+        
+        >.PC-count{
+            
+        }
+    }
+}
