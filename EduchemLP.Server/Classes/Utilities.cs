@@ -85,8 +85,12 @@ public static class Utilities {
     }
 
     public static string? GetStringOrNull(this MySqlDataReader reader, string key) {
-        int ordinal = reader.GetOrdinal(key);
-        return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+        try {
+            int ordinal = reader.GetOrdinal(key);
+            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+        } catch (Exception) {
+            return null;
+        }
     }
 
     public static User? GetLoggedAccountFromContextOrNull() {
