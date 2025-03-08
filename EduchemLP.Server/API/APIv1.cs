@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
+using EduchemLP.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EduchemLP.Server.API;
@@ -33,13 +34,22 @@ public class APIv1 : Controller {
 
     [HttpPost("loggeduser")]
     public IActionResult LoginUser([FromBody] Dictionary<string, object?> data) {
-        string? key = data.TryGetValue("key", out var _key) ? _key?.ToString() : null;
-        if (key == null) return new BadRequestObjectResult(new { success = false, message = "Chybějící 'key' parametr" });
+        string? email = data.TryGetValue("email", out var _email) ? _email?.ToString() : null;
+        string? password = data.TryGetValue("password", out var _password) ? _password?.ToString() : null;
+        if(email == null || password == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'email' nebo 'password'" });
 
-        var acc = Auth.AuthUser(key);
+        var acc = Auth.AuthUser(email, Utilities.EncryptPassword(password));
 
 
-        return acc == null ? new UnauthorizedObjectResult(new { success = false, message = "Neplatný klíč" }) : new NoContentResult();
+        return acc == null ? new UnauthorizedObjectResult(new { success = false, message = "Neplatný email nebo heslo" }) : new NoContentResult();
+    }
+
+    [HttpDelete("loggeduser")]
+    public IActionResult Logout() {
+        HttpContextService.Current.Items["loggeduser"] = null;
+        HttpContextService.Current.Session.Remove("loggeduser");
+        Response.Cookies.Delete("educhemlpr_session");
+        return new NoContentResult();
     }
 
 

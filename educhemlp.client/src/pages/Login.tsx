@@ -8,7 +8,8 @@ import Button from "@mui/material/Button";
 
 export const Login = () => {
     const { loggedUser, setLoggedUser } = useStore();
-    const [key, setKey] = useState("");
+    const [password, setPassword] = useState("");
+    const [email, setEmail] = useState("");
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
@@ -17,15 +18,15 @@ export const Login = () => {
 
         const res = await fetch("/api/v1/loggeduser", {
             method: "POST",
-            body: JSON.stringify({ key }),
+            body: JSON.stringify({ email, password }),
             headers: {
                 "Content-Type": "application/json",
             },
         });
 
         if (!res.ok) {
-            setKey("");
-            setError("Účet s tímto klíčem neexistuje.");
+            setPassword("");
+            setError("Účet s tímto uživatelským jménem a heslem neexistuje.");
             return;
         }
 
@@ -54,8 +55,8 @@ export const Login = () => {
                         autoComplete="off"
                         onSubmit={login}
                     >
-                        <TextField className={"email"} id="email" label="E-mail" variant="outlined" type="email" name={"email"}/>
-                        <TextField className={"password"} id="password" label="Heslo" variant="outlined" type="password" name={"password"}/>
+                        <TextField className={"email"} id="email" label="E-mail" variant="outlined" type="email" name={"email"} onKeyDown={(event) => { setEmail((event.target as HTMLInputElement).value) }} />
+                        <TextField className={"password"} id="password" label="Heslo" variant="outlined" type="password" name={"password"} onKeyDown={(event) => { setPassword((event.target as HTMLInputElement).value) }} />
                         <button className={"submit-button"} type="submit">Login</button>
                         <p>{error}</p>
                     </Box>

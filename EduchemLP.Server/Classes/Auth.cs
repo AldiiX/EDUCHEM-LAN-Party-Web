@@ -12,7 +12,7 @@ public static class Auth {
         return HttpContextService.Current.Session.Get("loggeduser") != null;
     }
 
-    public static Account? AuthUser(in string key) => Account.Auth(key);
+    public static Account? AuthUser(in string email, in string hashedPassword) => Account.Auth(email, hashedPassword);
 
     public static async Task<Account?> ReAuthUserAsync() {
         if (!UserIsLoggedIn()) return null;
@@ -24,7 +24,7 @@ public static class Auth {
             return null;
         }
 
-        var acc = await Account.AuthAsync(loggedUser.AuthKey);
+        var acc = await Account.AuthAsync(loggedUser.Email, loggedUser.Password);
         if (acc == null) {
             //Console.WriteLine("Acc is null");
             HttpContextService.Current.Session.Remove("loggeduser");

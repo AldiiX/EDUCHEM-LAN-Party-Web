@@ -8,7 +8,7 @@ import {toggleWebTheme} from "../../utils.ts";
 export const AppLayout = ({ children, className }: { children: React.ReactNode, className?: string }) => {
     const location = useLocation();
     const [currentPage, setCurrentPage] = useState<string>("");
-    const { loggedUser } = useStore();
+    const { loggedUser, setLoggedUser } = useStore();
     const { userAuthed, setUserAuthed } = useStore();
 
     useEffect(() => {
@@ -98,7 +98,16 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
 
                         <div className={"popover"}>
                             <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
-                            <p>Odhlásit se</p>
+                            <p onClick={() => {
+                                fetch("/api/v1/loggeduser", {
+                                    method: "DELETE",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                }).then(() => {
+                                    setLoggedUser(null);
+                                });
+                            }}>Odhlásit se</p>
                         </div>
                     </div>
                     : null

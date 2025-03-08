@@ -13,12 +13,12 @@ public class User {
 
 
     [JsonConstructor]
-    private User(int id, string displayName, string? email, string? @class, string authKey, string accountType, DateTime lastUpdated/*, UserGender? gender*/) {
+    private User(int id, string displayName, string email, string password, string? @class, string accountType, DateTime lastUpdated/*, UserGender? gender*/) {
         ID = id;
         DisplayName = displayName;
         Class = @class;
+        Password = password;
         Email = email;
-        AuthKey = authKey;
         AccountType = accountType;
         LastUpdated = lastUpdated;
         //Gender = gender;
@@ -27,9 +27,9 @@ public class User {
 
     public int ID { get; private set; }
     public string DisplayName { get; private set; }
-    public string? Email { get; private set; }
+    public string Email { get; private set; }
+    public string Password { get; private set; }
     public string? Class { get; private set; }
-    public string AuthKey { get; private set; }
     public string AccountType { get; private set; }
     public DateTime LastUpdated { get; private set; }
     public UserGender? Gender { get; private set; }
@@ -51,9 +51,9 @@ public class User {
         return new User(
             reader.GetInt32("id"),
             reader.GetString("display_name"),
-            reader.GetObjectOrNull("email") as string,
+            reader.GetString("email"),
+            reader.GetString("password"),
             reader.GetObjectOrNull("class") as string,
-            reader.GetString("auth_key"),
             reader.GetString("account_type"),
             reader.GetDateTime("last_updated")
             //Enum.TryParse<UserGender>(reader.GetObjectOrNull("gender") as string, out var _gender) ? _gender : null
@@ -62,13 +62,14 @@ public class User {
 
     public static User? GetByAuthKey(string authKey) => GetByAuthKeyAsync(authKey).Result;
 
-    public static async Task<User?> AuthAsync(string key) {
+    public static async Task<User?> AuthAsync(string email, string hashedPassword) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
 
-        const string query = "SELECT * FROM `users` WHERE `auth_key` = @key";
+        const string query = "SELECT * FROM `users` WHERE `email` = @email AND `password` = @password";
         await using var cmd = new MySqlCommand(query, conn);
-        cmd.Parameters.AddWithValue("@key", key);
+        cmd.Parameters.AddWithValue("@email", email);
+        cmd.Parameters.AddWithValue("@password", hashedPassword);
 
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if (reader == null || !reader.Read()) return null;
@@ -76,15 +77,15 @@ public class User {
         var user = new User(
             reader.GetInt32("id"),
             reader.GetString("display_name"),
-            reader.GetObjectOrNull("email") as string,
+            reader.GetString("email"),
+            reader.GetString("password"),
             reader.GetObjectOrNull("class") as string,
-            reader.GetString("auth_key"),
             reader.GetString("account_type"),
             reader.GetDateTime("last_updated")
         );
 
         // aktualizace posledního přihlášení
-        _ = UpdateLastLoggedInAsync(user.AuthKey);
+        _ = UpdateLastLoggedInAsync(user.ID);
 
         // dalsi nastaveni
         var httpContext = HttpContextService.Current;
@@ -94,7 +95,7 @@ public class User {
         return user;
     }
 
-    public static User? Auth(in string key) => AuthAsync(key).Result;
+    public static User? Auth(in string email, in string hashedPassword) => AuthAsync(email, hashedPassword).Result;
 
     public static async Task<List<User?>> GetAllAsync() {
         await using var conn = await Database.GetConnectionAsync();
@@ -123,14 +124,14 @@ public class User {
 
     public static List<User?> GetAll() => GetAllAsync().Result;
 
-    private static async Task UpdateLastLoggedInAsync(string authKey) {
+    private static async Task UpdateLastLoggedInAsync(int id) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return;
 
-        const string updateQuery = "UPDATE users SET last_logged_in = @now WHERE auth_key = @authKey";
+        const string updateQuery = "UPDATE users SET last_logged_in = @now WHERE id = @id";
         await using var cmd = new MySqlCommand(updateQuery, conn);
         cmd.Parameters.AddWithValue("@now", DateTime.Now);
-        cmd.Parameters.AddWithValue("@authKey", authKey);
+        cmd.Parameters.AddWithValue("@id", id);
         await cmd.ExecuteNonQueryAsync();
     }
 

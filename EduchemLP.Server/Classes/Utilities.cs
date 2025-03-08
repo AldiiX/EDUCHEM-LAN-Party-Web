@@ -139,6 +139,32 @@ public static class Utilities {
         return sha256.ComputeHash(Encoding.UTF8.GetBytes(key));
     }
 
+    private static string EncryptWithSHA512(in string password) {
+        using SHA512 sha512 = SHA512.Create();
+        byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+        byte[] sha512HashBytes = sha512.ComputeHash(passwordBytes);
+        StringBuilder sb = new StringBuilder();
+        foreach (byte b in sha512HashBytes) {
+            sb.Append(b.ToString("x2"));
+        }
+        return sb.ToString();
+    }
+
+    private static string EncryptWithMD5(in string password) {
+        using MD5 md5 = MD5.Create();
+        byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+        byte[] md5HashBytes = md5.ComputeHash(passwordBytes);
+        StringBuilder sb = new StringBuilder();
+        foreach (byte b in md5HashBytes) {
+            sb.Append(b.ToString("x2"));
+        }
+
+
+        return sb.ToString();
+    }
+
+    public static string EncryptPassword(in string password) => EncryptWithSHA512(password) + EncryptWithMD5(password[0] + "" + password[1] + "" + password[^1]);
+
     public static async Task<bool> AreReservationsEnabledAsync() {
         bool r = bool.TryParse(await Database.GetDataAsync("enableReservations") as string, out bool result) && result;
 
