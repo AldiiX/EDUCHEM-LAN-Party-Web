@@ -48,6 +48,7 @@ const Theme = () => {
 
         document.documentElement.classList.remove('theme-dark', 'theme-light');
 
+
         switch (cookieTheme) {
             case "dark":
                 document.documentElement.classList.add('theme-dark');
@@ -55,6 +56,12 @@ const Theme = () => {
             default:
                 document.documentElement.classList.add('theme-light');
                 break;
+        }
+
+        const body = document.querySelector('body');
+        if (body) {
+            body.style.backgroundColor = "var(--background-bg)";
+            body.style.color = "var(--text-color)";
         }
     }, []);
 

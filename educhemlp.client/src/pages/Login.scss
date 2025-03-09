@@ -4,7 +4,7 @@
     width: 100vw;
     height: 100vh;
     background-color: var(--background-bg);
-    background-image: url('../../../public/images/backgrounds/island3.jpg');
+    background-image: var(--bgimage);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
@@ -52,6 +52,7 @@
                 grid-template-columns: 1fr;
                 grid-gap: 12px;
                 padding: 16px;
+                width: 300px;
 
                 >.email, >.password{
                     width: 100%;
@@ -88,7 +89,7 @@
                     border-radius: 5px;
                     border: none;
                     background-color: var(--accent-color) !important;
-                    color: white;
+                    color: var(--accent-color-text);
                     font-family: 'gabarito';
                     font-weight: bold;
                     justify-self: center;

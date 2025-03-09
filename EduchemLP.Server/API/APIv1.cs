@@ -41,7 +41,7 @@ public class APIv1 : Controller {
         var acc = Auth.AuthUser(email, Utilities.EncryptPassword(password));
 
 
-        return acc == null ? new UnauthorizedObjectResult(new { success = false, message = "Neplatný email nebo heslo" }) : new NoContentResult();
+        return acc == null ? new UnauthorizedObjectResult(new { success = false, message = "Neplatný email nebo heslo" }) : new JsonResult(new { success = true, account = acc});
     }
 
     [HttpDelete("loggeduser")]
@@ -51,6 +51,13 @@ public class APIv1 : Controller {
         Response.Cookies.Delete("educhemlpr_session");
         return new NoContentResult();
     }
+
+    #if DEBUG
+    [HttpGet("gpw")]
+    public IActionResult GeneratePasswordEncryption([FromQuery] string password) {
+        return new JsonResult(new { password, encrypted = Utilities.EncryptPassword(password) });
+    }
+    #endif
 
 
 //     [HttpGet("computers")]

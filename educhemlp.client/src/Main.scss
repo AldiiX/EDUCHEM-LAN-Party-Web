@@ -13,6 +13,7 @@ html, body {
 
 html:is(.theme-dark) {
     --accent-color: #ffb303;
+    --accent-color-text: black;
     --accent-color-darker: #d39706;
     --element-bg: #171717;
     --element-bg-colored: #26241e;
@@ -24,6 +25,7 @@ html:is(.theme-dark) {
     --error-color: #ff0000;
     --error-color-2: #6c0000;
     --error-background: #2c1717;
+    --bgimage: url('../public/images/backgrounds/island_night.jpg');
 
     // pro mapu
     --pc-available: var(--accent-color);
@@ -37,6 +39,7 @@ html:is(.theme-dark) {
 
 html:is(.theme-light) {
     --accent-color: #ff8300;
+    --accent-color-text: white;
     --accent-color-darker: #d96f01;
     --element-bg: white;
     --element-bg-colored: #ffe8cc;
@@ -48,6 +51,7 @@ html:is(.theme-light) {
     --error-color: #ff0000;
     --error-color-2: #6c0000;
     --error-background: #ffb7b7;
+    --bgimage: url('../public/images/backgrounds/island3.jpg');
 
     // pro mapu
     --pc-available: var(--accent-color);

@@ -16,6 +16,11 @@ export const Login = () => {
     const login = async (event: React.FormEvent) => {
         event.preventDefault();
 
+        if(email === "" || password === "") {
+            setError("Vyplňte všechna pole.");
+            return;
+        }
+
         const res = await fetch("/api/v1/loggeduser", {
             method: "POST",
             body: JSON.stringify({ email, password }),
@@ -30,8 +35,9 @@ export const Login = () => {
             return;
         }
 
-        const user = await res.json();
-        setLoggedUser(user);
+        const data = await res.json();
+        setLoggedUser(data.account);
+        console.log("asdsaa")
         navigate("/app");
     };
 
@@ -51,12 +57,11 @@ export const Login = () => {
                         className={"login-form"}
                         component="form"
                         sx={{'& > :not(style)': {m: 1, width: '25ch'}}}
-                        noValidate
                         autoComplete="off"
                         onSubmit={login}
                     >
-                        <TextField className={"email"} id="email" label="E-mail" variant="outlined" type="email" name={"email"} onKeyDown={(event) => { setEmail((event.target as HTMLInputElement).value) }} />
-                        <TextField className={"password"} id="password" label="Heslo" variant="outlined" type="password" name={"password"} onKeyDown={(event) => { setPassword((event.target as HTMLInputElement).value) }} />
+                        <TextField className={"email"} id="email" label="E-mail" variant="outlined" type="email" name={"email"} onChange={(event) => { setEmail((event.target as HTMLInputElement).value) }} />
+                        <TextField className={"password"} id="password" label="Heslo" variant="outlined" type="password" name={"password"} onChange={(event) => { setPassword((event.target as HTMLInputElement).value) }} />
                         <button className={"submit-button"} type="submit">Login</button>
                         <p>{error}</p>
                     </Box>
