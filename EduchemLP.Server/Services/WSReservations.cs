@@ -5,32 +5,14 @@ using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
 using MySql.Data.MySqlClient;
+using Client = EduchemLP.Server.Classes.Objects.WSClient;
 
 namespace EduchemLP.Server.Services;
 
 
-
-
-
 public static class WSReservations {
 
-    // classy
-    public class Client {
-        public int ID { get; set; }
-        public string DisplayName { get; set; }
-        public string? Class { get; set; }
-        public WebSocket WebSocket { get; set; }
-        public string AccountType { get; set; }
-
-        public Client(int id, string displayName, WebSocket webSocket, string accountType, string? @class) {
-            ID = id;
-            DisplayName = displayName;
-            WebSocket = webSocket;
-            Class = @class;
-            AccountType = accountType;
-        }
-    }
-
+    
     // promenne
     private static readonly List<Client> ConnectedUsers = [];
     private static Timer? statusTimer;

@@ -14,6 +14,14 @@ public class WebSocketMiddleware(RequestDelegate next) {
                 context.Response.StatusCode = 400;
             }
         }
+        else if (context.Request.Path == "/ws/chat") {
+            if (context.WebSockets.IsWebSocketRequest) {
+                WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                await WSChat.HandleQueueAsync(webSocket);
+            } else {
+                context.Response.StatusCode = 400;
+            }
+        }
 
         else await next(context);
     }
