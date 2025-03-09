@@ -96,7 +96,7 @@ public static class WSChat {
                           SELECT c.*, u.display_name as author_name, u.avatar as author_avatar
                           FROM chat c
                           LEFT JOIN users u ON c.user_id = u.id
-                          ORDER BY `date` DESC LIMIT 10
+                          ORDER BY `date` ASC LIMIT 20
                           """;
         
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;

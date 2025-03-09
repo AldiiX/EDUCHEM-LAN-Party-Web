@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useStore } from "../../store.tsx";
 import {useEffect, useState} from "react";
 import "./Chat.scss";
+import {Avatar} from "../../components/Avatar.tsx";
 
 export const Chat = () => {
     const navigate = useNavigate();
     const { loggedUser } = useStore();
     const { userAuthed, setUserAuthed } = useStore();
-    const  [messages, setMessages] = useState<any[]>([]);
+    const [messages, setMessages] = useState<any[]>([]);
     
 
     // Effect for permission check
@@ -56,13 +57,33 @@ export const Chat = () => {
         <AppLayout>
             <h1>Chat</h1>
             <div className={"chat-parent"}>
-                {
-                    messages.map((message, index) => (
-                        <div key={index} className={`chat-message ${message.author.id === loggedUser.id ? "own-message" : "other-message"}`}>
-                            {message.message} 
-                        </div>
-                    ))
-                }
+                <div className={"messages"}>
+                    {
+                        messages.map((message, index) => (
+                            <div key={index} className={`chat-message ${message.author.id === loggedUser.id ? "own-message" : "other-message"}`}>
+                                {
+                                    message.author.id !== loggedUser.id ? (
+                                            <>
+                                                <Avatar size={"32px"} backgroundColor={"var(--accent-color)"} src={message.author.avatar} letter={message.author.name.split(" ")[0][0] + "" + message.author.name.split(" ")[1]?.[0]} />
+                                                <div className="texts">
+                                                    <h1>{message.author.name}</h1>
+                                                    <article>{ message.message }</article>
+                                                </div>
+                                            </>
+                                        ) :
+                                        <p>
+                                            {message.message}
+                                        </p>
+                                }
+
+
+                            </div>
+                        ))
+                    }
+                </div>
+                <div className={"inputdiv"}>
+                    <input type="text" placeholder={"Napiš zprávu..."} />
+                </div>
             </div>
         </AppLayout>
     );

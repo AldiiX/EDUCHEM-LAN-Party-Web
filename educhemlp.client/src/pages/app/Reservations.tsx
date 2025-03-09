@@ -29,7 +29,9 @@ export const Reservations = () => {
     const [occupiedPercent, setOccupiedPercent] = useState(0);
     const [clientsCount, setClientsCount] = useState<string>("?");
     const [socketStatus, setSocketStatus] = useState<string | null>(null);
-    const { loggedUser } = useStore();
+    const [statsCollapsed, setStatsCollapsed] = useState<boolean>(false);
+    const { loggedUser, setLoggedUser } = useStore();
+    const [ selectedReservation, setSelectedReservation ] = useState<any | null>(null);
     const mapRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -53,7 +55,7 @@ export const Reservations = () => {
         //e.preventDefault();
         const scaleFactor = 0.07;
         const newScale =
-            e.deltaY < 0 ? Math.min(1.2, scale + scaleFactor) : Math.max(0.6, scale - scaleFactor);
+            e.deltaY < 0 ? Math.min(1.2, scale + scaleFactor) : Math.max(0.4, scale - scaleFactor);
 
         const rect = e.currentTarget.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
@@ -200,6 +202,28 @@ export const Reservations = () => {
             // v pripade ze si uzivatel rezervoval mistnost
         }
     }
+
+    const selectReservation = (element: HTMLElement) => {
+        console.log(element);
+        const id = element.id;
+        let type: string | null = null;
+
+        const r = computers.find((r: any) => {
+            type = "computer";
+            return r.id === id;
+        }) ?? rooms.find((r: any) => {
+            type = "room";
+            return r.id === id.replace("ROOM_", "");
+        });
+
+        r.reservations = reservations.filter((res: any) => {
+            return res.computer?.id === r.id || res.room?.id === r.id;
+        });
+
+        r.type = type;
+        console.log(r);
+        setSelectedReservation(r);
+    }
     // endregion
 
 
@@ -248,6 +272,8 @@ export const Reservations = () => {
         <AppLayout className="reservations">
             <h1>Rezervace</h1>
 
+
+
             <div className="area-selector">
                 {areas.map((area) => (
                     <p
@@ -295,7 +321,7 @@ export const Reservations = () => {
                         </div>
                     </div>
 
-                    <div className={"rightbottom"}>
+                    <div className="rightbottom">
                         <div className={
                             socketStatus === "connected"
                                 ? "serverstatus connected"
@@ -322,6 +348,55 @@ export const Reservations = () => {
                         </div>
                     </div>
 
+                    {
+                        selectedReservation
+                            ?
+                            <div className="reservation-popover">
+                                <div className={"top"}></div>
+                                <div className={"bottom"}>
+                                    <div className={"first"}>
+                                        <h1>{ selectedReservation?.label ?? selectedReservation?.id }</h1>
+                                        <p className="status"></p>
+                                    </div>
+
+                                    {
+                                        selectedReservation?.type === "computer"
+                                            ?
+                                            <div className={"reservedby"}>
+                                                <div className="icon"></div>
+                                                <p>{ selectedReservation.reservations[0]?.user?.displayName }</p>
+                                            </div>
+                                            :
+                                            <>
+                                                <div className="status">
+                                                    <h2>Rezervace</h2>
+                                                    <p>{ selectedReservation.reservations.length } / { selectedReservation.limitOfSeats}</p>
+                                                </div>
+
+                                                <div className={"reservations-parent"}>
+                                                    {
+                                                        selectedReservation.reservations.map((reservation: any, index: number) => {
+                                                            return (
+                                                                <div key={index} className={"reservation"}>
+                                                                    <Avatar size={"24px"} backgroundColor={"var(--accent-color)"} src={reservation.user.avatar} letter={reservation?.user?.displayName?.split(" ")[0][0] + "" + reservation?.user?.displayName?.split(" ")[1]?.[0]} />
+                                                                    <div className="texts">
+                                                                        <p className={"name"}>{reservation.user.displayName} <span>{reservation.user.class}</span></p>
+                                                                        {/*<p className={"date"}>{new Date(reservation.createdAt).toLocaleString("cs-CZ" )}</p>*/}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    }
+                                                </div>
+                                            </>
+                                    }
+                                </div>
+                            </div>
+                            : null
+                    }
+
+
+
 
 
                     {/*mapka*/}
@@ -342,7 +417,7 @@ export const Reservations = () => {
                         <g transform={`translate(${translate.x}, ${translate.y}) scale(${scale})`}>
                             <g className="scaleTransition">
                                 {selectedArea === "spiral-upper" ? (
-                                    <SpiralUpper />
+                                    <SpiralUpper onHoverReservation={(element: HTMLElement) => { selectReservation(element) }} />
                                 ) : selectedArea === "spiral-lower" ? (
                                     <SpiralLower />
                                 ) : null}
@@ -351,7 +426,9 @@ export const Reservations = () => {
                     </svg>
                 </div>
 
-                <div className={"stats"}>
+                <div className={"stats" + (statsCollapsed ? " collapsed" : "")}>
+                    <div className={"collapser" + (statsCollapsed ? " collapsed" : "" )} onClick={() => statsCollapsed ? setStatsCollapsed(false) : setStatsCollapsed(true) }></div>
+
                     <div className={"block mainstats"}>
                         <h1>Statistiky</h1>
                         <p>Počet rezervovaných PC: <span>{reservations.filter(r => r.computer !== null).length}/{computers.length}</span></p>
@@ -407,8 +484,6 @@ export const Reservations = () => {
 
                 </div>
             </div>
-
-
         </AppLayout>
     );
 };

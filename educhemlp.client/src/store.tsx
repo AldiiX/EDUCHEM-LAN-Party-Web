@@ -14,6 +14,9 @@ type Store = {
 
     userAuthed: boolean,
     setUserAuthed: (authed: boolean) => void,
+
+    selectedReservation: any,
+    setSelectedReservation: (reservation: any) => void,
 };
 
 export const useStore = create<Store | any>((set: any) => ({
@@ -22,4 +25,7 @@ export const useStore = create<Store | any>((set: any) => ({
 
     userAuthed: false,
     setUserAuthed: (authed: boolean) => set({ userAuthed: authed }),
+
+    selectedReservation: null,
+    setSelectedReservation: (reservation: any) => set({ selectedReservation: reservation }),
 }));

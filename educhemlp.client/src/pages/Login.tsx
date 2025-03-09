@@ -37,7 +37,6 @@ export const Login = () => {
 
         const data = await res.json();
         setLoggedUser(data.account);
-        console.log("asdsaa")
         navigate("/app");
     };
 
