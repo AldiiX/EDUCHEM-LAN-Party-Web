@@ -169,13 +169,16 @@ public static class WSReservations {
                     COALESCE(room.limit_of_seats, NULL) AS room_limit, 
                     COALESCE(room.available, NULL) AS room_available,
                     COALESCE(room.label, NULL) AS room_label,
+                    COALESCE(room.image, NULL) AS room_image,
                     COALESCE(comp.id, NULL) AS computer_id,
                     COALESCE(comp.is_teachers_pc, NULL) AS computer_is_teachers_pc,
-                    COALESCE(comp.available, NULL) AS computer_available
+                    COALESCE(comp.available, NULL) AS computer_available,
+                    COALESCE(comproom.image, NULL) AS computer_image
                 FROM reservations res
                 LEFT JOIN users usr ON res.user_id = usr.id
                 LEFT JOIN rooms room ON res.room_id = room.id
                 LEFT JOIN computers comp ON res.computer_id = comp.id 
+                LEFT JOIN rooms comproom ON comp.room_id = comproom.id
                 WHERE comp.available = 1 OR room.available = 1;
                 """, conn
         );
@@ -189,20 +192,22 @@ public static class WSReservations {
                 ["user"] = loggedUser != null ? reader.GetValueOrNull<int>("user_id") != null ? new JsonObject() {
                     ["id"] = reader.GetValueOrNull<int>("user_id"),
                     ["displayName"] = reader.GetStringOrNull("user_display_name"),
-                    ["class"] = reader.GetStringOrNull("user_class")
+                    ["class"] = loggedUser.AccountType != "STUDENT" ? reader.GetStringOrNull("user_class") : null,
                 } : null : "unknown",
 
                 ["room"] = reader.GetStringOrNull("room_id") != null ? new JsonObject() {
                     ["id"] = reader.GetString("room_id"),
                     ["label"] = reader.GetStringOrNull("room_label") ?? reader.GetString("room_id"),
                     ["limit"] = reader.GetValueOrNull<int>("room_limit"),
-                    ["available"] = reader.GetValueOrNull<bool>("room_available")
+                    ["available"] = reader.GetValueOrNull<bool>("room_available"),
+                    ["image"] = reader.GetStringOrNull("room_image"),
                 } : null,
 
                 ["computer"] = reader.GetStringOrNull("computer_id") != null ? new JsonObject() {
                     ["id"] = reader.GetStringOrNull("computer_id"),
                     ["isTeachersPC"] = reader.GetValueOrNull<bool>("computer_is_teachers_pc"),
-                    ["available"] = reader.GetValueOrNull<bool>("computer_available")
+                    ["available"] = reader.GetValueOrNull<bool>("computer_available"),
+                    ["image"] = reader.GetStringOrNull("computer_image"),
                 } : null,
 
                 ["note"] = reader.GetStringOrNull("note"),

@@ -2,6 +2,12 @@
     box-sizing: border-box;
 }
 
+html:is(.noselect) {
+    * {
+        user-select: none;
+    }
+}
+
 html, body {
     margin: 0;
 }
@@ -100,4 +106,63 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
     font-family: 'leaguespartan';
     src: url('../public/fonts/leaguespartan-bold.ttf') format('opentype');
     font-weight: 800;
+}
+
+
+.button-primary,
+.button-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    >.icon {
+        width: 16px;
+        height: 16px;
+        mask-size: contain;
+        mask-repeat: no-repeat;
+        mask-position: center;
+    }
+}
+
+.button-primary {
+    background-color: var(--accent-color);
+    color: var(--accent-color-text);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    user-select: none;
+    font-weight: 600;
+    transition: background-color 0.2s;
+
+    >.icon {
+        background-color: var(--accent-color-text);
+    }
+
+    &:hover {
+        background-color: var(--accent-color-darker);
+    }
+}
+
+.button-secondary {
+    background-color: transparent;
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    user-select: none;
+    font-weight: 600;
+    transition: background-color 0.2s;
+
+    >.icon {
+        background-color: var(--accent-color);
+    }
+
+    &:hover {
+        background-color: var(--element-bg-colored);
+    }
 }

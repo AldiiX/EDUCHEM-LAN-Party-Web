@@ -4,6 +4,7 @@ import {CSSProperties, useEffect, useState} from "react";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
 import {toggleWebTheme} from "../../utils.ts";
+import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 
 export const AppLayout = ({ children, className }: { children: React.ReactNode, className?: string }) => {
     const location = useLocation();
@@ -87,30 +88,34 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
 
             <div className={"right"}>
                 {
-                    loggedUser !== null ?
-                    <div className="loggeduser">
-                        <div className="texts">
-                            <p>{ loggedUser?.accountType === "STUDENT" ? "Přihlášen jako" : normalizeText(loggedUser?.accountType) }</p>
-                            <h2>{ loggedUser?.displayName }</h2>
-                        </div>
+                    loggedUser !== null ? (
+                        <div className="loggeduser">
+                            <div className="texts">
+                                <p>{ loggedUser?.accountType === "STUDENT" ? "Přihlášen jako" : normalizeText(loggedUser?.accountType) }</p>
+                                <h2>{ loggedUser?.displayName }</h2>
+                            </div>
 
-                        <Avatar size={"40px"} src={loggedUser?.avatar} backgroundColor={"var(--accent-color)"}  letter={loggedUser?.displayName?.split(" ")[0][0] + "" + loggedUser?.displayName?.split(" ")[1]?.[0]} className={"avatar"} />
+                            <Avatar size={"40px"} src={loggedUser?.avatar} backgroundColor={"var(--accent-color)"}  letter={loggedUser?.displayName?.split(" ")[0][0] + "" + loggedUser?.displayName?.split(" ")[1]?.[0]} className={"avatar"} />
 
-                        <div className={"popover"}>
-                            <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
-                            <p onClick={() => {
-                                fetch("/api/v1/loggeduser", {
-                                    method: "DELETE",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                    },
-                                }).then(() => {
-                                    setLoggedUser(null);
-                                });
-                            }}>Odhlásit se</p>
+                            <div className={"popover"}>
+                                <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
+                                <p onClick={() => {
+                                    fetch("/api/v1/loggeduser", {
+                                        method: "DELETE",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                        },
+                                    }).then(() => {
+                                        setLoggedUser(null);
+                                    });
+                                }}>Odhlásit se</p>
+                            </div>
                         </div>
-                    </div>
-                    : null
+                    ) : (
+                        <div className="loggeduser">
+                            <ButtonPrimary text={"Přihlásit se"} onClick={() => {window.location.href = '/login'}} />
+                        </div>
+                    )
                 }
 
                 {children}

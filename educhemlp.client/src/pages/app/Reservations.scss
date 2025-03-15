@@ -52,8 +52,9 @@
     .reservation-popover {
         position: absolute;
         top: 50%;
-        right: 0;
-        max-height: 50vh;
+        right: 24px;
+        //max-height: 50vh;
+        min-width: 260px;
         transform: translate(0, -50%);
         background-color: var(--element-bg);
         display: flex;
@@ -63,13 +64,16 @@
         border-radius: 12px;
         overflow: hidden;
         border: solid 1px var(--text-color-3);
-        border-right: none;
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.07);
 
         >.top {
             width: 100%;
             aspect-ratio: 16/9;
-            background-color: gray;
+            background-color: var(--text-color-3);
             position: relative;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         >.bottom {
@@ -97,9 +101,28 @@
                 }
             }
 
+            >.divider {
+                width: 100%;
+                height: 1px;
+                background-color: var(--text-color-3);
+            }
+
+            >.buttons {
+                >button {
+                    width: 100%;
+                }
+            }
+
             .reservedby {
                 display: flex;
-                flex-direction: column;
+                gap: 8px;
+                align-items: center;
+                justify-content: space-between;
+
+                >.class {
+                    font-size: 12px;
+                    color: var(--text-color-darker);
+                }
             }
 
             .reservations-parent {
@@ -109,10 +132,32 @@
                 overflow-y: auto;
                 max-height: 200px;
 
+                &::-webkit-scrollbar {
+                    width: 4px;
+                }
+
                 >.reservation {
                     display: flex;
                     gap: 8px;
                     align-items: center;
+
+                    &:is(.you) {
+                        //background-color: var(--accent-color);
+                        //padding: 4px 8px;
+                        border-radius: 8px;
+
+                        p, h1, span {
+                            color: var(--accent-color) !important;
+                        }
+
+                        >.avatar {
+                            //background-color: var(--accent-color-text) !important;
+
+                            >p {
+                                color: var(--accent-color-text) !important;
+                            }
+                        }
+                    }
 
                     >.texts {
                         >.name {
@@ -605,7 +650,7 @@
 
                         .name {
                             font-size: 16px;
-                            font-weight: bolder;
+                            font-weight: 500;
                             width: 100%;
                             //max-width: 170px;
                             align-items: center;
