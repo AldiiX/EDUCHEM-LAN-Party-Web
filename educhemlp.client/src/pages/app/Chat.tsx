@@ -11,7 +11,7 @@ export const Chat = () => {
     const { userAuthed, setUserAuthed } = useStore();
     const [messages, setMessages] = useState<any[]>([]);
     
-
+    
     // Effect for permission check
     useEffect(() => {
         if (userAuthed && loggedUser === null) {
@@ -44,12 +44,12 @@ export const Chat = () => {
         ws.onclose = () => {
             console.log("disconnected");
         };
-
+        
         return () => {
             ws.close();
         };
     }, []); // This hook only runs once on mount and unmount
-
+    
     // Ensure that the component only renders if the user is authenticated
     if (!userAuthed) return <></>;
 
@@ -82,7 +82,8 @@ export const Chat = () => {
                     }
                 </div>
                 <div className={"inputdiv"}>
-                    <input type="text" placeholder={"Napiš zprávu..."} />
+                    <input type="text" placeholder="Napiš zprávu..."/>
+                    <button className={"sent-message-button"} /*onClick={sendMessage}*/></button>
                 </div>
             </div>
         </AppLayout>
