@@ -13,7 +13,7 @@ public class User {
 
 
     [JsonConstructor]
-    private User(int id, string displayName, string email, string password, string? @class, string accountType, DateTime lastUpdated/*, UserGender? gender*/) {
+    private User(int id, string displayName, string email, string password, string? @class, string accountType, DateTime lastUpdated/*, UserGender? gender*/, string? avatar) {
         ID = id;
         DisplayName = displayName;
         Class = @class;
@@ -21,6 +21,7 @@ public class User {
         Email = email;
         AccountType = accountType;
         LastUpdated = lastUpdated;
+        Avatar = avatar;
         //Gender = gender;
     }
 
@@ -30,6 +31,7 @@ public class User {
     public string Email { get; private set; }
     public string Password { get; private set; }
     public string? Class { get; private set; }
+    public string? Avatar { get; private set; }
     public string AccountType { get; private set; }
     public DateTime LastUpdated { get; private set; }
     public UserGender? Gender { get; private set; }
@@ -55,8 +57,9 @@ public class User {
             reader.GetString("password"),
             reader.GetObjectOrNull("class") as string,
             reader.GetString("account_type"),
-            reader.GetDateTime("last_updated")
+            reader.GetDateTime("last_updated"),
             //Enum.TryParse<UserGender>(reader.GetObjectOrNull("gender") as string, out var _gender) ? _gender : null
+            reader.GetStringOrNull("avatar")
         );
     }
 
@@ -81,7 +84,9 @@ public class User {
             reader.GetString("password"),
             reader.GetObjectOrNull("class") as string,
             reader.GetString("account_type"),
-            reader.GetDateTime("last_updated")
+            reader.GetDateTime("last_updated"),
+            //Enum.TryParse<UserGender>(reader.GetObjectOrNull
+            reader.GetStringOrNull("avatar")
         );
 
         // aktualizace posledního přihlášení
@@ -115,7 +120,9 @@ public class User {
                 reader.GetObjectOrNull("class") as string,
                 reader.GetString("auth_key"),
                 reader.GetString("account_type"),
-                reader.GetDateTime("last_updated")
+                reader.GetDateTime("last_updated"),
+                //Enum.TryParse<UserGender>(reader.GetObject
+                reader.GetStringOrNull("avatar")
             ));
         }
 

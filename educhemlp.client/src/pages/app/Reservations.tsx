@@ -418,7 +418,7 @@ export const Reservations = () => {
                                                                 <Avatar
                                                                     size="24px"
                                                                     backgroundColor="var(--accent-color)"
-                                                                    src={reservation.user.avatar}
+                                                                    src={reservation.user?.avatar}
                                                                     letter={
                                                                         reservation?.user?.displayName?.split(" ")[0][0] +
                                                                         (reservation?.user?.displayName?.split(" ")[1]?.[0] || "")

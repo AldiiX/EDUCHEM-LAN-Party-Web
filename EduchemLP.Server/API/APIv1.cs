@@ -27,6 +27,7 @@ public class APIv1 : Controller {
             ["class"] = acc?.Class,
             ["accountType"] = acc?.AccountType,
             ["lastUpdated"] = acc?.LastUpdated,
+            ["avatar"] = acc?.Avatar,
         };
 
         return acc == null ? new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" }) : new JsonResult(obj);

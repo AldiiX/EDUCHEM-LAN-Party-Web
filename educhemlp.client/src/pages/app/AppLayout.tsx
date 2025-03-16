@@ -25,7 +25,7 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
     if (!userAuthed) return <></>;
 
     return (
-        <div id="app" className={className}>
+        <div id="app" className={className} onContextMenu={(e) => e.preventDefault()}>
             <div className={"left"}>
 
 
@@ -40,6 +40,11 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                     <Link to={"/app/announcements"} className={currentPage === "/app/announcements" ? "active" : ""}>
                         <div style={{ maskImage: 'url(../../../public/images/icons/bell.svg)' }}></div>
                         Oznámení
+                    </Link>
+
+                    <Link to={"/app/map"} className={currentPage === "/app/map" ? "active" : ""}>
+                        <div style={{ maskImage: 'url(../../../public/images/icons/map.svg)' }}></div>
+                        Mapa
                     </Link>
 
                     <Link to={"/app/reservations"} className={currentPage === "/app/reservations" ? "active" : ""}>
@@ -95,7 +100,7 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                                 <h2>{ loggedUser?.displayName }</h2>
                             </div>
 
-                            <Avatar size={"40px"} src={loggedUser?.avatar} backgroundColor={"var(--accent-color)"}  letter={loggedUser?.displayName?.split(" ")[0][0] + "" + loggedUser?.displayName?.split(" ")[1]?.[0]} className={"avatar"} />
+                            <Avatar size={"48px"} src={loggedUser?.avatar} backgroundColor={"var(--accent-color)"}  letter={loggedUser?.displayName?.split(" ")[0][0] + "" + loggedUser?.displayName?.split(" ")[1]?.[0]} className={"avatar"} />
 
                             <div className={"popover"}>
                                 <p onClick={ () => toggleWebTheme() }>Změnit theme</p>

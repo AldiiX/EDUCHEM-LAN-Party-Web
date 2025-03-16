@@ -5,6 +5,7 @@ import "./assets/pure.css";
 import './Main.scss';
 import {getCookie} from "./utils.ts";
 import {useStore} from "./store.tsx";
+import {Map} from "./pages/app/Map.tsx";
 
 const Home = lazy(() => import('./pages/Home.tsx'));
 const Login = lazy(() => import('./pages/Login.tsx'));
@@ -25,6 +26,7 @@ const RouteTitle = () => {
             '/': 'Home • Educhem LAN Party',
             '/app': 'App • Educhem LAN Party',
             '/app/reservations': 'Rezervace • Educhem LAN Party',
+            '/app/map': 'Mapa • Educhem LAN Party',
             '/app/attendance': 'Příchody / Odchody • Educhem LAN Party',
             '/app/administration': 'Administrace • Educhem LAN Party',
             '/app/tournaments': 'Turnaje • Educhem LAN Party',
@@ -102,6 +104,7 @@ const App = () => {
                     <Route path="/app/tournaments" element={<Tournaments />} />
                     <Route path="/app/chat" element={<Chat />} />
                     <Route path="/app/forum" element={<Forum />} />
+                    <Route path="/app/map" element={<Map />} />
                 </Routes>
             </Router>
         </>
