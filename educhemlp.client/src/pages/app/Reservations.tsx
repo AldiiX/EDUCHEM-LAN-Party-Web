@@ -31,6 +31,7 @@ export const Reservations = () => {
     const [roomsCapacity, setRoomsCapacity] = useState<number>(0);
     const [occupiedPercent, setOccupiedPercent] = useState(0);
     const [clientsCount, setClientsCount] = useState<string>("?");
+    const [socket, setSocket] = useState<WebSocket | null>(null);
     const [socketStatus, setSocketStatus] = useState<string | null>(null);
     const [statsCollapsed, setStatsCollapsed] = useState<boolean>(false);
     const { loggedUser, setLoggedUser } = useStore();
@@ -137,6 +138,27 @@ export const Reservations = () => {
         }
     }
 
+    const reserve = async (room: string | null, computer: string | null) => {
+        if(!socket) {
+            // TODO: error toast
+            return;
+        }
+
+        socket.send(JSON.stringify({
+            action: "reserve",
+            room: room,
+            computer: computer,
+        }));
+    }
+
+    const deleteReservation = async () => {
+        if(!socket) {
+            return;
+        }
+
+        socket.send(JSON.stringify({ action: "deleteReservation" }));
+    }
+
     const setCirclesStyle = () => {
         // reset room.reservedSpaces
         for(let room of rooms) {
@@ -234,6 +256,7 @@ export const Reservations = () => {
         });
 
         r.type = type;
+        r.element = element;
         //console.log(r);
         setSelectedReservation(r);
     }
@@ -259,6 +282,8 @@ export const Reservations = () => {
             setSocketStatus("disconnected");
         };
 
+        setSocket(ws);
+
         return () => {
             ws.close();
             setSocketStatus(null);
@@ -276,6 +301,10 @@ export const Reservations = () => {
             }
 
             setOccupiedPercent(Math.round(reservations.length / (computers.length + roomsAllSeats) * 100));
+
+            if(selectedReservation !== null) {
+                selectReservation(selectedReservation.element);
+            }
         }
     }, [computers, rooms, reservations, selectedArea]);
 
@@ -452,14 +481,14 @@ export const Reservations = () => {
                                                 <>
                                                     <div className="divider"></div>
                                                     <div className="buttons">
-                                                        <ButtonSecondary text="Zrušit rezervaci" icon="/images/icons/cancel.svg" />
+                                                        <ButtonSecondary text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation()} />
                                                     </div>
                                                 </>
                                             ) : selectedReservation?.reservations.length === 0 ? (
                                                 <>
                                                     <div className="divider"></div>
                                                     <div className="buttons">
-                                                        <ButtonPrimary text="Rezervovat" icon="/images/icons/computer.svg" />
+                                                        <ButtonPrimary text="Rezervovat" icon="/images/icons/computer.svg" onClick={() => reserve(null, selectedReservation?.id) } />
                                                     </div>
                                                 </>
                                             ) : null
@@ -467,14 +496,14 @@ export const Reservations = () => {
                                             <>
                                                 <div className="divider"></div>
                                                 <div className="buttons">
-                                                    <ButtonSecondary text="Zrušit rezervaci" icon="/images/icons/cancel.svg" />
+                                                    <ButtonSecondary text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation() } />
                                                 </div>
                                             </>
                                         ) : selectedReservation?.reservations.length < selectedReservation?.limitOfSeats ? (
                                             <>
                                                 <div className="divider"></div>
                                                 <div className="buttons">
-                                                    <ButtonPrimary text="Rezervovat" icon="/images/icons/door.svg" />
+                                                    <ButtonPrimary text="Rezervovat" icon="/images/icons/door.svg" onClick={() => reserve(selectedReservation?.id, null) } />
                                                 </div>
                                             </>
                                         ) : null

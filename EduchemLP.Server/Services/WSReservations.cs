@@ -72,9 +72,53 @@ public static class WSReservations {
             if (action == null) continue;
 
             switch (action) {
-                case "status":
-                    await client.SendFullReservationInfoAsync();
-                    break;
+                case "reserve": {
+                    string? room = messageJson?["room"]?.ToString();
+                    string? computer = messageJson?["computer"]?.ToString();
+
+                    if (room == null && computer == null) break;
+
+                    await using var conn = await Database.GetConnectionAsync();
+                    if (conn == null) break;
+
+                    var command = new MySqlCommand(
+                        """
+                               DELETE FROM reservations WHERE user_id = @user_id;
+                               INSERT INTO reservations (user_id, room_id, computer_id) VALUES (@user_id, @room_id, @computer_id);
+                               """, conn
+                    );
+
+                    command.Parameters.AddWithValue("@user_id", sessionAccount?.ID);
+                    command.Parameters.AddWithValue("@room_id", room);
+                    command.Parameters.AddWithValue("@computer_id", computer);
+
+                    await command.ExecuteNonQueryAsync();
+                    lock (ConnectedUsers) {
+                        foreach (var c in ConnectedUsers) {
+                            c.SendFullReservationInfoAsync().Wait();
+                        }
+                    }
+                } break;
+
+                case "deleteReservation": {
+                    await using var conn = await Database.GetConnectionAsync();
+                    if (conn == null) break;
+
+                    var command = new MySqlCommand(
+                    """
+                           DELETE FROM reservations WHERE user_id = @user_id;
+                           """, conn
+                    );
+
+                    command.Parameters.AddWithValue("@user_id", sessionAccount?.ID);
+
+                    await command.ExecuteNonQueryAsync();
+                    lock (ConnectedUsers) {
+                        foreach (var c in ConnectedUsers) {
+                            c.SendFullReservationInfoAsync().Wait();
+                        }
+                    }
+                } break;
             }
         }
 

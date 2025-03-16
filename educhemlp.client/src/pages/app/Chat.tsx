@@ -63,20 +63,19 @@ export const Chat = () => {
                             <div key={index} className={`chat-message ${message.author.id === loggedUser.id ? "own-message" : "other-message"}`}>
                                 {
                                     message.author.id !== loggedUser.id ? (
-                                            <>
-                                                <Avatar size={"32px"} backgroundColor={"var(--accent-color)"} src={message.author.avatar} letter={message.author.name.split(" ")[0][0] + "" + message.author.name.split(" ")[1]?.[0]} />
-                                                <div className="texts">
-                                                    <h1>{message.author.name}</h1>
-                                                    <article>{ message.message }</article>
-                                                </div>
-                                            </>
-                                        ) :
+                                        <>
+                                            <Avatar size={"32px"} backgroundColor={"var(--accent-color)"} src={message.author.avatar} letter={message.author.name.split(" ")[0][0] + "" + message.author.name.split(" ")[1]?.[0]} />
+                                            <div className="texts">
+                                                <h1>{message.author.name}</h1>
+                                                <article>{ message.message }</article>
+                                            </div>
+                                        </>
+                                    ) : (
                                         <p>
                                             {message.message}
                                         </p>
+                                    )
                                 }
-
-
                             </div>
                         ))
                     }
