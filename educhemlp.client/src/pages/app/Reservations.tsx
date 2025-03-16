@@ -364,6 +364,8 @@ export const Reservations = () => {
                     {
                         selectedReservation ? (
                             <div className="reservation-popover">
+                                <div className="closebutton" onClick={() => setSelectedReservation(null) }></div>
+
                                 {selectedReservation?.image ? (
                                     <div
                                         className="top"
@@ -384,8 +386,10 @@ export const Reservations = () => {
                                         selectedReservation?.reservations.length !== 0 ? (
                                             loggedUser !== null ? (
                                                 <div className="reservedby">
-                                                    {/*<div className="icon"></div>*/}
-                                                    <p>{selectedReservation.reservations[0]?.user?.displayName}</p>
+                                                    <div className="nameandavatar">
+                                                        <Avatar size="24px" backgroundColor="var(--accent-color)" src={selectedReservation?.reservations?.[0]?.user?.avatar} letter={selectedReservation?.reservations?.[0]?.user?.displayName?.split(" ")[0][0] + (selectedReservation?.reservations?.[0]?.user?.displayName?.split(" ")[1]?.[0] || "")}/>
+                                                        <p>{selectedReservation.reservations[0]?.user?.displayName}</p>
+                                                    </div>
                                                     <p className="class">{selectedReservation.reservations[0]?.user?.class}</p>
                                                 </div>
                                             ) : (
@@ -444,7 +448,7 @@ export const Reservations = () => {
                                     {/* Tlačítka */}
                                     {loggedUser !== null ? (
                                         selectedReservation?.type === "computer" ? (
-                                            selectedReservation?.user?.id === loggedUser?.id ? (
+                                            selectedReservation?.reservations?.[0]?.user?.id === loggedUser?.id ? (
                                                 <>
                                                     <div className="divider"></div>
                                                     <div className="buttons">
