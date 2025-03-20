@@ -1,5 +1,5 @@
 import { AppLayout } from "./AppLayout.tsx";
-import { useEffect, useState } from "react";
+import {CSSProperties, useEffect, useState} from "react";
 import { useStore } from "../../store.tsx";
 import { useNavigate } from "react-router-dom";
 import "./Administration.scss";
@@ -68,6 +68,11 @@ export const Administration = () => {
                 { selectedUser !== null ? (
                     <>
                         <div className="top">
+                            {
+                                selectedUser.avatar ? (
+                                    <div className="banner" style={{ '--bg': `url(${selectedUser.avatar})`} as CSSProperties}></div>
+                                ) : null
+                            }
                             <Avatar size={"200px"} src={selectedUser.avatar} letter={ selectedUser.name?.split(" ")[0][0] + "" + selectedUser.name?.split(" ")[1]?.[0] } backgroundColor={"var(--accent-color)"} />
                         </div>
 
@@ -124,7 +129,7 @@ export const Administration = () => {
                                         !userModalEditMode ? (
                                             <p>{ translateGender(selectedUser.gender) }</p>
                                         ) : (
-                                            <select name="gender">
+                                            <select name="gender" defaultValue={selectedUser.gender}>
                                                 <option value="MALE">Muž</option>
                                                 <option value="FEMALE">Žena</option>
                                                 <option value="OTHER">Ostatní</option>
@@ -139,10 +144,10 @@ export const Administration = () => {
                                         !userModalEditMode ? (
                                             <p>{ selectedUser.accountType }</p>
                                         ) : (
-                                            <select name="accountType">
-                                                <option value="STUDENT" selected={selectedUser.accountType === "STUDENT"}>Student</option>
-                                                <option value="TEACHER" selected={selectedUser.accountType === "TEACHER"}>Učitel</option>
-                                                <option value="ADMIN"   selected={selectedUser.accountType === "ADMIN"}>Admin</option>
+                                            <select name="accountType"  defaultValue={selectedUser.accountType}>
+                                                <option value="STUDENT">Student</option>
+                                                <option value="TEACHER">Učitel</option>
+                                                <option value="ADMIN">Admin</option>
                                             </select>
                                         )
                                     }

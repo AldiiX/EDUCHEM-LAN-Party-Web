@@ -218,10 +218,8 @@ export const Reservations = () => {
 
 
                 // prirazeni classy
-                if(element.classList.contains("taken-by-you")) continue;
-
-                element.classList.remove("available");
-                if (loggedUser?.id && reservation.user?.id === loggedUser?.id) {
+                element.classList.remove("available", "taken-by-you", "unavailable");
+                if (loggedUser?.id && reservations.filter(r => r.room?.id === room.id && r.user?.id === loggedUser?.id).length > 0) {
                     element.classList.add("taken-by-you");
                 }
 

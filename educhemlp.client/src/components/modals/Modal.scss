@@ -27,6 +27,25 @@
             background-color: var(--text-color-3);
             margin-bottom: 50px;
 
+            >.banner {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                //overflow: hidden;
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    background-image: var(--bg);
+                    background-color: rgba(0, 0, 0, 0.5);
+                    background-size: 120% 100%;
+                    background-position: bottom center;
+                    filter: blur(40px);
+                }
+            }
+
             >.avatar {
                 position: relative;
                 width: 200px;
@@ -69,6 +88,7 @@
 
             h1 {
                 margin: 0;
+                font-family: leaguespartan, sans-serif;
                 font-size: 24px;
             }
 

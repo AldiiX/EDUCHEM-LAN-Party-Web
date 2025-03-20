@@ -77,7 +77,7 @@ public class APIv1 : Controller {
 
         var command = new MySqlCommand(
             """
-            SELECT * FROM users WHERE id > 0;
+            SELECT * FROM users WHERE id > 0 ORDER BY display_name;
             """, conn
         );
 
