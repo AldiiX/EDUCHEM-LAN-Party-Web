@@ -1,5 +1,5 @@
 import { AppLayout } from "./AppLayout.tsx";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Reservations.scss";
 import { SpiralUpper } from "../../components/reservation_areas/SpiralUpper.tsx";
 import { SpiralLower } from "../../components/reservation_areas/SpiralLower.tsx";

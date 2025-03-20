@@ -38,6 +38,7 @@ html:is(.theme-dark) {
     --element-bg: #171717;
     --element-bg-colored: #26241e;
     --background-bg: #101010;
+    --background-bg-2: #1c1c1c;
     --text-color: #f3f3f3;
     --text-color-darker: #afafaf;
     --text-color-secondary: #e0e0e0;
@@ -64,6 +65,7 @@ html:is(.theme-light) {
     --element-bg: white;
     --element-bg-colored: #ffe8cc;
     --background-bg: #f8f6f1;
+    --background-bg-2: #fffdf7;
     --text-color: #0c0c0c;
     --text-color-darker: #afafaf;
     --text-color-secondary: #606060;
@@ -164,5 +166,41 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
 
     &:hover {
         background-color: var(--element-bg-colored);
+    }
+}
+
+.button-tertiary {
+    background-color: transparent;
+    color: var(--text-color-darker);
+    border: 1px solid var(--text-color-3);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    user-select: none;
+    font-weight: 600;
+    transition: background-color 0.2s;
+
+    >.icon {
+        background-color: var(--accent-color);
+    }
+
+    &:hover {
+        background-color: var(--element-bg-colored);
+    }
+}
+
+
+input, select, textarea {
+    background-color: var(--background-bg-2);
+    color: var(--text-color);
+    border: 1px solid var(--element-bg-colored);
+    border-radius: 12px;
+    padding: 8px;
+    font-size: 16px;
+    transition: border-color 0.2s;
+
+    &:focus {
+        border-color: var(--accent-color);
     }
 }

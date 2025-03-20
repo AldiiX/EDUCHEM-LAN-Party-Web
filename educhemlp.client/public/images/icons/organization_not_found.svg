@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Transformed by: SVG Repo Mixer Tools -->
+
+<svg
+   fill="#ffffff"
+   width="800px"
+   height="800px"
+   viewBox="0 0 24 24"
+   stroke="#ffffff"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="organization_not_found.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <inkscape:path-effect
+       effect="powerstroke"
+       id="path-effect46"
+       is_visible="true"
+       lpeversion="1.3"
+       scale_width="1"
+       interpolator_type="CentripetalCatmullRom"
+       interpolator_beta="0.75"
+       start_linecap_type="zerowidth"
+       end_linecap_type="zerowidth"
+       offset_points="186.77462,0.9"
+       linejoin_type="spiro"
+       miter_limit="4"
+       not_jump="true"
+       sort_points="true"
+       message="&lt;b&gt;Ctrl + click&lt;/b&gt; on existing node and move it" />
+    <inkscape:path-effect
+       effect="simplify"
+       id="path-effect45"
+       is_visible="true"
+       lpeversion="1.3"
+       threshold="0.012"
+       steps="1"
+       smooth_angles="0"
+       helper_size="0"
+       simplify_individual_paths="false"
+       simplify_just_coalesce="false"
+       step="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2"
+       is_visible="true"
+       lpeversion="1" />
+    <inkscape:path-effect
+       effect="spiro"
+       id="path-effect2-8"
+       is_visible="true"
+       lpeversion="1" />
+  </defs>
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="1"
+     inkscape:cx="515.5"
+     inkscape:cy="346.5"
+     inkscape:window-width="2560"
+     inkscape:window-height="1351"
+     inkscape:window-x="2391"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <path
+     id="path1"
+     style="display:inline;stroke-width:0;stroke-dasharray:none"
+     d="M 17.697539 1.661543 A 0.94959425 0.93986035 0 0 0 16.747969 2.6013867 L 16.747969 4.5645703 L 19.685859 1.661543 L 17.697539 1.661543 z M 22.445508 5.1548437 L 20.273848 7.3007227 L 20.546367 7.3007227 L 20.546367 20.45877 L 6.957832 20.45877 L 5.0555859 22.338457 L 21.495938 22.338457 A 0.94959425 0.93986035 0 0 0 22.445508 21.398613 L 22.445508 5.1548437 z M 8.1909375 6.3604687 A 0.94959425 0.93986035 0 0 0 7.7771484 6.4595508 L 2.0796094 9.279082 A 0.94959425 0.93986035 0 0 0 1.5544922 10.120254 L 1.5544922 19.577813 L 3.4536328 17.701172 L 3.4536328 10.701094 L 7.2520312 8.8214062 L 7.2520312 10.120254 A 0.94959425 0.93986035 0 0 0 8.6261133 10.961426 L 11.928633 9.3267773 L 14.607246 6.6799219 A 0.94959425 0.93986035 0 0 0 13.474746 6.4595508 L 9.1512305 8.5995703 L 9.1512305 7.3007227 A 0.94959425 0.93986035 0 0 0 8.1909375 6.3604687 z M 18.647168 8.908125 L 16.469297 11.060156 L 17.697539 11.060156 A 0.94959425 0.93986035 0 0 0 18.647168 10.120254 L 18.647168 8.908125 z M 5.352832 12.939844 L 5.352832 14.81959 L 6.3698437 14.81959 L 8.2016016 13.00957 L 8.2016016 12.939844 L 5.352832 12.939844 z M 15.798398 12.939844 L 15.798398 14.81959 L 18.647168 14.81959 L 18.647168 12.939844 L 15.798398 12.939844 z M 13.899199 13.599785 L 12.664746 14.81959 L 13.899199 14.81959 L 13.899199 13.599785 z M 10.7625 16.699277 L 10.100801 17.353125 L 10.100801 18.579023 L 13.899199 18.579023 L 13.899199 16.699277 L 10.7625 16.699277 z M 15.798398 16.699277 L 15.798398 18.579023 L 18.647168 18.579023 L 18.647168 16.699277 L 15.798398 16.699277 z " />
+  <path
+     style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:20;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+     d="M 2.13,22.08 21.96,2.58"
+     id="path46" />
+</svg>
