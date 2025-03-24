@@ -59,8 +59,8 @@ export const Login = () => {
                         autoComplete="off"
                         onSubmit={login}
                     >
-                        <TextField className={"email"} id="email" label="E-mail" variant="outlined" type="email" name={"email"} onChange={(event) => { setEmail((event.target as HTMLInputElement).value) }} />
-                        <TextField className={"password"} id="password" label="Heslo" variant="outlined" type="password" name={"password"} onChange={(event) => { setPassword((event.target as HTMLInputElement).value) }} />
+                        <TextField autoComplete={"educhemlp_email"}    className={"email"} id="email" label="E-mail" variant="outlined" type="email" name={"email"} onChange={(event) => { setEmail((event.target as HTMLInputElement).value) }} />
+                        <TextField autoComplete={"educhemlp_password"} className={"password"} id="password" label="Heslo" variant="outlined" type="password" name={"password"} onChange={(event) => { setPassword((event.target as HTMLInputElement).value) }} />
                         <button className={"submit-button"} type="submit">Login</button>
                         <p>{error}</p>
                     </Box>

@@ -45,7 +45,7 @@ public static class Program {
                 };
             //} else options.Configuration = "localhost:6379";
 
-            options.InstanceName = "EduchemLPR_session";
+            options.InstanceName = "EduchemLP_session";
         });
         builder.Services.AddSession(options => {
             options.IdleTimeout = TimeSpan.FromDays(365);
@@ -101,9 +101,7 @@ public static class Program {
         });
         App.UseMiddleware<WebSocketMiddleware>();
         App.UseRouting();
-        App.UseAuthorization();
-        if(ENV.TryGetValue("WEBSITE_AVAILABLE", out var websiteAvailable) && websiteAvailable == "false")
-            App.UseMiddleware<WebsiteNotAvailableRedirectMiddleware>();
+        //App.UseAuthorization();
         //App.UseMiddleware<ErrorHandlingMiddleware>();
         App.UseMiddleware<FunctionalQueryParameterMiddleware>();
         App.MapControllerRoute(name: "default", pattern: "/");
