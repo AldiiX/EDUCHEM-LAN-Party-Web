@@ -4,6 +4,7 @@
     border-radius: 100%;
     position: relative;
     flex-shrink: 0;
+    overflow: hidden;
     
     >p {
         font-size: calc(var(--size) / 2.3);

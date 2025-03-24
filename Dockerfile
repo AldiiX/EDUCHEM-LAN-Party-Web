@@ -4,7 +4,6 @@ ARG APP_UID=1000
 # Base stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
-EXPOSE 80
 
 # Stage to install Node.js
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS with-node
@@ -57,5 +56,6 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 # Prepare the start script
 WORKDIR /app
+EXPOSE 80
 COPY --chmod=0755 start.sh .
 CMD ["./start.sh"]

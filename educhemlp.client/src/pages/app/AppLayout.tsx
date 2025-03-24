@@ -38,47 +38,47 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
 
                 <div className={"menu"}>
                     <Link to={"/app/announcements"} className={currentPage === "/app/announcements" ? "active" : ""}>
-                        <div style={{ maskImage: 'url(../../../public/images/icons/bell.svg)' }}></div>
+                        <div style={{ maskImage: 'url(/images/icons/bell.svg)' }}></div>
                         Oznámení
                     </Link>
 
                     <Link to={"/app/map"} className={currentPage === "/app/map" ? "active" : ""}>
-                        <div style={{ maskImage: 'url(../../../public/images/icons/map.svg)' }}></div>
+                        <div style={{ maskImage: 'url(/images/icons/map.svg)' }}></div>
                         Mapa
                     </Link>
 
                     <Link to={"/app/reservations"} className={currentPage === "/app/reservations" ? "active" : ""}>
-                        <div style={{ maskImage: 'url(../../../public/images/icons/calc.svg)' }}></div>
+                        <div style={{ maskImage: 'url(/images/icons/calc.svg)' }}></div>
                         Rezervace
                     </Link>
 
                     <Link to={"/app/forum"} className={currentPage === "/app/forum" ? "active" : ""}>
-                        <div style={{ maskImage: 'url(../../../public/images/icons/forum.svg)' }}></div>
+                        <div style={{ maskImage: 'url(/images/icons/forum.svg)' }}></div>
                         Forum
                     </Link>
 
                     {
                         loggedUser !== null
                             ? <Link to={"/app/chat"} className={currentPage === "/app/chat" ? "active" : ""}>
-                                <div style={{ maskImage: 'url(../../../public/images/icons/chat.svg)' }}></div>
+                                <div style={{ maskImage: 'url(/images/icons/chat.svg)' }}></div>
                                 Chat
                             </Link>
                             : null
                     }
 
                     <Link to={"/app/attendance"} className={currentPage === "/app/attendance" ? "active" : ""}>
-                        <div style={{ maskImage: 'url(../../../public/images/icons/user_in_building.svg)' }}></div>
+                        <div style={{ maskImage: 'url(/images/icons/user_in_building.svg)' }}></div>
                         Příchody / Odchody
                     </Link>
 
                     <Link to={"/app/tournaments"} className={currentPage === "/app/tournaments" ? "active" : ""}>
-                        <div style={{ maskImage: 'url(../../../public/images/icons/trophy_star.svg)' }}></div>
+                        <div style={{ maskImage: 'url(/images/icons/trophy_star.svg)' }}></div>
                         Turnaje
                     </Link>
 
                     { loggedUser?.accountType === "ADMIN" ?
                         <Link to={"/app/administration"} className={currentPage === "/app/administration" ? "active" : ""}>
-                            <div style={{ maskImage: 'url(../../../public/images/icons/user_with_shield.svg)' }}></div>
+                            <div style={{ maskImage: 'url(/images/icons/user_with_shield.svg)' }}></div>
                             Administrace
                         </Link> : null
                     }

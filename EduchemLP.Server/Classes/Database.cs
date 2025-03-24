@@ -12,7 +12,7 @@ public static class Database {
         MySqlConnection? conn = null;
 
         try {
-            conn = new MySqlConnection($"server={(Program.USE_LOCALHOST_CONNECTION ? "localhost" : Program.ENV["DATABASE_IP"])};userid={Program.ENV["DATABASE_USERNAME"]};password={Program.ENV["DATABASE_PASSWORD"]};database={Program.ENV["DATABASE_DBNAME"]};pooling=true;Max Pool Size=300;");
+            conn = new MySqlConnection($"server={Program.ENV["DATABASE_IP"]};userid={Program.ENV["DATABASE_USERNAME"]};password={Program.ENV["DATABASE_PASSWORD"]};database={Program.ENV["DATABASE_DBNAME"]};pooling=true;Max Pool Size=300;");
             conn.Open();
         } catch (Exception e) {
             Program.Logger.LogCritical(e, "Failed to connect to the database.");
@@ -25,7 +25,7 @@ public static class Database {
         MySqlConnection? conn = null;
 
         try {
-            conn = new MySqlConnection($"server={(Program.USE_LOCALHOST_CONNECTION ? "localhost" : Program.ENV["DATABASE_IP"])};userid={Program.ENV["DATABASE_USERNAME"]};password={Program.ENV["DATABASE_PASSWORD"]};database={Program.ENV["DATABASE_DBNAME"]};pooling=true;Max Pool Size=300;");
+            conn = new MySqlConnection($"server={Program.ENV["DATABASE_IP"]};userid={Program.ENV["DATABASE_USERNAME"]};password={Program.ENV["DATABASE_PASSWORD"]};database={Program.ENV["DATABASE_DBNAME"]};pooling=true;Max Pool Size=300;");
             await conn.OpenAsync().ConfigureAwait(true);
         } catch (Exception e) {
             Program.Logger.LogCritical(e, "Failed to connect to the database.");

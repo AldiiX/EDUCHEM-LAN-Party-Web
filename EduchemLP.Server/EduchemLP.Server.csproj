@@ -30,4 +30,11 @@
     </ProjectReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove=".env" />
+    <Content Include=".env">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

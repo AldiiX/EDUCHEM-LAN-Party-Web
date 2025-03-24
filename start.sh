@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Start the backend in the background
-dotnet 4tense.Server.dll &
+dotnet EduchemLP.Server.dll &
 
 # Start the frontend (vite preview) in the background
 cd /app/client

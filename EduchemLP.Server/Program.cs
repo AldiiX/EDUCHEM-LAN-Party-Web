@@ -19,25 +19,16 @@ public static class Program {
     public const string APP_WALLPAPER = "/images/wallpapers/xmas_day.png";
     public const string ROOT_DOMAIN = "lanparty.educhem.it";//"lanparty.adminsphere.me";
 
-
-
-    
     #if DEBUG
         public const bool DEVELOPMENT_MODE = true;
-        public const bool USE_LOCALHOST_CONNECTION = false;
-        public const string PROFILE = "DEBUG";
     #elif RELEASE
         public const bool DEVELOPMENT_MODE = false;
-        public const bool USE_LOCALHOST_CONNECTION = true;
-        public const string PROFILE = "RELEASE";
     #elif TESTING
         public const bool DEVELOPMENT_MODE = true;
-        public const bool USE_LOCALHOST_CONNECTION = true;
-        public const string PROFILE = "TESTING";
     #endif
 
-    
-    
+
+
 
     public static void Main(string[] args) {
         var builder = WebApplication.CreateBuilder(args);
@@ -47,12 +38,12 @@ public static class Program {
         builder.Services.AddRazorPages();
         builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         builder.Services.AddStackExchangeRedisCache(options => {
-            if (DEVELOPMENT_MODE) {
+            //if (DEVELOPMENT_MODE) {
                 options.ConfigurationOptions = new ConfigurationOptions {
                     EndPoints = { $"{ENV["DATABASE_IP"]}:{ENV["REDIS_PORT"]}" },
                     Password = ENV["REDIS_PASSWORD"],
                 };
-            } else options.Configuration = "localhost:6379";
+            //} else options.Configuration = "localhost:6379";
 
             options.InstanceName = "EduchemLPR_session";
         });
@@ -63,7 +54,7 @@ public static class Program {
 
             options.Cookie.MaxAge = TimeSpan.FromDays(365); // Trvání cookie na 365 dní
             //options.Cookie.Expiration = TimeSpan.FromDays(365);
-            options.Cookie.Name = "educhemlpr_session";
+            options.Cookie.Name = "educhemlp_session";
         });
 
         builder.Configuration
