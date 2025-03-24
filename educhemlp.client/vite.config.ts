@@ -39,6 +39,10 @@ export default defineConfig(({ command, mode }: any): any => {
                 host: '0.0.0.0', // Naslouchá na všech IP
                 https: false
             },
+
+            preview: {
+                allowedHosts: true
+            }
         };
     }
 
