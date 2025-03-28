@@ -14,7 +14,11 @@ export const Administration = () => {
     const [users, setUsers] = useState<any[] | null>(null);
     const [userModalShown, setUserModalShown] = useState(false);
     const [userModalEditMode, setUserModalEditMode] = useState(false);
+    const [userModalCreationMode, setUserModalCreationMode] = useState(false);
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [sortColumn, setSortColumn] = useState(null);
+    const [sortDirection, setSortDirection] = useState("asc");
 
     useEffect(() => {
         // Ověření oprávnění
@@ -46,6 +50,7 @@ export const Administration = () => {
     function closeModal() {
         setUserModalShown(false);
         setUserModalEditMode(false);
+        setUserModalCreationMode(false);
     }
 
     function translateGender(gender: string) {
@@ -56,6 +61,40 @@ export const Administration = () => {
             default: return "Neznámý";
         }
     }
+
+    const handleSearchChange = (event: any) => {
+        setSearchTerm(event.target.value);
+    };
+
+    const handleSort = (column: any) => {
+        const newDirection = sortColumn === column && sortDirection === "asc" ? "desc" : "asc";
+        setSortColumn(column);
+        setSortDirection(newDirection);
+    };
+
+    const filteredAndSortedUsers = users
+        ?.filter((user) =>
+            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) => {
+            if (!sortColumn) return 0;
+            const aValue = a[sortColumn] || "";
+            const bValue = b[sortColumn] || "";
+            return (
+                aValue.toString().localeCompare(bValue.toString(), "cs", { numeric: true }) *
+                (sortDirection === "asc" ? 1 : -1)
+            );
+    });
+
+    const addUser = () => {
+        setUserModalShown(true);
+        setUserModalEditMode(true);
+        setUserModalCreationMode(true);
+
+        setSelectedUser({});
+    }
+
 
 
 
@@ -69,19 +108,24 @@ export const Administration = () => {
                     <>
                         <div className="top">
                             {
-                                selectedUser.avatar ? (
-                                    <div className="banner" style={{ '--bg': `url(${selectedUser.avatar})`} as CSSProperties}></div>
+                                selectedUser?.avatar ? (
+                                    <div className="banner" style={{ '--bg': `url(${selectedUser?.avatar})`} as CSSProperties}></div>
                                 ) : null
                             }
-                            <Avatar size={"200px"} src={selectedUser.avatar} letter={ selectedUser.name?.split(" ")[0][0] + "" + selectedUser.name?.split(" ")[1]?.[0] } backgroundColor={"var(--accent-color)"} />
+
+                            {
+                                !userModalCreationMode ?
+                                    <Avatar size={"200px"} src={selectedUser?.avatar} name={selectedUser?.name} />
+                                : <Avatar size={"200px"} name="?" backgroundColor="var(--accent-color)" />
+                            }
                         </div>
 
                         <div className="bottom">
                             {
                                 !userModalEditMode ? (
-                                    <h1>{ selectedUser.name }</h1>
+                                    <h1>{ selectedUser?.name }</h1>
                                 ) : (
-                                    <input name="name"  defaultValue={selectedUser.name} type={"text"}  required placeholder="Jméno" maxLength={30} />
+                                    <input name="name"  defaultValue={selectedUser?.name} type={"text"}  required placeholder="Jméno" maxLength={30} />
                                 )
                             }
 
@@ -91,7 +135,12 @@ export const Administration = () => {
                                         <button className="button-tertiary" style={{ flexGrow: 1 }} type="button" onClick={() => setUserModalEditMode(true)}>Upravit</button>
                                         <button className="button-tertiary" type="button">Smazat</button>
                                     </div>
-                                ) :(
+                                ) : userModalCreationMode ? (
+                                    <div className="edit-delete-buttons-div">
+                                        <button className="button-tertiary" style={{ flexGrow: 1 }} type="button">Vytvořit uživatele</button>
+                                        <button className="button-tertiary" type="button" onClick={() => {setUserModalEditMode(false); setUserModalShown(false) }}>Zrušit</button>
+                                    </div>
+                                ) : (
                                     <div className="edit-delete-buttons-div">
                                         <button className="button-tertiary" style={{ flexGrow: 1 }} type="button">Uložit změny</button>
                                         <button className="button-tertiary" type="button" onClick={() => setUserModalEditMode(false)}>Zrušit změny</button>
@@ -105,9 +154,9 @@ export const Administration = () => {
 
                                     {
                                         !userModalEditMode ? (
-                                            <p>{ selectedUser.email }</p>
+                                            <p>{ selectedUser?.email }</p>
                                         ) : (
-                                            <input type="email" defaultValue={ selectedUser.email } name="email" placeholder="Email" />
+                                            <input type="email" defaultValue={ selectedUser?.email } name="email" placeholder="Email" />
                                         )
                                     }
                                 </div>
@@ -116,9 +165,9 @@ export const Administration = () => {
                                     <div className="icon" style={{ maskImage: `url(/images/icons/class.svg)` }}></div>
                                     {
                                         !userModalEditMode ? (
-                                            <p>{ selectedUser.class ?? "Neznámá" }</p>
+                                            <p>{ selectedUser?.class ?? "Neznámá" }</p>
                                         ) : (
-                                            <input type="text" defaultValue={ selectedUser.class } name="class" placeholder="Třída" />
+                                            <input type="text" defaultValue={ selectedUser?.class } name="class" placeholder="Třída" />
                                         )
                                     }
                                 </div>
@@ -127,9 +176,9 @@ export const Administration = () => {
                                     <div className="icon" style={{ maskImage: `url(/images/icons/gender.svg)` }}></div>
                                     {
                                         !userModalEditMode ? (
-                                            <p>{ translateGender(selectedUser.gender) }</p>
+                                            <p>{ translateGender(selectedUser?.gender) }</p>
                                         ) : (
-                                            <select name="gender" defaultValue={selectedUser.gender}>
+                                            <select name="gender" defaultValue={selectedUser?.gender}>
                                                 <option value="MALE">Muž</option>
                                                 <option value="FEMALE">Žena</option>
                                                 <option value="OTHER">Ostatní</option>
@@ -142,9 +191,9 @@ export const Administration = () => {
                                     <div className="icon" style={{ maskImage: `url(/images/icons/account.svg)` }}></div>
                                     {
                                         !userModalEditMode ? (
-                                            <p>{ selectedUser.accountType }</p>
+                                            <p>{ selectedUser?.accountType }</p>
                                         ) : (
-                                            <select name="accountType"  defaultValue={selectedUser.accountType}>
+                                            <select name="accountType"  defaultValue={selectedUser?.accountType}>
                                                 <option value="STUDENT">Student</option>
                                                 <option value="TEACHER">Učitel</option>
                                                 <option value="ADMIN">Admin</option>
@@ -171,37 +220,53 @@ export const Administration = () => {
                 selectedTab === "users" ? (
                     <div className="users-wrapper">
                         <div className="inputs">
+                            <p className="user-count">Uživatelé ({ filteredAndSortedUsers?.length ?? 0 })</p>
 
+                            <input
+                                type="text"
+                                placeholder="Hledat uživatele..."
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                            />
+
+                            <p className="add-user" onClick={() => addUser()}>+ Přidat uživatele</p>
                         </div>
 
                         <table>
                             <thead>
                             <tr>
-                                <th>Jméno a příjmení</th>
-                                <th>Email</th>
-                                <th>Pohlaví</th>
-                                <th>Třída</th>
-                                <th>Typ účtu</th>
-                                <th>Naposledy upraven</th>
-                                <th>Naposledy přihlášen</th>
+                                <th onClick={() => handleSort("name")}>Jméno a příjmení</th>
+                                <th onClick={() => handleSort("email")}>Email</th>
+                                <th onClick={() => handleSort("gender")}>Pohlaví</th>
+                                <th onClick={() => handleSort("class")}>Třída</th>
+                                <th onClick={() => handleSort("accountType")}>Typ účtu</th>
+                                <th onClick={() => handleSort("lastUpdated")}>Naposledy upraven</th>
+                                <th onClick={() => handleSort("lastLoggedIn")}>Naposledy přihlášen</th>
                             </tr>
                             </thead>
 
                             <tbody>
-                                {users?.map(user => (
-                                    <tr key={user.id} className={loggedUser.id === user.id ? "loggeduser" : ""} onClick={()=>{setSelectedUser(user); setUserModalShown(true)}}>
+                                {filteredAndSortedUsers?.map((user) => (
+                                    <tr
+                                        key={user.id}
+                                        className={loggedUser.id === user.id ? "loggeduser" : ""}
+                                        onClick={() => {
+                                            setSelectedUser(user);
+                                            setUserModalShown(true);
+                                        }}
+                                    >
                                         <td>
                                             <div className="name">
-                                                <Avatar size={"28px"} letter={user.name?.split(" ")[0][0] + "" + user.name?.split(" ")[1]?.[0]} backgroundColor={"var(--accent-color)"} src={user.avatar} />
+                                                <Avatar size={"28px"} name={user.name} src={user.avatar} />
                                                 <p>{user.name}</p>
                                             </div>
                                         </td>
                                         <td>{user.email}</td>
-                                        <td>{user.gender}</td>
+                                        <td >{translateGender(user.gender)}</td>
                                         <td>{user.class}</td>
                                         <td>{user.accountType}</td>
-                                        <td>{new Date(user.lastUpdated).toLocaleString() }</td>
-                                        <td>{user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : null }</td>
+                                        <td>{new Date(user.lastUpdated).toLocaleString()}</td>
+                                        <td>{user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : null}</td>
                                     </tr>
                                 ))}
                             </tbody>

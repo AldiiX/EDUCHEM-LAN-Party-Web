@@ -73,7 +73,7 @@ html:is(.theme-light) {
     --error-color: #ff0000;
     --error-color-2: #6c0000;
     --error-background: #ffb7b7;
-    --bgimage: url('../public/images/backgrounds/island3.webp');
+    --bgimage: url('../public/images/backgrounds/island3.jpg');
 
     // pro mapu
     --pc-available: var(--accent-color);
@@ -174,7 +174,7 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
 
 .button-tertiary {
     background-color: transparent;
-    color: var(--text-color-darker);
+    color: var(--text-color-secondary);
     border: 1px solid var(--text-color-3);
     padding: 8px 16px;
     border-radius: 8px;
@@ -195,15 +195,15 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
 
 
 input, select, textarea {
-    background-color: var(--background-bg-2);
+    background-color: var(--element-bg);
     color: var(--text-color);
     border: 1px solid var(--element-bg-colored);
-    border-radius: 12px;
-    padding: 8px;
+    border-radius: 8px;
+    padding: 12px;
     font-size: 16px;
     transition: border-color 0.2s;
 
-    &:focus {
-        border-color: var(--accent-color);
+    &:focus, &:focus-visible {
+        outline: none;
     }
 }

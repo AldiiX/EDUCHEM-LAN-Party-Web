@@ -9,7 +9,7 @@ const Home = () => {
                 <h1>Educhem LAN Party</h1>
 
                 <div className="buttons">
-                    <a className="button-secondary">Informace o akci</a>
+                    <a className="button-secondary" href="/info.pdf" target="_blank">Informace o akci</a>
                     <Link to="/app/reservations" className="button-primary">Rezervace</Link>
                 </div>
             </div>

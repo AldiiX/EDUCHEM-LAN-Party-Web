@@ -414,7 +414,7 @@ export const Reservations = () => {
                                             loggedUser !== null ? (
                                                 <div className="reservedby">
                                                     <div className="nameandavatar">
-                                                        <Avatar size="24px" backgroundColor="var(--accent-color)" src={selectedReservation?.reservations?.[0]?.user?.avatar} letter={selectedReservation?.reservations?.[0]?.user?.displayName?.split(" ")[0][0] + (selectedReservation?.reservations?.[0]?.user?.displayName?.split(" ")[1]?.[0] || "")}/>
+                                                        <Avatar size="24px" src={selectedReservation?.reservations?.[0]?.user?.avatar} name={selectedReservation?.reservations?.[0]?.user?.displayName}/>
                                                         <p>{selectedReservation.reservations[0]?.user?.displayName}</p>
                                                     </div>
                                                     <p className="class">{selectedReservation.reservations[0]?.user?.class}</p>
@@ -448,12 +448,8 @@ export const Reservations = () => {
                                                             >
                                                                 <Avatar
                                                                     size="24px"
-                                                                    backgroundColor="var(--accent-color)"
                                                                     src={reservation.user?.avatar}
-                                                                    letter={
-                                                                        reservation?.user?.displayName?.split(" ")[0][0] +
-                                                                        (reservation?.user?.displayName?.split(" ")[1]?.[0] || "")
-                                                                    }
+                                                                    name={reservation?.user?.displayName}
                                                                 />
                                                                 <div className="texts">
                                                                     <p className="name">
@@ -468,7 +464,14 @@ export const Reservations = () => {
                                                         );
                                                     })}
                                                 </div>
-                                            ) : null}
+                                            ) : (
+                                                selectedReservation.reservations.length < selectedReservation.limitOfSeats ? (
+                                                    <>
+                                                        <div className="divider"></div>
+                                                        <p>Pro rezervování <Link to="/login" style={{ color: "var(--accent-color)"}}>se přihlaš</Link>.</p>
+                                                    </>
+                                                ) : null
+                                            )}
                                         </>
                                     )}
 
@@ -584,7 +587,7 @@ export const Reservations = () => {
                                             reservation = reservation as any;
                                             return (
                                                 <div key={index} className={"reservation"}>
-                                                    <Avatar size={"40px"} backgroundColor={"var(--accent-color)"} src={reservation.user?.avatar} letter={reservation.user?.displayName?.split(" ")[0][0] + "" + reservation.user?.displayName?.split(" ")[1]?.[0]} />
+                                                    <Avatar size={"40px"} src={reservation.user?.avatar} name={reservation.user?.displayName} />
 
                                                     <div className="texts">
                                                         <p className={"name"}>{reservation.user?.displayName} <span>{reservation.user?.class}</span></p>
@@ -598,7 +601,7 @@ export const Reservations = () => {
                             </div>
                         </div>
                         : <div className={"block"}>
-                            <p>Pro zobrazení rezervací <a href={"/login"}>se přihlaš</a>.</p>
+                            <p>Pro zobrazení více informací <Link to="/login">se přihlaš</Link>.</p>
                         </div>
                     }
 

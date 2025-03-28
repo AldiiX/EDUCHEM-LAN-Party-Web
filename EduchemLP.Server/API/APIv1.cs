@@ -52,7 +52,7 @@ public class APIv1 : Controller {
     public IActionResult Logout() {
         HttpContextService.Current.Items["loggeduser"] = null;
         HttpContextService.Current.Session.Remove("loggeduser");
-        Response.Cookies.Delete("educhemlpr_session");
+        Response.Cookies.Delete("educhemlp_session");
         return new NoContentResult();
     }
 

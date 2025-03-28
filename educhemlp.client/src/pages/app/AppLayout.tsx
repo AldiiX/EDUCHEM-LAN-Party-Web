@@ -100,7 +100,7 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                                 <h2>{ loggedUser?.displayName }</h2>
                             </div>
 
-                            <Avatar size={"48px"} src={loggedUser?.avatar} backgroundColor={"var(--accent-color)"}  letter={loggedUser?.displayName?.split(" ")[0][0] + "" + loggedUser?.displayName?.split(" ")[1]?.[0]} className={"avatar"} />
+                            <Avatar size={"48px"} src={loggedUser?.avatar} name={loggedUser?.displayName} className={"avatar"}  />
 
                             <div className={"popover"}>
                                 <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
@@ -118,7 +118,8 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                         </div>
                     ) : (
                         <div className="loggeduser">
-                            <ButtonPrimary text={"Přihlásit se"} onClick={() => {window.location.href = '/login'}} />
+                            <div className="changetheme"></div>
+                            <Link to="/login" className={"button-primary"}>Přihlásit se</Link>
                         </div>
                     )
                 }

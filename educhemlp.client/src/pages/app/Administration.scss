@@ -41,6 +41,39 @@
 }
 
 .users-wrapper {
+    >.inputs {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+        margin-top: 48px;
+
+        >.user-count {
+            overflow: hidden;
+            font-size: 24px;
+            color: var(--text-color-secondary);
+            width: 150px;
+            text-wrap: nowrap;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        >.add-user {
+            color: var(--accent-color);
+            user-select: none;
+            cursor: pointer;
+            transition-duration: 0.3s;
+
+            &:hover {
+                color: var(--accent-color-darker);
+                transition-duration: 0.3s;
+            }
+        }
+
+        >input {
+            border: none;
+        }
+    }
+
     table {
         width: 100%;
         border-collapse: collapse;
@@ -51,6 +84,14 @@
 
         thead th {
             padding: 20px 12px;
+            user-select: none;
+            cursor: pointer;
+            transition-duration: 0.2s;
+
+            &:hover {
+                background-color: var(--element-bg-colored);
+                transition-duration: 0.2s;
+            }
         }
 
         th {
@@ -82,7 +123,7 @@
 
 
             &:is(.loggeduser) {
-                .name p {
+                .name >p {
                     font-weight: bold;
 
                     &::after {

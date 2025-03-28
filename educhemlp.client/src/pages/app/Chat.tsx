@@ -64,7 +64,7 @@ export const Chat = () => {
                                 {
                                     message.author.id !== loggedUser.id ? (
                                         <>
-                                            <Avatar size={"32px"} backgroundColor={"var(--accent-color)"} src={message.author.avatar} letter={message.author.name.split(" ")[0][0] + "" + message.author.name.split(" ")[1]?.[0]} />
+                                            <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
                                             <div className="texts">
                                                 <h1>{message.author.name}</h1>
                                                 <article>{ message.message }</article>
