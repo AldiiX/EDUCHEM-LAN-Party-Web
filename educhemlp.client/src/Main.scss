@@ -73,7 +73,7 @@ html:is(.theme-light) {
     --error-color: #ff0000;
     --error-color-2: #6c0000;
     --error-background: #ffb7b7;
-    --bgimage: url('../public/images/backgrounds/island3.jpg');
+    --bgimage: url('../public/images/backgrounds/island3.webp');
 
     // pro mapu
     --pc-available: var(--accent-color);
@@ -117,6 +117,9 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    user-select: none;
+    text-decoration: none;
+    text-align: center;
 
     >.icon {
         width: 16px;

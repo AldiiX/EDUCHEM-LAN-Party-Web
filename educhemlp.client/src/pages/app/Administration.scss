@@ -1,3 +1,18 @@
+:root:is(.theme-light) {
+    .modal:is(.user-modal) .modal-content > .top > .banner {
+        overflow: hidden;
+
+        &::after {
+            width: 150%;
+            height: 150%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            filter: blur(20px);
+        }
+    }
+}
+
 .area-selector {
     display: flex;
     gap: 16px;

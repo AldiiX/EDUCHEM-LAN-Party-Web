@@ -23,8 +23,8 @@ const RouteTitle = () => {
 
     useEffect(() => {
         const routeTitles: { [key: string]: string } = {
-            '/': 'Home • Educhem LAN Party',
-            '/app': 'App • Educhem LAN Party',
+            '/': 'Domů • Educhem LAN Party',
+            '/app': 'Aplikace • Educhem LAN Party',
             '/app/reservations': 'Rezervace • Educhem LAN Party',
             '/app/map': 'Mapa • Educhem LAN Party',
             '/app/attendance': 'Příchody / Odchody • Educhem LAN Party',
