@@ -1,3 +1,12 @@
+input,
+textarea,
+button,
+select,
+div,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+
 #app {
     display: flex;
     height: 100vh;
@@ -286,6 +295,10 @@
 
         >.right {
             padding: 24px;
+
+            >.loggeduser {
+                right: 24px;
+            }
         }
     }
 }

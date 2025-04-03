@@ -12,5 +12,6 @@
     <Folder Include="public\images\avatars\" />
     <Folder Include="public\images\logo\" />
     <Folder Include="public\images\room_images\" />
+    <Folder Include="public\libs\" />
   </ItemGroup>
 </Project>

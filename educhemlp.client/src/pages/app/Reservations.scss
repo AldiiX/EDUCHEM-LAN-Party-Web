@@ -721,8 +721,7 @@
 @media (max-width: 768px) {
     .reservations {
         .map-wrapper {
-            display: flex;
-            flex-direction: column-reverse;
+            display: grid;
             gap: 24px;
             max-height: none;
             height: auto;
@@ -744,6 +743,10 @@
                     width: 100%;
                     transition-duration: 0.3s;
                     height: 24px;
+                }
+
+                >.collapser {
+                    display: none;
                 }
 
                 >.reservations {

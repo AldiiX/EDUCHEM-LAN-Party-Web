@@ -207,3 +207,10 @@ input, select, textarea {
         outline: none;
     }
 }
+
+
+@media (max-width: 768px) {
+    ::-webkit-scrollbar {
+        width: 4px;
+    }
+}
