@@ -562,6 +562,33 @@
             transition-duration: 0.3s;
             width: 320px;
 
+            .chart {
+                top: 24px;
+                left: 24px;
+                z-index: 2;
+                background-color: var(--element-bg);
+                border-radius: 12px;
+                pointer-events: none;
+                user-select: none;
+                //display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-top: 24px;
+                display: none;
+
+                >.texts {
+                    >h1{
+                        color: var(--accent-color);
+                    }
+
+                    >p {
+                        font-size: 16px;
+                        color: var(--text-color-secondary);
+                    }
+                }
+
+            }
+
             &:is(.collapsed) {
                 width: 24px;
                 transition-duration: 0.3s;
@@ -734,10 +761,19 @@
                 border-radius: 12px;
                 overflow: hidden;
                 box-shadow: 0 0 6px rgba(0,0,0,0.025);
+
+
+                >.chart {
+                    display: none;
+                }
             }
 
             >.stats {
                 width: 100%;
+
+                .chart {
+                    display: flex;
+                }
 
                 &:is(.collapsed) {
                     width: 100%;

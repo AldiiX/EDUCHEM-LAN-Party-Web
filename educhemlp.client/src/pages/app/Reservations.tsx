@@ -558,6 +558,14 @@ export const Reservations = () => {
                         <p>Počet rezervovaných PC: <span>{reservations.filter(r => r.computer !== null).length}/{computers.length}</span></p>
                         <p>Počet rezervovaných míst: <span>{reservations.filter(r => r.room !== null).length}/{roomsCapacity}</span></p>
                         <p>Celkem rezervací: <span>{reservations.length}/{computers.length + roomsCapacity}</span></p>
+
+                        <div className="chart">
+                            <PieChart value={occupiedPercent} width={100} height={100} />
+                            <div className="texts">
+                                <h1>{ occupiedPercent }%</h1>
+                                <p>Naplněné kapacity</p>
+                            </div>
+                        </div>
                     </div>
 
                     { loggedUser !== null ?

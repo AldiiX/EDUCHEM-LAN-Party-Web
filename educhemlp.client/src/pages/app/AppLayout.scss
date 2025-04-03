@@ -131,12 +131,13 @@ a {
 
     >.left-mobile {
         display: none;
+        z-index: 2;
         background-color: var(--element-bg);
         border-radius: 32px 32px 0 0;
         padding: 6px;
         box-shadow: 0 0 6px rgba(0,0,0,0.025);
         width: 100%;
-        min-height: 24px;
+        min-height: 32px;
 
         >.menu {
             display: flex;
@@ -298,6 +299,10 @@ a {
 
             >.loggeduser {
                 right: 24px;
+
+                *:not(.button-primary) {
+                    display: none;
+                }
             }
         }
     }
