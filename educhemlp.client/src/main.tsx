@@ -6,6 +6,7 @@ import './Main.scss';
 import {getCookie} from "./utils.ts";
 import {useStore} from "./store.tsx";
 import {Map} from "./pages/app/Map.tsx";
+import {AppMobileMenuDiv} from "./components/AppMobileMenuDiv.tsx";
 
 const Home = lazy(() => import('./pages/Home.tsx'));
 const Login = lazy(() => import('./pages/Login.tsx'));
@@ -16,6 +17,7 @@ const Announcements = lazy(() => import('./pages/app/Announcements.tsx'));
 const Tournaments = lazy(() => import('./pages/app/Tournaments.tsx'));
 const Chat = lazy(() => import('./pages/app/Chat.tsx'));
 const Forum = lazy(() => import('./pages/app/Forum.tsx'));
+const Account = lazy(() => import('./pages/app/Account.tsx'));
 
 
 const RouteTitle = () => {
@@ -33,6 +35,7 @@ const RouteTitle = () => {
             '/app/announcements': 'Oznámení • Educhem LAN Party',
             '/app/chat': 'Chat • Educhem LAN Party',
             '/app/forum': 'Forum • Educhem LAN Party',
+            '/app/account': 'Můj účet • Educhem LAN Party',
         };
 
         document.title = routeTitles[location.pathname] || 'Educhem LAN Party';
@@ -91,7 +94,9 @@ const App = () => {
         <>
             <Theme />
 
+
             <Router>
+                <AppMobileMenuDiv />
                 <RouteTitle />
                 <Routes>
                     <Route path="/" element={<Home />} />
@@ -105,6 +110,7 @@ const App = () => {
                     <Route path="/app/chat" element={<Chat />} />
                     <Route path="/app/forum" element={<Forum />} />
                     <Route path="/app/map" element={<Map />} />
+                    <Route path="/app/account" element={<Account />} />
                 </Routes>
             </Router>
         </>

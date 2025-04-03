@@ -116,7 +116,7 @@
 
         >.inputdiv {
             position: fixed;
-            bottom: 64px;
+            bottom: calc(64px + 12px);
             width: calc(100% - 48px);
             z-index: 1;
 

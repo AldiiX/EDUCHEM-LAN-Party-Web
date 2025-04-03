@@ -1,0 +1,15 @@
+.info {
+    justify-items: center;
+    align-items: center;
+    margin-top: 128px;
+    display: flex;
+    flex-direction: column;
+
+    .avatar {
+        margin-bottom: 16px;
+    }
+
+    .email {
+        color: var(--text-color-secondary);
+    }
+}

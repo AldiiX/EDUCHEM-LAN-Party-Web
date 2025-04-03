@@ -14,6 +14,8 @@ a {
     background-color: var(--background-bg);
     overflow: hidden;
 
+
+
     >.left {
         display: flex;
         flex-direction: column;
@@ -131,11 +133,11 @@ a {
 
     >.left-mobile {
         display: none;
-        z-index: 2;
+        z-index: 3;
         background-color: var(--element-bg);
         border-radius: 32px 32px 0 0;
         padding: 6px;
-        box-shadow: 0 0 6px rgba(0,0,0,0.025);
+        box-shadow: 0px -10px 20px 0px rgba(0, 0, 0, 0.028);
         width: 100%;
         min-height: 32px;
 
@@ -144,9 +146,12 @@ a {
             gap: 4px;
             user-select: none;
             flex-grow: 1;
-            justify-content: center;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 420px;
+            margin: 0 auto;
 
-            >a {
+            >a:not(.ignorestyle) {
                 text-decoration: none;
                 padding: 12px 24px;
                 border-radius: 48px;
@@ -196,6 +201,17 @@ a {
                         transition-duration: 0.3s;
                         background-color: var(--accent-color);
                     }
+                }
+            }
+
+            .avatar {
+                aspect-ratio: 1/1;
+                width: 28px;
+                margin: 0 18px;
+                flex-shrink: 0;
+
+                &:is(.active) {
+                    outline: 2px solid var(--accent-color);
                 }
             }
         }

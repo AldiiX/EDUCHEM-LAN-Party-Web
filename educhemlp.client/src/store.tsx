@@ -1,12 +1,7 @@
 import { create } from "zustand";
+import {LoggedUser} from "./interfaces.ts";
 
-type LoggedUser = {
-    id: number,
-    displayName: string,
-    class: string | null,
-    email: string,
-    accountType: string,
-}
+
 
 type Store = {
     loggedUser: LoggedUser | null,
@@ -17,15 +12,22 @@ type Store = {
 
     selectedReservation: any,
     setSelectedReservation: (reservation: any) => void,
+
+    menuOpened: boolean,
+    setMenuOpened: (opened: boolean) => void,
 };
 
 export const useStore = create<Store | any>((set: any) => ({
     loggedUser: null,
-    setLoggedUser: (user: LoggedUser) => set({ loggedUser: user }),
+    setLoggedUser: (user: LoggedUser) => set({loggedUser: user}),
 
     userAuthed: false,
-    setUserAuthed: (authed: boolean) => set({ userAuthed: authed }),
+    setUserAuthed: (authed: boolean) => set({userAuthed: authed}),
 
     selectedReservation: null,
-    setSelectedReservation: (reservation: any) => set({ selectedReservation: reservation }),
+    setSelectedReservation: (reservation: any) => set({selectedReservation: reservation}),
+
+    menuOpened: false,
+    setMenuOpened: (opened: boolean) => set({menuOpened: opened}),
+
 }));

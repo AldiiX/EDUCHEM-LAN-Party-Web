@@ -568,13 +568,18 @@
                 z-index: 2;
                 background-color: var(--element-bg);
                 border-radius: 12px;
-                pointer-events: none;
                 user-select: none;
                 //display: flex;
                 align-items: center;
-                gap: 8px;
+                justify-content: center;
+                gap: 16px;
                 margin-top: 24px;
                 display: none;
+
+                >div[role=meter] {
+                    width: 100px;
+                    flex-grow: 0;
+                }
 
                 >.texts {
                     >h1{

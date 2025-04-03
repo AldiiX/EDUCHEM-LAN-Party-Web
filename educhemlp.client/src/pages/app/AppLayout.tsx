@@ -5,12 +5,16 @@ import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
 import {toggleWebTheme} from "../../utils.ts";
 import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
+import {LoggedUser} from "../../interfaces.ts";
+import {AppMobileMenuDiv} from "../../components/AppMobileMenuDiv.tsx";
+import {AppMenu} from "../../components/AppMenu.tsx";
 
 export const AppLayout = ({ children, className }: { children: React.ReactNode, className?: string }) => {
     const location = useLocation();
     const [currentPage, setCurrentPage] = useState<string>("");
     const { loggedUser, setLoggedUser } = useStore();
     const { userAuthed, setUserAuthed } = useStore();
+    const { menuOpened, setMenuOpened } = useStore();
 
     useEffect(() => {
         setCurrentPage(location.pathname);
@@ -24,57 +28,7 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
 
     if (!userAuthed) return <></>;
 
-    const menu = () => {
-        return (
-            <div className={"menu"}>
-                <Link to={"/app/announcements"} className={currentPage === "/app/announcements" ? "active" : ""}>
-                    <div style={{ maskImage: 'url(/images/icons/bell.svg)' }}></div>
-                    <p>Oznámení</p>
-                </Link>
 
-                <Link to={"/app/map"} className={currentPage === "/app/map" ? "active" : ""}>
-                    <div style={{ maskImage: 'url(/images/icons/map.svg)' }}></div>
-                    <p>Mapa</p>
-                </Link>
-
-                <Link to={"/app/reservations"} className={currentPage === "/app/reservations" ? "active" : ""}>
-                    <div style={{ maskImage: 'url(/images/icons/calc.svg)' }}></div>
-                    <p>Rezervace</p>
-                </Link>
-
-                <Link to={"/app/forum"} className={currentPage === "/app/forum" ? "active" : ""}>
-                    <div style={{ maskImage: 'url(/images/icons/forum.svg)' }}></div>
-                    <p>Forum</p>
-                </Link>
-
-                {
-                    loggedUser !== null
-                        ? <Link to={"/app/chat"} className={currentPage === "/app/chat" ? "active" : ""}>
-                            <div style={{ maskImage: 'url(/images/icons/chat.svg)' }}></div>
-                            <p>Chat</p>
-                        </Link>
-                        : null
-                }
-
-                <Link to={"/app/attendance"} className={currentPage === "/app/attendance" ? "active" : ""}>
-                    <div style={{ maskImage: 'url(/images/icons/user_in_building.svg)' }}></div>
-                    <p>Příchody / Odchody</p>
-                </Link>
-
-                <Link to={"/app/tournaments"} className={currentPage === "/app/tournaments" ? "active" : ""}>
-                    <div style={{ maskImage: 'url(/images/icons/trophy_star.svg)' }}></div>
-                    <p>Turnaje</p>
-                </Link>
-
-                { loggedUser?.accountType === "ADMIN" ?
-                    <Link to={"/app/administration"} className={currentPage === "/app/administration" ? "active" : ""}>
-                        <div style={{ maskImage: 'url(/images/icons/user_with_shield.svg)' }}></div>
-                        <p>Administrace</p>
-                    </Link> : null
-                }
-            </div>
-        );
-    }
 
 
     return (
@@ -88,8 +42,7 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                     <h1>Educhem<br/>LAN Party</h1>
                 </div>
 
-                { menu() }
-                
+                <AppMenu />
 
                 <div className="footer">
                     <p>© { new Date().getFullYear() } Educhem LAN Party</p>
@@ -98,10 +51,38 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
             </div>
 
             <div className="left-mobile">
-                { menu() }
+                <div className="menu">
+                    <Link to={"/app/announcements"} className={currentPage === "/app/announcements" ? "active" : ""}>
+                        <div style={{ maskImage: 'url(/images/icons/bell.svg)' }}></div>
+                    </Link>
+
+                    <Link to={"/app/reservations"} className={currentPage === "/app/reservations" ? "active" : ""}>
+                        <div style={{ maskImage: 'url(/images/icons/calc.svg)' }}></div>
+                    </Link>
+
+                    <a className="menu-icon" onClick={() => setMenuOpened(true) }>
+                        <div style={{ maskImage: 'url(/images/icons/menu.svg)' }}></div>
+                    </a>
+
+                    <Link to={"/app/map"} className={currentPage === "/app/map" ? "active" : ""}>
+                        <div style={{ maskImage: 'url(/images/icons/map.svg)' }}></div>
+                    </Link>
+
+                    {
+                        loggedUser !== null ? (
+                            <Link to="/app/account" className="ignorestyle">
+                                <Avatar size="16px" name={loggedUser.displayName} src={loggedUser.avatar} className={currentPage === "/app/account" ? "active" : ""} />
+                            </Link>
+                        ) : (
+                            <Link to={"/app/forum"} className={currentPage === "/app/forum" ? "active" : ""}>
+                                <div style={{ maskImage: 'url(/images/icons/forum.svg)' }}></div>
+                            </Link>
+                        )
+                    }
+                </div>
             </div>
 
-            <div className={"right"}>
+            <div className="right">
                 {
                     loggedUser !== null ? (
                         <div className="loggeduser">

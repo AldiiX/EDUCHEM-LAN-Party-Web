@@ -8,10 +8,11 @@ type AvatarProps = {
     name: string,
     src?: string,
     className?: string,
-    backgroundColor?: string
+    backgroundColor?: string,
+    onClick?: () => void,
 }
 
-export const Avatar = ({ size = "16px", src, className, backgroundColor, name }: AvatarProps) => {
+export const Avatar = ({ size = "16px", src, className, backgroundColor, name, onClick }: AvatarProps) => {
     if(!backgroundColor) {
         // Výpočet hashe
         let hash = 0;
@@ -44,7 +45,7 @@ export const Avatar = ({ size = "16px", src, className, backgroundColor, name }:
     const letter = name?.split(" ").map((word) => word[0]).join("").slice(0, 2);
 
     return (
-        <div className={"avatar" + (className ? " " + className : "")} style={{ backgroundColor: !src || !AVATAR_ENABLED ? backgroundColor : "transparent",  "--size": size } as React.CSSProperties}>
+        <div onClick={onClick} className={"avatar" + (className ? " " + className : "")} style={{ backgroundColor: !src || !AVATAR_ENABLED ? backgroundColor : "transparent",  "--size": size } as React.CSSProperties}>
             {
                 src && AVATAR_ENABLED ? (
                     <img className={"image"} src={src} alt="avatar" />
