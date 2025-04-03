@@ -718,3 +718,42 @@
 
 }
 
+@media (max-width: 768px) {
+    .reservations {
+        .map-wrapper {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 24px;
+            max-height: none;
+            height: auto;
+
+            >.map {
+                width: 100%;
+                height: 80vh;
+                position: relative;
+                background-color: var(--element-bg);
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 0 6px rgba(0,0,0,0.025);
+            }
+
+            >.stats {
+                width: 100%;
+
+                &:is(.collapsed) {
+                    width: 100%;
+                    transition-duration: 0.3s;
+                    height: 24px;
+                }
+
+                >.reservations {
+                    max-height: 600px;
+                }
+
+                >.block {
+                    width: 100%;
+                }
+            }
+        }
+    }
+}
