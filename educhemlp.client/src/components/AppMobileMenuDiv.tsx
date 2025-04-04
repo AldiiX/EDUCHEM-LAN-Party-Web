@@ -19,7 +19,7 @@ export const AppMobileMenuDiv = () => {
             setTimeout(() => {
                 setMenuOpened(false);
                 menu.classList.remove("closing");
-            }, 500);
+            }, 400);
         }, 0);
     }
 

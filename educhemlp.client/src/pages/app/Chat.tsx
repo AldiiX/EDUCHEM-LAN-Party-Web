@@ -41,6 +41,22 @@ export const Chat = () => {
                 messages.push(message);
                 /!*setMessages((prevMessages) => [...prevMessages, message]);*!/
             }*/
+
+            // scrollnuti na konec
+            const messagesDiv = document.querySelector(".messages");
+            const rightSection = document.querySelector(".right");
+
+            setTimeout(() => {
+                messagesDiv?.scrollTo({
+                    top: messagesDiv.scrollHeight,
+                    behavior: "smooth"
+                });
+
+                rightSection?.scrollTo({
+                    top: rightSection.scrollHeight,
+                    behavior: "smooth"
+                });
+            }, 1)
         };
 
         ws.onclose = () => {
