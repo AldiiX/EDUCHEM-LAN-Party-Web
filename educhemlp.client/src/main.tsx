@@ -25,20 +25,20 @@ const RouteTitle = () => {
 
     useEffect(() => {
         const routeTitles: { [key: string]: string } = {
-            '/': 'Domů • Educhem LAN Party',
-            '/app': 'Aplikace • Educhem LAN Party',
-            '/app/reservations': 'Rezervace • Educhem LAN Party',
-            '/app/map': 'Mapa • Educhem LAN Party',
-            '/app/attendance': 'Příchody / Odchody • Educhem LAN Party',
-            '/app/administration': 'Administrace • Educhem LAN Party',
-            '/app/tournaments': 'Turnaje • Educhem LAN Party',
-            '/app/announcements': 'Oznámení • Educhem LAN Party',
-            '/app/chat': 'Chat • Educhem LAN Party',
-            '/app/forum': 'Forum • Educhem LAN Party',
-            '/app/account': 'Můj účet • Educhem LAN Party',
+            '/': 'Domů • EDUCHEM LAN Party',
+            '/app': 'Aplikace • EDUCHEM LAN Party',
+            '/app/reservations': 'Rezervace • EDUCHEM LAN Party',
+            '/app/map': 'Mapa • EDUCHEM LAN Party',
+            '/app/attendance': 'Příchody / Odchody • EDUCHEM LAN Party',
+            '/app/administration': 'Administrace • EDUCHEM LAN Party',
+            '/app/tournaments': 'Turnaje • EDUCHEM LAN Party',
+            '/app/announcements': 'Oznámení • EDUCHEM LAN Party',
+            '/app/chat': 'Chat • EDUCHEM LAN Party',
+            '/app/forum': 'Forum • EDUCHEM LAN Party',
+            '/app/account': 'Můj účet • EDUCHEM LAN Party',
         };
 
-        document.title = routeTitles[location.pathname] || 'Educhem LAN Party';
+        document.title = routeTitles[location.pathname] || 'EDUCHEM LAN Party';
     }, [location]);
 
     return null;

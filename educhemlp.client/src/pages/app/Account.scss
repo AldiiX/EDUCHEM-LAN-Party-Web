@@ -1,15 +1,37 @@
-.info {
-    justify-items: center;
-    align-items: center;
-    margin-top: 128px;
-    display: flex;
-    flex-direction: column;
+.page-account {
+    .info {
+        justify-items: center;
+        align-items: center;
+        margin-top: 128px;
+        display: flex;
+        flex-direction: column;
 
-    .avatar {
-        margin-bottom: 16px;
-    }
+        .avatar {
+            margin-bottom: 16px;
+        }
 
-    .email {
-        color: var(--text-color-secondary);
+        h1 {
+            text-align: center;
+        }
+
+        .email {
+            text-align: center;
+            color: var(--text-color-secondary);
+        }
+
+        .type {
+            font-size: 12px;
+            color: var(--accent-color);
+            margin-top: 4px;
+        }
+
+        >.buttons {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            //flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
     }
 }

@@ -27,3 +27,14 @@ export const toggleWebTheme = () => {
     const theme = document.documentElement.classList.contains('theme-dark') ? "light" : "dark";
     setWebTheme(theme);
 }
+
+export const logout = (setLoggedUser: Function) => {
+    fetch("/api/v1/loggeduser", {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    }).then(() => {
+        setLoggedUser(null);
+    });
+}

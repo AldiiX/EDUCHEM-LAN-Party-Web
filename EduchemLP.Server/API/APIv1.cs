@@ -19,7 +19,6 @@ public class APIv1 : Controller {
         return new JsonResult(new { success = true, message = "API v1" });
     }
 
-
     [HttpGet("loggeduser")]
     public IActionResult GetLoggedUser() {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();

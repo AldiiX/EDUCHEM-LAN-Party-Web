@@ -27,7 +27,7 @@ export const AppMobileMenuDiv = () => {
         <div className="mobile-menu">
             <div className="title">
                 <div className="logo"></div>
-                <h1>Educhem<br/>LAN Party</h1>
+                <h1>EDUCHEM<br/>LAN Party</h1>
             </div>
 
             <AppMenu onClick={() => closeMenu() } />

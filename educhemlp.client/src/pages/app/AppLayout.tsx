@@ -3,7 +3,7 @@ import "./AppLayout.scss";
 import {CSSProperties, useEffect, useState} from "react";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
-import {toggleWebTheme} from "../../utils.ts";
+import {logout, toggleWebTheme} from "../../utils.ts";
 import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import {LoggedUser} from "../../interfaces.ts";
 import {AppMobileMenuDiv} from "../../components/AppMobileMenuDiv.tsx";
@@ -39,13 +39,13 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                 {/*<h1>Educhem<br/>LAN Party</h1>*/}
                 <div className="title">
                     <div className="logo"></div>
-                    <h1>Educhem<br/>LAN Party</h1>
+                    <h1>EDUCHEM<br/>LAN Party</h1>
                 </div>
 
                 <AppMenu />
 
                 <div className="footer">
-                    <p>© { new Date().getFullYear() } Educhem LAN Party</p>
+                    <p>© { new Date().getFullYear() } EDUCHEM LAN Party</p>
                     <p>Vytvořili: <a href="https://stanislavskudrna.cz" target="_blank">Stanislav Škudrna</a>, <a href="https://github.com/WezeAnonymm" target="_blank">Serhii Yavorskyi</a></p>
                 </div>
             </div>
@@ -86,25 +86,18 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                 {
                     loggedUser !== null ? (
                         <div className="loggeduser">
-                            <div className="texts">
-                                <p>{ loggedUser?.accountType === "STUDENT" ? "Přihlášen jako" : normalizeText(loggedUser?.accountType) }</p>
-                                <h2>{ loggedUser?.displayName }</h2>
-                            </div>
+                            <Link to="/app/account">
+                                <div className="texts">
+                                    <p>{ loggedUser?.accountType === "STUDENT" ? "Přihlášen jako" : normalizeText(loggedUser?.accountType) }</p>
+                                    <h2>{ loggedUser?.displayName }</h2>
+                                </div>
 
-                            <Avatar size={"48px"} src={loggedUser?.avatar} name={loggedUser?.displayName} className={"avatar"}  />
+                                <Avatar size="48px" src={loggedUser?.avatar} name={loggedUser?.displayName}  />
+                            </Link>
 
                             <div className={"popover"}>
                                 <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
-                                <p onClick={() => {
-                                    fetch("/api/v1/loggeduser", {
-                                        method: "DELETE",
-                                        headers: {
-                                            "Content-Type": "application/json",
-                                        },
-                                    }).then(() => {
-                                        setLoggedUser(null);
-                                    });
-                                }}>Odhlásit se</p>
+                                <p onClick={() => logout(setLoggedUser)}>Odhlásit se</p>
                             </div>
                         </div>
                     ) : (

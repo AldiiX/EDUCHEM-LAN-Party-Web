@@ -75,6 +75,7 @@ public static class WSChat {
         // pri ukonceni socketu
         lock (ConnectedUsers) ConnectedUsers.Remove(client);
     }
+
     //metodiky 
     private static async Task BroadcastMessageAsync(this WSClient client, string message) {
         if (client.WebSocket is not { State: WebSocketState.Open }) return;
@@ -87,8 +88,7 @@ public static class WSChat {
     }
     
     //logisticky metody
-    private static async Task<bool> SendInicialChat(this WSClient client)
-    {
+    private static async Task<bool> SendInicialChat(this WSClient client) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return false;
         await using var cmd = conn.CreateCommand();
@@ -96,19 +96,18 @@ public static class WSChat {
                           SELECT c.*, u.display_name as author_name, u.avatar as author_avatar
                           FROM chat c
                           LEFT JOIN users u ON c.user_id = u.id
-                          ORDER BY `date` ASC LIMIT 20
+                          ORDER BY `date` DESC LIMIT 20
                           """;
         
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if (reader == null) return false;
         var messages = new JsonArray();
-        while (await reader.ReadAsync())
-        {
-            var message = new JsonObject
-            {
+        while (await reader.ReadAsync()) {
+            if(reader.GetValueOrNull<int>("user_id") == null || reader.GetStringOrNull("author_name") == null) continue;
+
+            var message = new JsonObject {
                 ["uuid"] = reader.GetString("uuid"),
-                ["author"] = new JsonObject
-                {
+                ["author"] = new JsonObject {
                     ["id"] = reader.GetInt32("user_id"),
                     ["name"] = reader.GetString("author_name"),
                     ["avatar"] = reader.GetStringOrNull("author_avatar")
@@ -116,10 +115,11 @@ public static class WSChat {
                 ["message"] = reader.GetString("message"),
                 ["date"] = reader.GetDateTime("date")
             };
+
             messages.Add(message);
         }
-        await client.BroadcastMessageAsync(new JsonObject
-        {
+
+        await client.BroadcastMessageAsync(new JsonObject {
             ["action"] = "sendMessages",
             ["messages"] = messages
         }.ToString());

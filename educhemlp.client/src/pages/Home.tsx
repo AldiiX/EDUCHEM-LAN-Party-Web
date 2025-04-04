@@ -6,7 +6,7 @@ const Home = () => {
     return (
         <>
             <div className="centerobj">
-                <h1>Educhem LAN Party</h1>
+                <h1>EDUCHEM LAN Party</h1>
 
                 <div className="buttons">
                     <a className="button-secondary" href="/info.pdf" target="_blank">Informace o akci</a>

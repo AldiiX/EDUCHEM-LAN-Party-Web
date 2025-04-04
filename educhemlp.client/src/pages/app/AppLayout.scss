@@ -139,7 +139,7 @@ a {
         padding: 6px;
         box-shadow: 0px -10px 20px 0px rgba(0, 0, 0, 0.028);
         width: 100%;
-        min-height: 32px;
+        min-height: 64px;
 
         >.menu {
             display: flex;
@@ -229,14 +229,48 @@ a {
             position: absolute;
             top: 32px;
             right: 48px;
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            user-select: none;
-            cursor: pointer;
-            transition-duration: 0.3s;
             z-index: 3;
 
+
+            >a {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+                user-select: none;
+                cursor: pointer;
+                transition-duration: 0.3s;
+                text-decoration: none;
+
+                .texts {
+                    * {
+                        text-align: right;
+                    }
+
+                    >h2 {
+                        font-size: 20px;
+                        color: var(--accent-color);
+                    }
+                }
+
+                .avatar {
+                    //width: 44px;
+                    aspect-ratio: 1/1;
+                    background-color: var(--accent-color);
+                    border-radius: 100%;
+                    position: relative;
+
+                    &:before {
+                        content: var(--letter);
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: white;
+                        font-weight: bolder;
+                        font-size: 20px;
+                    }
+                }
+            }
 
             >.popover {
                 display: none;
@@ -249,47 +283,21 @@ a {
                 top: calc(100%);
                 right: 0;
             }
-            
+
             &:hover {
                 transition-duration: 0.3s;
+
+                a {
+                    transition-duration: 0.3s;
+                }
 
                 .texts, .avatar {
                     transition-duration: 0.3s;
                     opacity: 0.5;
                 }
 
-                >.popover {
+                .popover {
                     display: flex;
-                }
-            }
-
-            >.texts {
-                * {
-                    text-align: right;
-                }
-
-                >h2 {
-                    font-size: 20px;
-                    color: var(--accent-color);
-                }
-            }
-
-            >.avatar {
-                //width: 44px;
-                aspect-ratio: 1/1;
-                background-color: var(--accent-color);
-                border-radius: 100%;
-                position: relative;
-
-                &:before {
-                    content: var(--letter);
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    color: white;
-                    font-weight: bolder;
-                    font-size: 20px;
                 }
             }
         }

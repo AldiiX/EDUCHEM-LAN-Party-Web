@@ -11,29 +11,31 @@ export const Chat = () => {
     const { userAuthed, setUserAuthed } = useStore();
     const [messages, setMessages] = useState<any[]>([]);
     
-    
-    // Effect for permission check
+
     useEffect(() => {
         if (userAuthed && loggedUser === null) {
             navigate("/app");
         }
-    }, [userAuthed, loggedUser, navigate]); // Add `loggedUser` to the dependencies array
+    }, [userAuthed, loggedUser, navigate]);
 
-    // Effect for WebSocket connection (always runs)
+
     useEffect(() => {
         const ws = new WebSocket(
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/chat`
         );
 
         ws.onopen = () => {
-            console.log("connected");
+            //console.log("connected");
         };
 
         ws.onmessage = (e) => {
             const data = JSON.parse(e.data);
-            console.log(data);
+            //console.log(data);
 
-            setMessages((prevMessages) => [...prevMessages, ...data.messages]);
+            const messages = data.messages?.reverse();
+            console.log(messages);
+
+            setMessages((prevMessages) => [...prevMessages, ...messages ]);
             /*for (let message of data.messages ) {
                 console.log(message);
                 messages.push(message);
@@ -42,16 +44,21 @@ export const Chat = () => {
         };
 
         ws.onclose = () => {
-            console.log("disconnected");
+            //console.log("disconnected");
         };
         
         return () => {
             ws.close();
         };
-    }, []); // This hook only runs once on mount and unmount
-    
-    // Ensure that the component only renders if the user is authenticated
-    if (!userAuthed) return <></>;
+    }, []);
+
+
+
+
+    if (!userAuthed || (userAuthed && !loggedUser)) {
+        navigate("/app");
+        return null;
+    }
 
     return (
         <AppLayout>

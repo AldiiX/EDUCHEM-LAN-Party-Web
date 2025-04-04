@@ -44,7 +44,7 @@ export const Administration = () => {
         }
     }, [selectedTab]);
 
-    if (!userAuthed) return <></>;
+
 
 
     function closeModal() {
@@ -96,7 +96,10 @@ export const Administration = () => {
     }
 
 
-
+    if (!userAuthed || (userAuthed && !loggedUser) || (userAuthed && loggedUser?.accountType !== "ADMIN" && loggedUser?.accountType !== "TEACHER")) {
+        navigate("/app");
+        return null;
+    }
 
     return (
         <AppLayout>
