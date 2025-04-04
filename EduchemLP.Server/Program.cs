@@ -38,12 +38,10 @@ public static class Program {
         builder.Services.AddRazorPages();
         builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         builder.Services.AddStackExchangeRedisCache(options => {
-            if (DEVELOPMENT_MODE) {
-                options.ConfigurationOptions = new ConfigurationOptions {
-                    EndPoints = { $"{ENV["DATABASE_IP"]}:{ENV["REDIS_PORT"]}" },
-                    Password = ENV["REDIS_PASSWORD"],
-                };
-            } else options.Configuration = $"{ENV["DATABASE_IP"]}:6379";
+            options.ConfigurationOptions = new ConfigurationOptions {
+                EndPoints = { $"{ENV["DATABASE_IP"]}:{ENV["REDIS_PORT"]}" },
+                Password = ENV["REDIS_PASSWORD"],
+            };
 
             options.InstanceName = "EduchemLP_session";
         });
