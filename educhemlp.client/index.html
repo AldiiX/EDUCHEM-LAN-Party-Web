@@ -2,26 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="robots" content="noindex">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
     <title>EDUCHEM LAN Party</title>
     <link rel="stylesheet" href="./public/libs/purecss.css" />
 
     <!-- Favicony -->
-    <link rel="icon" href="./public/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/x-icon" href="./public/favicon.ico">
     <link rel="icon" href="./public/favicon_black.ico" type="image/x-icon" media="(prefers-color-scheme: light)">
     <link rel="icon" href="./public/favicon_white.ico" type="image/x-icon" media="(prefers-color-scheme: dark)">
 </head>
 <body>
-<div id="root"></div>
-<script type="module" src="/src/main.tsx"></script>
+    <noscript>
+        <div class="noscript">
+            <h1>JavaScript je vypnutý!</h1>
+            <p>Pro fungování aplikace je nutné mít zapnutý JavaScript.</p>
+        </div>
+    </noscript>
+
+
+    <!-- NAČÍTÁNÍ STRÁNKY -->
+<!--    <div id="loading"></div>-->
+
+
+    <!-- REACT APLIKACE -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 <style>
+    .noscript {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        /*background-color: #fff;*/
+        /*color: #000;*/
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: sans-serif;
+    }
+
+    #loading {
+        position: fixed;
+        aspect-ratio: 1/1;
+        width: clamp(100px, 10vw, 200px);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        mask-image: url('./public/images/icons/loading_puff.svg');
+        mask-size: cover;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        z-index: -1;
+    }
+
     @media (prefers-color-scheme: dark) {
         body {
             background-color: #101010;
             color: #fff;
+        }
+
+        #loading {
+            background-color: #fff;
         }
     }
 
@@ -29,6 +74,9 @@
         body {
             background-color: #f8f6f1;
             color: #000;
+        }
+        #loading {
+            background-color: #000;
         }
     }
 </style>

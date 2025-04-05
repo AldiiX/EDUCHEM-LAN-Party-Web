@@ -87,14 +87,14 @@ html:is(.theme-light) {
 
 h1, h2, h3, h4, h5, h6 {
     //font-family: 'leaguespartan';
-    font-family: 'gabarito';
+    font-family: 'gabarito', calibri, arial, sans-serif;
     font-weight: 700;
     margin: 0;
     color: var(--text-color);
 }
 
 p,a,div,span,button,input,textarea,select,label,li,ul {
-    font-family: 'gabarito';
+    font-family: 'gabarito', calibri, arial, sans-serif;
     margin: 0;
     color: var(--text-color);
 }

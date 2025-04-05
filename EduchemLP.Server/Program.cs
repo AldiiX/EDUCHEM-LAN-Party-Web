@@ -40,7 +40,7 @@ public static class Program {
 
         // pripojeni k redisu
         string? rhost, rport, rpassword;
-        /*if (!DEVELOPMENT_MODE) {
+        /*if (!DEVELOPMENT_MODE) { // TODO: opravit, aby to na productionu jelo na localhost:6379
             rhost = ENV["DATABASE_IP"];
             rport = "6379";
             rpassword = null;

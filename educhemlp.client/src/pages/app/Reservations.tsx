@@ -112,7 +112,7 @@ export const Reservations = () => {
         document.documentElement.classList.remove("noselect");
     };
 
-    const receiveSocketMessage = async (message: string) => {
+    const receiveSocketMessage = (message: string) => {
         const object = JSON.parse(message);
 
         switch (object.action) {
@@ -268,7 +268,7 @@ export const Reservations = () => {
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/reservations`
         );
         ws.onopen = () => {
-            console.log("connected");
+            //console.log("connected");
         };
 
         ws.onmessage = (e) => {
@@ -276,7 +276,7 @@ export const Reservations = () => {
         };
 
         ws.onclose = () => {
-            console.log("disconnected");
+            //console.log("disconnected");
             setSocketStatus("disconnected");
         };
 

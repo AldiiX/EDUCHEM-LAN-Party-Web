@@ -33,7 +33,7 @@ export const Chat = () => {
             //console.log(data);
 
             const messages = data.messages?.reverse();
-            console.log(messages);
+            //console.log(messages);
 
             setMessages((prevMessages) => [...prevMessages, ...messages ]);
             /*for (let message of data.messages ) {

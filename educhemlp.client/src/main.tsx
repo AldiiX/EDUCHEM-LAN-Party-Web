@@ -78,6 +78,9 @@ const App = () => {
     const { userAuthed, setUserAuthed } = useStore();
 
     useEffect(() => {
+        // vymazani loading animace
+        document.getElementById("loading")?.remove();
+
         fetch("/api/v1/loggeduser").then(async res => {
             if(!res.ok) {
                 setUserAuthed(true);
