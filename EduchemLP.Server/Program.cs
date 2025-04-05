@@ -45,7 +45,7 @@ public static class Program {
             rport = "6379";
             rpassword = null;
         } else {
-            rhost = ENV["REDIS_HOST"];
+            rhost = ENV["DATABASE_IP"];
             rport = ENV["REDIS_PORT"];
             rpassword = ENV["REDIS_PASSWORD"];
         }
