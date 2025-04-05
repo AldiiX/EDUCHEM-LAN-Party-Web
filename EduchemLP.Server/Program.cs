@@ -1,6 +1,9 @@
 using dotenv.net;
 using EduchemLP.Server.Middlewares;
 using EduchemLP.Server.Services;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using StackExchange.Redis;
 
 namespace EduchemLP.Server;
@@ -31,27 +34,33 @@ public static class Program {
 
 
     public static void Main(string[] args) {
+        ENV = DotEnv.Read();
         var builder = WebApplication.CreateBuilder(args);
+
+        var redis = ConnectionMultiplexer.Connect($"{ENV["DATABASE_IP"]}:{ENV["REDIS_PORT"]},password={ENV["REDIS_PASSWORD"]}");
+        builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
 
         builder.Services.AddControllersWithViews();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddRazorPages();
         builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-        builder.Services.AddStackExchangeRedisCache(options => {
-            options.ConfigurationOptions = new ConfigurationOptions {
-                EndPoints = { $"{ENV["DATABASE_IP"]}:{ENV["REDIS_PORT"]}" },
-                Password = ENV["REDIS_PASSWORD"],
-            };
 
-            options.InstanceName = "EduchemLP_session";
-        });
+        builder.Services.AddDataProtection()
+            .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys")
+            .SetApplicationName("EduchemLP");
+
+        builder.Services.AddSingleton<IDistributedCache>(sp =>
+            new RedisCache(new RedisCacheOptions {
+                ConfigurationOptions = ConfigurationOptions.Parse(redis.Configuration),
+                InstanceName = "EduchemLP_session"
+            })
+        );
+
         builder.Services.AddSession(options => {
             options.IdleTimeout = TimeSpan.FromDays(365);
             options.Cookie.HttpOnly = true;
             options.Cookie.IsEssential = true;
-
-            options.Cookie.MaxAge = TimeSpan.FromDays(365); // Trvání cookie na 365 dní
-            //options.Cookie.Expiration = TimeSpan.FromDays(365);
+            options.Cookie.MaxAge = TimeSpan.FromDays(365);
             options.Cookie.Name = "educhemlp_session";
         });
 
@@ -60,36 +69,26 @@ public static class Program {
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
         #if DEBUG
-                builder.Configuration.AddJsonFile("appsettings.Debug.json", optional: true, reloadOnChange: true);
+            builder.Configuration.AddJsonFile("appsettings.Debug.json", optional: true, reloadOnChange: true);
         #elif RELEASE
-                builder.Configuration.AddJsonFile("appsettings.Release.json", optional: true, reloadOnChange: true);
+            builder.Configuration.AddJsonFile("appsettings.Release.json", optional: true, reloadOnChange: true);
         #elif TESTING
             builder.Configuration.AddJsonFile("appsettings.Testing.json", optional: true, reloadOnChange: true);
         #endif
 
         builder.Configuration.AddEnvironmentVariables();
 
-
         App = builder.Build();
-        ENV = DotEnv.Read();
-        
-        
-        
-        // Konfigurace HttpContextService
+
         var httpContextAccessor = App.Services.GetRequiredService<IHttpContextAccessor>();
         HttpContextService.Configure(httpContextAccessor);
-        
 
-        
-        // Configure the HTTP request pipeline.
         if (!App.Environment.IsDevelopment()) {
             App.UseExceptionHandler("/error");
             App.UseStatusCodePagesWithReExecute("/error/{0}");
             App.UseHsts();
         }
 
-        
-        
         //App.UseHttpsRedirection();
         //App.UseStaticFiles();
         App.UseSession();
@@ -104,9 +103,6 @@ public static class Program {
         App.UseMiddleware<FunctionalQueryParameterMiddleware>();
         App.MapControllerRoute(name: "default", pattern: "/");
 
-        
-
-        // Spuštění aplikace
         App.Run();
     }
 }
