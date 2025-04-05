@@ -40,15 +40,15 @@ public static class Program {
 
         // pripojeni k redisu
         string? rhost, rport, rpassword;
-        if (!DEVELOPMENT_MODE) {
+        /*if (!DEVELOPMENT_MODE) {
             rhost = ENV["DATABASE_IP"];
             rport = "6379";
             rpassword = null;
-        } else {
+        } else {*/
             rhost = ENV["DATABASE_IP"];
             rport = ENV["REDIS_PORT"];
             rpassword = ENV["REDIS_PASSWORD"];
-        }
+        //}
 
         var config = new ConfigurationOptions {
             EndPoints = { $"{rhost}:{rport}" },
