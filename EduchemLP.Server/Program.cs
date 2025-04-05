@@ -50,7 +50,16 @@ public static class Program {
             rpassword = ENV["REDIS_PASSWORD"];
         }
 
-        var redis = ConnectionMultiplexer.Connect($"{rhost}:{rport}" + (rpassword != null! ? $",password={rpassword}" : ""));
+        var config = new ConfigurationOptions {
+            EndPoints = { $"{rhost}:{rport}" },
+            AbortOnConnectFail = false
+        };
+
+        if (rpassword != null!) {
+            config.Password = rpassword;
+        }
+
+        var redis = ConnectionMultiplexer.Connect(config);
         builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
 
         builder.Services.AddControllersWithViews();
