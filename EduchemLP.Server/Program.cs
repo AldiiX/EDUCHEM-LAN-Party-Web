@@ -37,7 +37,20 @@ public static class Program {
         ENV = DotEnv.Read();
         var builder = WebApplication.CreateBuilder(args);
 
-        var redis = ConnectionMultiplexer.Connect($"{ENV["DATABASE_IP"]}:{ENV["REDIS_PORT"]},password={ENV["REDIS_PASSWORD"]}");
+
+        // pripojeni k redisu
+        string? rhost, rport, rpassword;
+        if (!DEVELOPMENT_MODE) {
+            rhost = ENV["DATABASE_IP"];
+            rport = "6379";
+            rpassword = null;
+        } else {
+            rhost = ENV["REDIS_HOST"];
+            rport = ENV["REDIS_PORT"];
+            rpassword = ENV["REDIS_PASSWORD"];
+        }
+
+        var redis = ConnectionMultiplexer.Connect($"{rhost}:{rport}" + (rpassword != null! ? $",password={rpassword}" : ""));
         builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
 
         builder.Services.AddControllersWithViews();
