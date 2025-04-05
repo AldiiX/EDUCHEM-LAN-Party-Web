@@ -44,7 +44,8 @@
     >.inputs {
         display: flex;
         align-items: center;
-        gap: 32px;
+        flex-wrap: wrap;
+        gap: 16px 32px;
         margin-top: 48px;
 
         >.user-count {
@@ -139,6 +140,30 @@
                 display: flex;
                 gap: 12px;
                 align-items: center;
+            }
+        }
+    }
+}
+
+
+@media (max-width: 768px) {
+    .users-wrapper {
+        >.inputs {
+            gap: 16px;
+            width: 100%;
+
+            >.user-count {
+                width: 100%;
+            }
+        }
+
+        table {
+            thead th {
+                padding: 12px 8px;
+            }
+
+            td {
+                padding: 8px;
             }
         }
     }

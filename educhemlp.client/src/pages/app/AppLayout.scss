@@ -224,6 +224,7 @@ a {
         display: flex;
         flex-direction: column;
         overflow-y: auto;
+        overflow-x: hidden;
 
         >.loggeduser {
             position: absolute;
@@ -320,6 +321,7 @@ a {
 
         >.right {
             padding: 24px;
+            overflow: auto;
 
             >.loggeduser {
                 right: 24px;
