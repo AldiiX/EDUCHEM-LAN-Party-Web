@@ -37,6 +37,7 @@ html:is(.theme-dark) {
     --accent-color-darker: #d39706;
     --element-bg: #171717;
     --element-bg-colored: #252115;
+    --bg: black;
     --background-bg: #101010;
     --background-bg-2: #1c1c1c;
     --text-color: #f3f3f3;
@@ -64,6 +65,7 @@ html:is(.theme-light) {
     --accent-color-darker: #d96f01;
     --element-bg: white;
     --element-bg-colored: #ffe8cc;
+    --bg: white;
     --background-bg: #f8f6f1;
     --background-bg-2: #fffdf7;
     --text-color: #0c0c0c;
