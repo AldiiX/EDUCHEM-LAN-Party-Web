@@ -235,60 +235,6 @@
             overflow: hidden;
             box-shadow: 0 0 6px rgba(0,0,0,0.025);
 
-
-            >.zoomsettings {
-                position: absolute;
-                box-sizing: content-box;
-                top: 24px;
-                right: 24px;
-                display: flex;
-                z-index: 2;
-                border: solid 1px var(--text-color-3);
-                border-radius: 12px;
-                overflow: hidden;
-                background-color: var(--element-bg);
-
-                >.zoom-in, >.zoom-out {
-                    transition-duration: 0.3s;
-                    position: relative;
-
-                    &:hover {
-                        background-color: var(--text-color-3);
-                    }
-
-                    &::after {
-                        content: "+";
-                        display: block;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        position: absolute;
-                        color: var(--text-color-secondary);
-                        font-size: 24px;
-                        font-weight: 10;
-                    }
-                }
-
-                >.zoom-in{
-                    width: 48px;
-                    aspect-ratio: 1/1;
-                    cursor: pointer;
-                    transition-duration: 0.2s;
-                    border-right: solid 1px var(--text-color-3);
-                }
-
-                >.zoom-out {
-                    &::after {
-                        content: "-";
-                    }
-
-                    width: 48px;
-                    aspect-ratio: 1/1;
-                    transition-duration: 0.2s;
-                    cursor: pointer;
-                }
-            }
-
             >.legend {
                 position: absolute;
                 bottom: 24px;
@@ -464,7 +410,7 @@
                 }
             }
 
-            >svg {
+            svg {
                 position: absolute;
                 transition-duration: 0.3s;
                 top: 0;
@@ -472,15 +418,25 @@
                 //width: 100%;
                 height: 100%;
                 z-index: 1;
+                touch-action: none;
 
                 /*.scaleTransition {
                     transition-duration: 0.3s;
                 }*/
 
+                >g {
+                    touch-action: none;
+
+                    >g {
+                        touch-action: none;
+                    }
+                }
+
 
                 .pc {
                     fill: transparent;
                     pointer-events: none;
+                    z-index: 2;
 
                     &:is(.unavailable) {
                         fill: var(--pc-unavailable);
@@ -524,6 +480,7 @@
 
                 rect {
                     fill: var(--shapes-color);
+                    z-index: 0;
                 }
 
                 .table {

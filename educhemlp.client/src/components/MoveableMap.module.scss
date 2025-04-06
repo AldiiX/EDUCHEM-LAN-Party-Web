@@ -1,0 +1,58 @@
+/* Map.module.scss */
+.map {
+
+}
+
+.zoomsettings {
+    position: absolute;
+    box-sizing: content-box;
+    top: 24px;
+    right: 24px;
+    display: flex;
+    z-index: 2;
+    border: solid 1px var(--text-color-3);
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--element-bg);
+
+}
+
+.zoomIn, .zoomOut {
+    transition-duration: 0.3s;
+    position: relative;
+
+    &:hover {
+        background-color: var(--text-color-3);
+    }
+
+    &::after {
+        content: "+";
+        display: block;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        position: absolute;
+        color: var(--text-color-secondary);
+        font-size: 24px;
+        font-weight: 10;
+    }
+}
+
+.zoomIn{
+    width: 48px;
+    aspect-ratio: 1/1;
+    cursor: pointer;
+    transition-duration: 0.2s;
+    border-right: solid 1px var(--text-color-3);
+}
+
+.zoomOut {
+    &::after {
+        content: "-";
+    }
+
+    width: 48px;
+    aspect-ratio: 1/1;
+    transition-duration: 0.2s;
+    cursor: pointer;
+}

@@ -10,6 +10,7 @@ import {Skeleton} from "@mui/material";
 import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import {ButtonSecondary} from "../../components/buttons/ButtonSecondary.tsx";
 import {Link} from "react-router-dom";
+import MoveableMap from "../../components/MoveableMap.tsx";
 
 
 export const Reservations = () => {
@@ -20,10 +21,6 @@ export const Reservations = () => {
     ];
 
     // počáteční scale a translation se budou počítat dle rozměrů .map kontejneru
-    const [scale, setScale] = useState<number>(1);
-    const [translate, setTranslate] = useState({ x: 0, y: 0 });
-    const [isDragging, setIsDragging] = useState(false);
-    const [startPos, setStartPos] = useState({ x: 0, y: 0 });
     const [selectedArea, setSelectedArea] = useState<string>(areas[0].id);
     const [computers, setComputers] = useState<any[]>([]);
     const [reservations, setReservations] = useState<any[]>([]);
@@ -38,80 +35,8 @@ export const Reservations = () => {
     const [ selectedReservation, setSelectedReservation ] = useState<any | null>(null);
     const mapRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (mapRef.current) {
-            const { clientWidth, clientHeight } = mapRef.current;
-            // Spočítáme scale tak, aby se celý SVG vešel do kontejneru
-            const initialScale = Math.min(clientWidth / 1960, clientHeight / 1216);
-            setScale(initialScale);
-            // Vypočítáme vykreslované rozměry SVG při daném scale
-            const contentWidth = 1960 * initialScale;
-            const contentHeight = 1216 * initialScale;
-            // Vycentrujeme obsah – rozdíl dělený dvěma
-            const initialTranslateX = (clientWidth - contentWidth) / 2;
-            const initialTranslateY = (clientHeight - contentHeight) / 2;
-            setTranslate({ x: initialTranslateX, y: initialTranslateY });
-        }
-    }, []);
 
-    // region funkce
-    const handleZoom = (e: React.WheelEvent<SVGSVGElement>) => {
-        //e.preventDefault();
-        const scaleFactor = 0.07;
-        const newScale =
-            e.deltaY < 0 ? Math.min(1.2, scale + scaleFactor) : Math.max(0.4, scale - scaleFactor);
-
-        const rect = e.currentTarget.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        const deltaX = (mouseX - translate.x) * (newScale / scale - 1);
-        const deltaY = (mouseY - translate.y) * (newScale / scale - 1);
-
-        setTranslate({
-            x: translate.x - deltaX,
-            y: translate.y - deltaY,
-        });
-        setScale(newScale);
-    };
-
-    const forceZoom = (delta: number) => {
-        setScale(prevScale => Math.min(1.5, Math.max(0.7, prevScale + delta)));
-    };
-
-    const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-        setIsDragging(true);
-        const rect = e.currentTarget.getBoundingClientRect();
-        // Převod pozice myši do SVG souřadnic
-        const mouseX = (e.clientX - rect.left) / scale;
-        const mouseY = (e.clientY - rect.top) / scale;
-        setStartPos({
-            x: mouseX - translate.x,
-            y: mouseY - translate.y,
-        });
-
-        // locknuti selectu vsech elementu
-        document.documentElement.classList.add("noselect");
-    };
-
-    const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-        if (!isDragging) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const mouseX = (e.clientX - rect.left) / scale;
-        const mouseY = (e.clientY - rect.top) / scale;
-        setTranslate({
-            x: mouseX - startPos.x,
-            y: mouseY - startPos.y,
-        });
-    };
-
-    const handleMouseUp = () => {
-        setIsDragging(false);
-
-        // locknuti selectu vsech elementu
-        document.documentElement.classList.remove("noselect");
-    };
-
+    // region ostatní funkce
     const receiveSocketMessage = (message: string) => {
         const object = JSON.parse(message);
 
@@ -328,11 +253,6 @@ export const Reservations = () => {
 
             <div className={"map-wrapper"}>
                 <div className="map" ref={mapRef}>
-                    <div className="zoomsettings">
-                        <div className="zoom-in" onClick={() => forceZoom(0.1)}></div>
-                        <div className="zoom-out" onClick={() => forceZoom(-0.1)}></div>
-                    </div>
-
                     <div className="legend">
                         <h3>Legenda mapy:</h3>
                         <div className="legend-item">
@@ -519,35 +439,14 @@ export const Reservations = () => {
                         ) : null
                     }
 
-
-
-
-
-                    {/*mapka*/}
-                    <svg
-                        id="spiral-upper"
-                        width="1960"
-                        height="1216"
-                        viewBox="0 0 1960 1216"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        onWheel={handleZoom}
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseUp}
-                        style={{ cursor: isDragging ? "grabbing" : "grab" }}
-                    >
-                        <g transform={`translate(${translate.x}, ${translate.y}) scale(${scale})`}>
-                            <g className="scaleTransition">
-                                {selectedArea === "spiral-upper" ? (
-                                    <SpiralUpper onHoverReservation={(element: HTMLElement) => { selectReservation(element) }} />
-                                ) : selectedArea === "spiral-lower" ? (
-                                    <SpiralLower />
-                                ) : null}
-                            </g>
-                        </g>
-                    </svg>
+                    { /* mapka */ }
+                    <MoveableMap displayControls={true}>
+                        {selectedArea === "spiral-upper" ? (
+                            <SpiralUpper onHoverReservation={(element: HTMLElement) => { selectReservation(element) }} />
+                        ) : selectedArea === "spiral-lower" ? (
+                            <SpiralLower />
+                        ) : null}
+                    </MoveableMap>
                 </div>
 
                 <div className={"stats" + (statsCollapsed ? " collapsed" : "")}>
