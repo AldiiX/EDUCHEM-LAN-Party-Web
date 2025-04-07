@@ -1,8 +1,11 @@
 ﻿using System.Data;
 using System.Globalization;
+using System.Text;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
+using EduchemLP.Server.Models;
 using EduchemLP.Server.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
 
@@ -55,6 +58,17 @@ public class APIv1 : Controller {
         return new NoContentResult();
     }
 
+    [HttpGet("lg")]
+    public IActionResult LoginAndRedirect([FromQuery] string u, [FromQuery] string? redirect) {
+        string[] credentials = Encoding.UTF8.GetString(Convert.FromBase64String(u)).Split(" ");
+        string email = credentials[0];
+        string password = credentials.Length > 1 ? credentials[1] : "";
+
+        _ = Auth.AuthUser(email, Utilities.EncryptPassword(password));
+
+        return Redirect(redirect ?? "/app");
+    }
+
     #if DEBUG
     [HttpGet("gpw")]
     public IActionResult GeneratePasswordEncryption([FromQuery] string password) {
@@ -101,5 +115,55 @@ public class APIv1 : Controller {
         }
 
         return new JsonResult(array);
+    }
+
+    [HttpPost("adm/users")]
+    public IActionResult AddUser([FromBody] Dictionary<string, object?> body) {
+        string? email = body.TryGetValue("email", out var _email) ? _email?.ToString() : null;
+        string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
+        string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
+        string? accountType = body.TryGetValue("accountType", out var _accountType) ? _accountType?.ToString() : null;
+        bool sendToEmail = body.TryGetValue("sendToEmail", out var _sendToEmail) && bool.TryParse(_sendToEmail?.ToString(), out var _sendToEmail2) && _sendToEmail2;
+
+        if(email == null || displayName == null || accountType == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'email', 'displayName' nebo 'accountType'" });
+
+        var user = Classes.Objects.User.Create(email, displayName, @class, accountType, sendToEmail);
+        if(user == null) return new JsonResult(new { success = false, message = "Chyba při vytváření uživatele" }) { StatusCode = 500};
+
+        return new NoContentResult();
+    }
+
+    [HttpPost("adm/users/passwordreset")]
+    public IActionResult ResetUserPassword([FromBody] Dictionary<string, object?> data) {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc is not { AccountType: "ADMIN" }) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený jako admin" });
+
+        int? id = data.TryGetValue("id", out var _id) ? int.TryParse(_id?.ToString(), out var _id2) ? _id2 : null : null;
+        if(id == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'id'" });
+
+        var user = Classes.Objects.User.GetById((int) id);
+        if(user == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen" });
+
+        var newPassword = Utilities.GenerateRandomPassword();
+        var encryptedPassword = Utilities.EncryptPassword(newPassword);
+
+        using var conn = Database.GetConnection();
+        if(conn == null) return new StatusCodeResult(500);
+
+        var command = new MySqlCommand(
+            """
+            UPDATE users SET password=@password WHERE id=@id;
+            """, conn
+        );
+        command.Parameters.AddWithValue("@password", encryptedPassword);
+        command.Parameters.AddWithValue("@id", user.ID);
+        command.ExecuteNonQuery();
+
+        string webLink = "https://" + Program.ROOT_DOMAIN + "/api/v1/lg?u=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Email + " " + newPassword));
+        _ = EmailService.SendHTMLEmailAsync(user.Email, "Obnovení hesla k EDUCHEM LAN Party", "~/Views/Emails/UserResetPassword.cshtml",
+            new EmailUserRegisterModel(newPassword, webLink, user.Email)
+        );
+
+        return new JsonResult(new { success = true, message = "Heslo bylo obnoveno a odesláno na email" });
     }
 }

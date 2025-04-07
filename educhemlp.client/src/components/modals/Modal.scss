@@ -146,6 +146,20 @@
                 }
             }
 
+            .buttons {
+                display: flex;
+                gap: 32px;
+                margin-top: 16px;
+                justify-content: space-between;
+            }
+
+            .separator {
+                height: 1px;
+                background-color: var(--text-color-3);
+                width: 100%;
+                margin: 16px 0;
+            }
+
             input, select {
                 padding: 5px;
                 border-radius: 5px;

@@ -1,0 +1,20 @@
+/* TextWithIcon.module.scss */
+
+.main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:is(.clickable) {
+        user-select: none;
+        cursor: pointer;
+        transition-duration: 0.3s;
+
+        &:hover {
+            transition-duration: 0.3s;
+            opacity: 0.5;
+        }
+    }
+}
+
+.clickable {}

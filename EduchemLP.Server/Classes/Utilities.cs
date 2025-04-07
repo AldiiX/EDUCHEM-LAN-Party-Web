@@ -97,6 +97,7 @@ public static class Utilities {
         return HttpContextService.Current.Items["loggeduser"] as User;
     }
 
+    [Obsolete("Tato metoda se už nepoužívá, slouží jen jako předloha pro nové metody a aby byla uchována historie.", true)]
     public static string GenerateRandomAuthKey(int length = 48) {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         var random = new Random();
@@ -108,6 +109,19 @@ public static class Utilities {
         }
 
         return keyBuilder.ToString();
+    }
+
+    public static string GenerateRandomPassword(int length = 12) {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+        var random = new Random();
+        var passwordBuilder = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            var randomIndex = random.Next(chars.Length);
+            passwordBuilder.Append(chars[randomIndex]);
+        }
+
+        return passwordBuilder.ToString();
     }
 
     public static string EncryptStringWithKey(string plainText, string key) {

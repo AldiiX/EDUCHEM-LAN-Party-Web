@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import "./Administration.scss";
 import {Avatar} from "../../components/Avatar.tsx";
 import {Modal} from "../../components/modals/Modal.tsx";
+import {ButtonSecondary} from "../../components/buttons/ButtonSecondary.tsx";
+import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 
 export const Administration = () => {
     const navigate = useNavigate();
@@ -15,6 +17,7 @@ export const Administration = () => {
     const [userModalShown, setUserModalShown] = useState(false);
     const [userModalEditMode, setUserModalEditMode] = useState(false);
     const [userModalCreationMode, setUserModalCreationMode] = useState(false);
+    const [userModalConfirmationShown, setUserModalConfirmationShown] = useState(false);
     const [selectedUser, setSelectedUser] = useState<any | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortColumn, setSortColumn] = useState(null);
@@ -51,6 +54,8 @@ export const Administration = () => {
         setUserModalShown(false);
         setUserModalEditMode(false);
         setUserModalCreationMode(false);
+        setUserModalConfirmationShown(false);
+        setSelectedUser(null);
     }
 
     function translateGender(gender: string) {
@@ -104,9 +109,7 @@ export const Administration = () => {
     return (
         <AppLayout>
 
-
-
-            <Modal title={"test"} onClose={closeModal} enabled={userModalShown} className="user-modal">
+            <Modal title="usermodal" onClose={closeModal} enabled={userModalShown && !userModalConfirmationShown} className="user-modal">
                 { selectedUser !== null ? (
                     <>
                         <div className="top">
@@ -128,7 +131,7 @@ export const Administration = () => {
                                 !userModalEditMode ? (
                                     <h1>{ selectedUser?.name }</h1>
                                 ) : (
-                                    <input name="name"  defaultValue={selectedUser?.name} type={"text"}  required placeholder="Jméno" maxLength={30} />
+                                    <input name="name" style={{fontSize: 24, fontFamily: "leaguespartan"}} defaultValue={selectedUser?.name} type={"text"}  required placeholder="Jméno" maxLength={30} />
                                 )
                             }
 
@@ -136,7 +139,7 @@ export const Administration = () => {
                                 !userModalEditMode ? (
                                     <div className="edit-delete-buttons-div">
                                         <button className="button-tertiary" style={{ flexGrow: 1 }} type="button" onClick={() => setUserModalEditMode(true)}>Upravit</button>
-                                        <button className="button-tertiary" type="button">Smazat</button>
+                                        {/*<button className="button-tertiary" type="button">Smazat</button>*/}
                                     </div>
                                 ) : userModalCreationMode ? (
                                     <div className="edit-delete-buttons-div">
@@ -205,9 +208,29 @@ export const Administration = () => {
                                     }
                                 </div>
                             </div>
+
+                            {
+                                userModalEditMode
+                                    ? null
+                                    : (
+                                        <>
+                                            <div className="separator"></div>
+
+                                            <div className="buttons">
+                                                <TextWithIcon text="Resetovat heslo" iconSrc="/images/icons/reset_password.svg" color="var(--error-color)" onClick={() => {}} />
+                                                <TextWithIcon text="Smazat uživatele" iconSrc="/images/icons/trash.svg" color="var(--error-color)" onClick={() => {}} />
+                                            </div>
+                                        </>
+                                    )
+                            }
+
                         </div>
                     </>
                 ) : null}
+            </Modal>
+
+            <Modal title="usermodalconfirmation" enabled={userModalConfirmationShown} onClose={closeModal}>
+                <h1>Opravdu chceš provést akci na uživateli {selectedUser?.displayName}?</h1>
             </Modal>
 
 

@@ -1,5 +1,7 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using EduchemLP.Server.Models;
 using EduchemLP.Server.Services;
 using MySql.Data.MySqlClient;
 
@@ -38,19 +40,18 @@ public class User {
 
 
 
-    public static async Task<User?> GetByAuthKeyAsync(string authKey) {
+    public static User? GetById(in int id) => GetByIdAsync(id).Result;
+
+    public static async Task<User?> GetByIdAsync(int id) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
-
-        await using var cmd = new MySqlCommand(@"SELECT * FROM users WHERE auth_key = @authKey", conn);
-        cmd.Parameters.AddWithValue("@authKey", authKey);
-
+        const string query = "SELECT * FROM `users` WHERE `id` = @id";
+        await using var cmd = new MySqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@id", id);
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
-        if (reader == null) return null;
+        if (reader == null || !reader.Read()) return null;
 
-        if (!await reader.ReadAsync()) return null;
-
-        return new User(
+        var user = new User(
             reader.GetInt32("id"),
             reader.GetString("display_name"),
             reader.GetString("email"),
@@ -58,12 +59,12 @@ public class User {
             reader.GetObjectOrNull("class") as string,
             reader.GetString("account_type"),
             reader.GetDateTime("last_updated"),
-            //Enum.TryParse<UserGender>(reader.GetObjectOrNull("gender") as string, out var _gender) ? _gender : null
+            //Enum.TryParse<UserGender>(reader.GetObjectOrNull
             reader.GetStringOrNull("avatar")
         );
-    }
 
-    public static User? GetByAuthKey(string authKey) => GetByAuthKeyAsync(authKey).Result;
+        return user;
+    }
 
     public static async Task<User?> AuthAsync(string email, string hashedPassword) {
         await using var conn = await Database.GetConnectionAsync();
@@ -140,6 +141,56 @@ public class User {
         cmd.Parameters.AddWithValue("@now", DateTime.Now);
         cmd.Parameters.AddWithValue("@id", id);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    public static User? Create(string email, string displayName, string? @class, string accountType, bool sendToEmail = false) => CreateAsync(email, displayName, @class, accountType, sendToEmail).Result;
+
+    public static async Task<User?> CreateAsync(string email, string displayName, string? @class, string accountType, bool sendToEmail = false) {
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return null;
+
+        var password = Utilities.GenerateRandomPassword();
+        const string insertQuery =
+            """
+            INSERT INTO users (email, display_name, password, class, account_type) VALUES (@email, @displayName, @password, @class, @accountType);
+
+            SELECT * FROM users WHERE id = LAST_INSERT_ID();
+            """;
+        await using var cmd = new MySqlCommand(insertQuery, conn);
+        cmd.Parameters.AddWithValue("@email", email);
+        cmd.Parameters.AddWithValue("@displayName", displayName);
+        cmd.Parameters.AddWithValue("@password", Utilities.EncryptPassword(password));
+        cmd.Parameters.AddWithValue("@class", @class);
+        cmd.Parameters.AddWithValue("@accountType", accountType);
+
+        await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
+        if (reader == null || !reader.Read()) return null;
+
+        var user = new User(
+            reader.GetInt32("id"),
+            reader.GetString("display_name"),
+            reader.GetString("email"),
+            reader.GetString("password"),
+            reader.GetObjectOrNull("class") as string,
+            reader.GetString("account_type"),
+            reader.GetDateTime("last_updated"),
+            //Enum.TryParse<UserGender>(reader.GetObjectOrNull
+            reader.GetStringOrNull("avatar")
+        );
+
+
+
+        // odeslání emailu
+        if (sendToEmail) {
+            string webLink = "https://" + Program.ROOT_DOMAIN + "/api/v1/lg?u=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Email + " " + password));
+            _ = EmailService.SendHTMLEmailAsync(user.Email, "Registrace do EDUCHEM LAN Party", "~/Views/Emails/UserRegistered.cshtml",
+                new EmailUserRegisterModel(password, webLink, user.Email)
+            );
+        }
+
+
+
+        return user;
     }
 
     public override string ToString() {
