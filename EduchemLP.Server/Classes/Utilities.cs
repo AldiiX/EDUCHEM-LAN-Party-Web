@@ -111,8 +111,8 @@ public static class Utilities {
         return keyBuilder.ToString();
     }
 
-    public static string GenerateRandomPassword(int length = 12) {
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+";
+    public static string GenerateRandomPassword(int length = 24) {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ěščřž!@*";
         var random = new Random();
         var passwordBuilder = new StringBuilder(length);
 

@@ -7,21 +7,36 @@ import {Avatar} from "../../components/Avatar.tsx";
 import {Modal} from "../../components/modals/Modal.tsx";
 import {ButtonSecondary} from "../../components/buttons/ButtonSecondary.tsx";
 import {TextWithIcon} from "../../components/TextWithIcon.tsx";
+import { ButtonPrimary } from "../../components/buttons/ButtonPrimary.tsx";
+import { toast } from "react-toastify";
 
 export const Administration = () => {
+    enum Modals { USER, DELETE_CONFIRMATION, RESETPASSWORD_CONFIRMATION }
+    interface User {
+        id: string,
+        name: string,
+        email: string,
+        avatar: string,
+        class: string,
+        accountType: string,
+        gender: string,
+        lastUpdated: string,
+        lastLoggedIn: string,
+    }
+
     const navigate = useNavigate();
     const { loggedUser } = useStore();
     const { userAuthed, setUserAuthed } = useStore();
     const [selectedTab, setSelectedTab] = useState<string>("users");
     const [users, setUsers] = useState<any[] | null>(null);
-    const [userModalShown, setUserModalShown] = useState(false);
+    const [openedModal, setOpenedModal] = useState<Modals | null>(null);
     const [userModalEditMode, setUserModalEditMode] = useState(false);
     const [userModalCreationMode, setUserModalCreationMode] = useState(false);
-    const [userModalConfirmationShown, setUserModalConfirmationShown] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<any | null>(null);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState("asc");
+
 
     useEffect(() => {
         // Ověření oprávnění
@@ -34,27 +49,29 @@ export const Administration = () => {
     useEffect(() => {
         switch (selectedTab) {
             case "users": {
-                fetch("/api/v1/adm/users").then(async res => {
-                    if (!res.ok) {
-                        console.error("Chyba při načítání uživatelů");
-                        return;
-                    }
-
-                    const data = await res.json();
-                    setUsers(data);
-                });
+                fetchUsersFromApi();
             } break;
         }
     }, [selectedTab]);
 
 
 
+    function fetchUsersFromApi() {
+        fetch("/api/v1/adm/users").then(async res => {
+            if (!res.ok) {
+                console.error("Chyba při načítání uživatelů");
+                return;
+            }
+
+            const data = await res.json();
+            setUsers(data);
+        });
+    }
 
     function closeModal() {
-        setUserModalShown(false);
+        setOpenedModal(null);
         setUserModalEditMode(false);
         setUserModalCreationMode(false);
-        setUserModalConfirmationShown(false);
         setSelectedUser(null);
     }
 
@@ -93,11 +110,10 @@ export const Administration = () => {
     });
 
     const addUser = () => {
-        setUserModalShown(true);
+        setOpenedModal(Modals.USER);
         setUserModalEditMode(true);
         setUserModalCreationMode(true);
-
-        setSelectedUser({});
+        setSelectedUser({} as any);
     }
 
 
@@ -109,7 +125,7 @@ export const Administration = () => {
     return (
         <AppLayout>
 
-            <Modal title="usermodal" onClose={closeModal} enabled={userModalShown && !userModalConfirmationShown} className="user-modal">
+            <Modal onClose={closeModal} enabled={openedModal === Modals.USER } className="user-modal">
                 { selectedUser !== null ? (
                     <>
                         <div className="top">
@@ -143,8 +159,54 @@ export const Administration = () => {
                                     </div>
                                 ) : userModalCreationMode ? (
                                     <div className="edit-delete-buttons-div">
-                                        <button className="button-tertiary" style={{ flexGrow: 1 }} type="button">Vytvořit uživatele</button>
-                                        <button className="button-tertiary" type="button" onClick={() => {setUserModalEditMode(false); setUserModalShown(false) }}>Zrušit</button>
+                                        <button className="button-tertiary" style={{ flexGrow: 1 }} type="button" onClick={() => {
+                                            const userModal = document.querySelector(".user-modal") as HTMLDivElement;
+                                            const name = (userModal.querySelector("input[name='name']") as HTMLInputElement).value;
+                                            const email = (userModal.querySelector("input[name='email']") as HTMLInputElement).value;
+                                            let cls: string | null = (userModal.querySelector("input[name='class']") as HTMLInputElement).value;
+                                            const gender = (userModal.querySelector("select[name='gender']") as HTMLSelectElement).value;
+                                            const accountType = (userModal.querySelector("select[name='accountType']") as HTMLSelectElement).value;
+
+                                            if(name?.length < 3) {
+                                                toast.error("Jméno musí mít alespoň 3 znaky.");
+                                                return;
+                                            }
+
+                                            if(email?.length < 5) {
+                                                toast.error("Email musí mít alespoň 5 znaků.");
+                                                return;
+                                            }
+
+                                            if(cls.length == 0) cls = null;
+
+                                            //console.log(name, email, cls, gender, accountType);
+
+                                            fetch(`/api/v1/adm/users/`, {
+                                                method: "POST",
+                                                headers: {
+                                                    "Content-Type": "application/json"
+                                                },
+                                                body: JSON.stringify({
+                                                    email: email,
+                                                    displayName: name,
+                                                    class: cls,
+                                                    accountType: accountType,
+                                                    gender: gender,
+                                                    sendToEmail: false,
+                                                })
+                                            }).then(async res => {
+                                                if (!res.ok) {
+                                                    toast.error("Chyba při vytváření uživatele.");
+                                                    return;
+                                                }
+
+                                                //const data = await res.json();
+                                                closeModal();
+                                                fetchUsersFromApi();
+                                                toast.success(`Uživatel ${name} úspěšně vytvořen.`);
+                                            })
+                                        }}>Vytvořit uživatele</button>
+                                        <button className="button-tertiary" type="button" onClick={() => {setUserModalEditMode(false); setOpenedModal(null) }}>Zrušit</button>
                                     </div>
                                 ) : (
                                     <div className="edit-delete-buttons-div">
@@ -217,8 +279,8 @@ export const Administration = () => {
                                             <div className="separator"></div>
 
                                             <div className="buttons">
-                                                <TextWithIcon text="Resetovat heslo" iconSrc="/images/icons/reset_password.svg" color="var(--error-color)" onClick={() => {}} />
-                                                <TextWithIcon text="Smazat uživatele" iconSrc="/images/icons/trash.svg" color="var(--error-color)" onClick={() => {}} />
+                                                <TextWithIcon text="Resetovat heslo" iconSrc="/images/icons/reset_password.svg" color="var(--error-color)" onClick={() => { setOpenedModal(Modals.RESETPASSWORD_CONFIRMATION) }} />
+                                                <TextWithIcon text="Smazat uživatele" iconSrc="/images/icons/trash.svg" color="var(--error-color)" onClick={() => { setOpenedModal(Modals.DELETE_CONFIRMATION) }} />
                                             </div>
                                         </>
                                     )
@@ -229,8 +291,68 @@ export const Administration = () => {
                 ) : null}
             </Modal>
 
-            <Modal title="usermodalconfirmation" enabled={userModalConfirmationShown} onClose={closeModal}>
-                <h1>Opravdu chceš provést akci na uživateli {selectedUser?.displayName}?</h1>
+            <Modal enabled={openedModal === Modals.DELETE_CONFIRMATION || openedModal === Modals.RESETPASSWORD_CONFIRMATION} onClose={closeModal} className="confirmation-modal">
+                {
+                    openedModal === Modals.DELETE_CONFIRMATION ? (
+                        <p>Opravdu chcete smazat uživatele <span>{selectedUser?.name}</span>?</p>
+                    ): openedModal === Modals.RESETPASSWORD_CONFIRMATION ? (
+                        <>
+                            <p>Opravdu chcete resetovat heslo uživatele <span>{selectedUser?.name}</span>?</p>
+                            {/* <p>Heslo uživateli přijde na email <span>{selectedUser?.email}</span>.</p> */}
+                        </>
+                    ) : null
+                }
+                
+                <div className="buttons">
+                    <ButtonPrimary text="Ano" onClick={() => {
+                        switch (openedModal) {
+                            case Modals.DELETE_CONFIRMATION: {
+                                fetch(`/api/v1/adm/users/`, {
+                                    method: "DELETE",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        id: selectedUser?.id,
+                                    }),
+                                }).then(async res => {
+                                    if (!res.ok) {
+                                        console.error("Chyba při mazání uživatele");
+                                        toast.error("Chyba při mazání uživatele.");
+                                        return;
+                                    }
+
+                                    closeModal();
+                                    fetchUsersFromApi();
+                                    toast.success(`Uživatel ${selectedUser?.name} úspěšně smazán.`);
+                                });
+                            } break;
+                            
+                            case Modals.RESETPASSWORD_CONFIRMATION: {
+                                fetch(`/api/v1/adm/users/passwordreset`, {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        id: selectedUser?.id,
+                                    }),
+                                }).then(async res => {
+                                    if (!res.ok) {
+                                        console.error("Chyba při resetování hesla");
+                                        return;
+                                    }
+
+                                    const data = await res.json();
+                                    fetchUsersFromApi();
+                                    setOpenedModal(Modals.USER);
+                                    toast.success(`Heslo uživatele ${selectedUser?.name} úspěšně resetováno. Nové heslo bylo odesláno na email uživatele.`);
+                                });
+                            }
+                        }
+                    }} />
+                    <ButtonSecondary text="Ne" onClick={() => setOpenedModal(Modals.USER) } />
+                </div>
             </Modal>
 
 
@@ -278,7 +400,7 @@ export const Administration = () => {
                                         className={loggedUser.id === user.id ? "loggeduser" : ""}
                                         onClick={() => {
                                             setSelectedUser(user);
-                                            setUserModalShown(true);
+                                            setOpenedModal(Modals.USER);
                                         }}
                                     >
                                         <td>

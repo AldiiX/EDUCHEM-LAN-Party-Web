@@ -2,14 +2,13 @@ import React from "react";
 import "./Modal.scss";
 
 interface ModalProps {
-    title: string;
     onClose: () => void;
     children: React.ReactNode;
     enabled: boolean;
     className?: string;
 }
 
-export const Modal = ({ children, title, onClose, enabled, className = "" }: ModalProps) => {
+export const Modal = ({ children, onClose, enabled, className = "" }: ModalProps) => {
     if (!enabled) return null; // Pokud není modal povolený, nevykresluj ho
 
     return (

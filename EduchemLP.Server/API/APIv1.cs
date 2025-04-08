@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
+using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Models;
 using EduchemLP.Server.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -123,13 +124,35 @@ public class APIv1 : Controller {
         string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
         string? accountType = body.TryGetValue("accountType", out var _accountType) ? _accountType?.ToString() : null;
+        string? gender = body.TryGetValue("gender", out var _gender) ? _gender?.ToString() : null;
         bool sendToEmail = body.TryGetValue("sendToEmail", out var _sendToEmail) && bool.TryParse(_sendToEmail?.ToString(), out var _sendToEmail2) && _sendToEmail2;
 
         if(email == null || displayName == null || accountType == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'email', 'displayName' nebo 'accountType'" });
 
-        var user = Classes.Objects.User.Create(email, displayName, @class, accountType, sendToEmail);
+        var genderParsed = Enum.TryParse(gender, out EduchemLP.Server.Classes.Objects.User.UserGender _g) ? _g : EduchemLP.Server.Classes.Objects.User.UserGender.OTHER;
+        var user = Classes.Objects.User.Create(email, displayName, @class, genderParsed, accountType, sendToEmail);
         if(user == null) return new JsonResult(new { success = false, message = "Chyba při vytváření uživatele" }) { StatusCode = 500};
 
+        return new NoContentResult();
+    }
+
+    [HttpDelete("adm/users")]
+    public IActionResult DeleteUser([FromBody] Dictionary<string, object?> body) {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc is not { AccountType: "ADMIN" }) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený jako admin" });
+        
+        int? id = body.TryGetValue("id", out var _id) ? int.TryParse(_id?.ToString(), out var _id2) ? _id2 : null : null;
+        if(id == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'id'" });
+
+        using var conn = Database.GetConnection();
+        if(conn == null) return new StatusCodeResult(500);
+        var command = new MySqlCommand(
+            """
+            DELETE FROM users WHERE id=@id;
+            """, conn
+        );
+        command.Parameters.AddWithValue("@id", id);
+        command.ExecuteNonQuery();
         return new NoContentResult();
     }
 

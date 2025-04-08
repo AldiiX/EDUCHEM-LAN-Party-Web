@@ -31,6 +31,12 @@ html, body {
     border-radius: 8px;
 }
 
+:root {
+    --toastify-font-family: 'Gabarito', calibri, arial, sans-serif;
+    --toastify-color-success: var(--accent-color);
+    --toastify-color-error: var(--error-color);
+}
+
 html:is(.theme-dark) {
     --accent-color: #ffb303;
     --accent-color-text: black;

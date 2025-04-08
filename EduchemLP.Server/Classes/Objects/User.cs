@@ -143,16 +143,16 @@ public class User {
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public static User? Create(string email, string displayName, string? @class, string accountType, bool sendToEmail = false) => CreateAsync(email, displayName, @class, accountType, sendToEmail).Result;
+    public static User? Create(string email, string displayName, string? @class, UserGender gender, string accountType, bool sendToEmail = false) => CreateAsync(email, displayName, @class, gender, accountType, sendToEmail).Result;
 
-    public static async Task<User?> CreateAsync(string email, string displayName, string? @class, string accountType, bool sendToEmail = false) {
+    public static async Task<User?> CreateAsync(string email, string displayName, string? @class, UserGender gender, string accountType, bool sendToEmail = false) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
 
         var password = Utilities.GenerateRandomPassword();
         const string insertQuery =
             """
-            INSERT INTO users (email, display_name, password, class, account_type) VALUES (@email, @displayName, @password, @class, @accountType);
+            INSERT INTO users (email, display_name, password, class, account_type, gender) VALUES (@email, @displayName, @password, @class, @accountType, @gender);
 
             SELECT * FROM users WHERE id = LAST_INSERT_ID();
             """;
@@ -162,6 +162,7 @@ public class User {
         cmd.Parameters.AddWithValue("@password", Utilities.EncryptPassword(password));
         cmd.Parameters.AddWithValue("@class", @class);
         cmd.Parameters.AddWithValue("@accountType", accountType);
+        cmd.Parameters.AddWithValue("@gender", gender.ToString().ToUpper());
 
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if (reader == null || !reader.Read()) return null;

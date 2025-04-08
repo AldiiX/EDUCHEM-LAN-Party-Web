@@ -7,6 +7,7 @@ import {getCookie} from "./utils.ts";
 import {useStore} from "./store.tsx";
 import {Map} from "./pages/app/Map.tsx";
 import {AppMobileMenuDiv} from "./components/AppMobileMenuDiv.tsx";
+import { ToastContainer } from 'react-toastify';
 
 const Home = lazy(() => import('./pages/Home.tsx'));
 const Login = lazy(() => import('./pages/Login.tsx'));
@@ -77,6 +78,9 @@ const App = () => {
     const { loggedUser, setLoggedUser } = useStore();
     const { userAuthed, setUserAuthed } = useStore();
 
+    let theme = getCookie("theme");
+    theme ??= window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
+
     useEffect(() => {
         // vymazani loading animace
         document.getElementById("loading")?.remove();
@@ -93,9 +97,12 @@ const App = () => {
         });
     }, []);
 
+
+    // TODO: udelat aby theme ToastContaineru se dynamicky menil podle themu 
     return (
         <>
             <Theme />
+            <ToastContainer theme={ theme === "dark" ? "dark" : "light" } position="bottom-right" />
 
 
             <Router>
