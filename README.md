@@ -16,6 +16,7 @@ Tento projekt poskytuje webovou platformu pro správu a organizaci LAN party ud�
     - [5. Spuštění aplikace](#5-spuštění-aplikace)
     - [6. Přihlášení do admin panelu](#6-přihlášení-do-admin-panelu)
 - [Screenshoty](#screenshoty)
+- [Pravidla commitování](#pravidla-commitování-předpony)
 
 ## Popis projektu
 
@@ -68,19 +69,19 @@ git clone https://github.com/AldiiX/EDUCHEM-LAN-Party-Web.git
   1. Aplikace používá MySQL databázi. Stáhněte si jakkoliv MySQL databázi na svůj počítač. Například [zde](https://dev.mysql.com/downloads/installer/).
         - Doporučujeme k tomu stáhnout i _PhpMyAdmin_, abyste mohli snadno spravovat databázi. [Zde je odkaz na stažení](https://www.phpmyadmin.net/downloads/).
         - Můžete nainstalovat program _XAMPP_, kde PhpMyAdmin a MySQL jsou již součástí balíčku. [Zde můžete stáhnout](https://www.apachefriends.org/)
-  2. Přihlašte se do PhpMyAdmin/MySQL cli pomocí těchto příkazů:
+  2. Přihlašte se do PhpMyAdmin/MySQL cli pomocí defaultního admin účtu, většinou:
    ```
    username: admin
    password: password
    ```
-3. Otevřete soubor `dbschema.sql`, zkopírujte obsah a toto provedte v MySQL jako dotaz, tím se vám vytvoří databáze.
+  3. Otevřete soubor `dbschema.sql`, zkopírujte obsah a toto provedte v MySQL jako dotaz, tím se vám vytvoří databáze.
 ### 4. Vytvoření souboru .env
    - V adresáři /EduchemLP.Server/ vytvoř soubor .env a vlož do něj následující obsah:
    ```dotenv
     DATABASE_IP=localhost   # případně zadej vzdálenou IP adresu
-    DATABASE_DBNAME=educhem_lanparty
-    DATABASE_USERNAME=admin
-    DATABASE_PASSWORD=password
+    DATABASE_DBNAME=educhem_lan_party_dev
+    DATABASE_USERNAME=educhem_lan_party
+    DATABASE_PASSWORD=educhem_lan_party
     
     # pokud chceš posílat emaily, nakonfiguruj svůj SMTP server
     SMTP_HOST=???
@@ -107,3 +108,16 @@ git clone https://github.com/AldiiX/EDUCHEM-LAN-Party-Web.git
 
 ## Screenshoty
 ![img1](https://stanislavskudrna.cz/images/websites/educhemlp/1.png)
+
+## Pravidla commitování (předpony)
+- `FEAT` – přidána nová funkce
+- `FIX` – oprava chyby
+- `CHORE` – změny nesouvisející s opravou nebo funkcí, které nemodifikují src nebo test soubory (např. aktualizace závislostí)
+- `REFACTOR` – refaktorizace kódu, která neopravuje chybu ani nepřidává funkci
+- `DOCS` – aktualizace dokumentace, jako je README nebo jiné markdown soubory
+- `STYLE` – změny, které neovlivňují význam kódu, obvykle souvisejí s formátováním kódu (např. mezery, chybějící středníky atd.)
+- `TEST` – přidání nových nebo oprava stávajících testů
+- `PERF` – vylepšení výkonu
+- `CI` - změny týkající se kontinuální integrace
+- `BUILD` – změny, které ovlivňují systém sestavení nebo externí závislosti
+- `REVERT` – návrat k předchozímu commitu
