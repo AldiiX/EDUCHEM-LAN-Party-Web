@@ -13,9 +13,16 @@ namespace EduchemLP.Server.Classes.Objects;
 public class User {
     public enum UserGender { MALE, FEMALE, OTHER}
 
+    public enum UserAccountType {
+        STUDENT,
+        TEACHER,
+        ADMIN,
+        SUPERADMIN,
+    }
+
 
     [JsonConstructor]
-    private User(int id, string displayName, string email, string password, string? @class, string accountType, DateTime lastUpdated/*, UserGender? gender*/, string? avatar) {
+    private User(int id, string displayName, string email, string password, string? @class, UserAccountType accountType, DateTime lastUpdated/*, UserGender? gender*/, string? avatar) {
         ID = id;
         DisplayName = displayName;
         Class = @class;
@@ -34,7 +41,7 @@ public class User {
     public string Password { get; private set; }
     public string? Class { get; private set; }
     public string? Avatar { get; private set; }
-    public string AccountType { get; private set; }
+    public UserAccountType AccountType { get; private set; }
     public DateTime LastUpdated { get; private set; }
     public UserGender? Gender { get; private set; }
 
@@ -57,7 +64,7 @@ public class User {
             reader.GetString("email"),
             reader.GetString("password"),
             reader.GetObjectOrNull("class") as string,
-            reader.GetString("account_type"),
+            Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
             reader.GetDateTime("last_updated"),
             //Enum.TryParse<UserGender>(reader.GetObjectOrNull
             reader.GetStringOrNull("avatar")
@@ -84,7 +91,7 @@ public class User {
             reader.GetString("email"),
             reader.GetString("password"),
             reader.GetObjectOrNull("class") as string,
-            reader.GetString("account_type"),
+            Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
             reader.GetDateTime("last_updated"),
             //Enum.TryParse<UserGender>(reader.GetObjectOrNull
             reader.GetStringOrNull("avatar")
@@ -117,10 +124,10 @@ public class User {
             list.Add(new User(
                 reader.GetInt32("id"),
                 reader.GetString("display_name"),
-                reader.GetObjectOrNull("email") as string,
-                reader.GetObjectOrNull("class") as string,
-                reader.GetString("auth_key"),
-                reader.GetString("account_type"),
+                reader.GetString("email"),
+                reader.GetString("password"),
+                reader.GetStringOrNull("class"),
+                Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
                 reader.GetDateTime("last_updated"),
                 //Enum.TryParse<UserGender>(reader.GetObject
                 reader.GetStringOrNull("avatar")
@@ -173,7 +180,7 @@ public class User {
             reader.GetString("email"),
             reader.GetString("password"),
             reader.GetObjectOrNull("class") as string,
-            reader.GetString("account_type"),
+            Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
             reader.GetDateTime("last_updated"),
             //Enum.TryParse<UserGender>(reader.GetObjectOrNull
             reader.GetStringOrNull("avatar")

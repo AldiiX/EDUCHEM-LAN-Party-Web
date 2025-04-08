@@ -208,7 +208,7 @@ export const Administration = () => {
                                                 toast.success(`Uživatel ${name} úspěšně vytvořen.`);
                                             })
                                         }}>Vytvořit uživatele</button>
-                                        <button className="button-tertiary" type="button" onClick={() => {setUserModalEditMode(false); setOpenedModal(null) }}>Zrušit</button>
+                                        <button className="button-tertiary" type="button" onClick={() => {closeModal()}}>Zrušit</button>
                                     </div>
                                 ) : (
                                     <div className="edit-delete-buttons-div">
@@ -271,9 +271,12 @@ export const Administration = () => {
                                         )
                                     }
                                 </div>
+                            </div>
 
-                                {
-                                    userModalCreationMode ? (
+                            {
+                                userModalCreationMode ? (
+                                    <>
+                                        <div className="separator" style={{ marginTop: 24}}></div>
                                         <div className="switch-div">
                                             <p>Odeslat přihlašovací údaje na email</p>
 
@@ -281,22 +284,24 @@ export const Administration = () => {
                                                 '--Switch-thumbSize': '16px',
                                                 '--Switch-trackWidth': '40px',
                                                 '--Switch-trackHeight': '24px',
+                                                '--Switch-thumbBackground': 'var(--bg)',
                                                 '--Switch-trackBackground': 'var(--text-color-darker)',
                                                 '&:hover': {
-                                                  '--Switch-trackBackground': 'var(--text-color-3)',
+                                                    '--Switch-trackBackground': 'var(--text-color-3)',
                                                 },
                                                 [`&.${switchClasses.checked}`]: {
-                                                  '--Switch-trackBackground': 'var(--accent-color)',
-                                                  '&:hover': {
-                                                    '--Switch-trackBackground': 'var(--accent-color-darker)',
-                                                  },
+                                                    '--Switch-trackBackground': 'var(--accent-color)',
+                                                    '--Switch-thumbBackground': 'var(--bg)',
+                                                    '&:hover': {
+                                                        '--Switch-trackBackground': 'var(--accent-color-darker)',
+                                                    },
                                                 },
-                                              }}
+                                            }}
                                             />
                                         </div>
-                                    ) : null
-                                }
-                            </div>
+                                    </>
+                                ) : null
+                            }
 
                             {
                                 userModalEditMode

@@ -26,7 +26,7 @@ public static class WSChat {
             sessionAccount?.ID ?? new Random().Next(10000, int.MaxValue),
             sessionAccount?.DisplayName ?? "Guest",
             webSocket,
-            sessionAccount?.AccountType ?? "GUEST",
+            sessionAccount?.AccountType.ToString().ToUpper() ?? "GUEST",
             sessionAccount?.Class
         );
 

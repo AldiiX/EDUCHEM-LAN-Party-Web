@@ -16,6 +16,7 @@ public static class WSReservations {
     // promenne
     private static readonly List<Client> ConnectedUsers = [];
     private static Timer? statusTimer;
+    private static readonly JsonSerializerOptions JSON_OPTIONS = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     static WSReservations() {
         statusTimer = new Timer(Status!, null, 0, 1000);
@@ -33,7 +34,7 @@ public static class WSReservations {
             sessionAccount?.ID ?? new Random().Next(10000, int.MaxValue),
             sessionAccount?.DisplayName ?? "Guest",
             webSocket,
-            sessionAccount?.AccountType ?? "GUEST",
+            sessionAccount?.AccountType.ToString().ToUpper() ?? "GUEST",
             sessionAccount?.Class
         );
 
@@ -237,7 +238,7 @@ public static class WSReservations {
                 ["user"] = loggedUser != null ? reader.GetValueOrNull<int>("user_id") != null ? new JsonObject() {
                     ["id"] = reader.GetValueOrNull<int>("user_id"),
                     ["displayName"] = reader.GetStringOrNull("user_display_name"),
-                    ["class"] = loggedUser.AccountType != "STUDENT" ? reader.GetStringOrNull("user_class") : null,
+                    ["class"] = loggedUser.AccountType > User.UserAccountType.STUDENT ? reader.GetStringOrNull("user_class") : null,
                     ["avatar"] = reader.GetStringOrNull("user_avatar"),
                 } : null : "unknown",
 
@@ -271,7 +272,7 @@ public static class WSReservations {
             rooms = rooms.Result,
         };
 
-        var message = JsonSerializer.Serialize(payload, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var message = JsonSerializer.Serialize(payload, JSON_OPTIONS);
         BroadcastMessageAsync(client, message).Wait();
 
         return true;

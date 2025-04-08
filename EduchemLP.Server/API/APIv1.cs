@@ -19,7 +19,7 @@ public class APIv1 : Controller {
 
 
     [HttpGet]
-    public IActionResult Test() {
+    public IActionResult Index() {
         return new JsonResult(new { success = true, message = "API v1" });
     }
 
@@ -31,7 +31,7 @@ public class APIv1 : Controller {
             ["displayName"] = acc?.DisplayName,
             ["email"] = acc?.Email,
             ["class"] = acc?.Class,
-            ["accountType"] = acc?.AccountType,
+            ["accountType"] = acc?.AccountType.ToString().ToUpper(),
             ["lastUpdated"] = acc?.LastUpdated,
             ["avatar"] = acc?.Avatar,
         };
@@ -84,7 +84,7 @@ public class APIv1 : Controller {
     [HttpGet("adm/users")]
     public IActionResult GetUsers() {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();
-        if(acc is not { AccountType: "ADMIN" }) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený jako admin" });
+        if(acc?.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
         using var conn = Database.GetConnection();
         if(conn == null) return new StatusCodeResult(500);
@@ -120,6 +120,9 @@ public class APIv1 : Controller {
 
     [HttpPost("adm/users")]
     public IActionResult AddUser([FromBody] Dictionary<string, object?> body) {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc?.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+
         string? email = body.TryGetValue("email", out var _email) ? _email?.ToString() : null;
         string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
@@ -138,12 +141,24 @@ public class APIv1 : Controller {
 
     [HttpDelete("adm/users")]
     public IActionResult DeleteUser([FromBody] Dictionary<string, object?> body) {
+        // auth sendera
         var acc = Utilities.GetLoggedAccountFromContextOrNull();
-        if(acc is not { AccountType: "ADMIN" }) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený jako admin" });
-        
+        if(acc is null) return new UnauthorizedObjectResult(new { success = false, message = "Tuto akci může provést jen přihlášený uživatel." });
+
+        // zjisteni id uzivatele kteryho chceme mazat
         int? id = body.TryGetValue("id", out var _id) ? int.TryParse(_id?.ToString(), out var _id2) ? _id2 : null : null;
         if(id == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'id'" });
 
+        // zjisteni user instance uzivatele kteryho chceme mazat
+        var user = Classes.Objects.User.GetById((int) id);
+        if(user == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen" });
+
+        // overeni prav
+        if(acc.AccountType <= user.AccountType) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš smazat uživatele s vyššími nebo stejnými právy" });
+
+
+
+        // query
         using var conn = Database.GetConnection();
         if(conn == null) return new StatusCodeResult(500);
         var command = new MySqlCommand(
@@ -153,23 +168,32 @@ public class APIv1 : Controller {
         );
         command.Parameters.AddWithValue("@id", id);
         command.ExecuteNonQuery();
+
         return new NoContentResult();
     }
 
     [HttpPost("adm/users/passwordreset")]
     public IActionResult ResetUserPassword([FromBody] Dictionary<string, object?> data) {
+        // zjisteni prihlasenyho uzivatele + jeho perms
         var acc = Utilities.GetLoggedAccountFromContextOrNull();
-        if(acc is not { AccountType: "ADMIN" }) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený jako admin" });
+        if(acc == null || acc.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
+        // zjisteni id uzivatele kteryho chceme mazat
         int? id = data.TryGetValue("id", out var _id) ? int.TryParse(_id?.ToString(), out var _id2) ? _id2 : null : null;
         if(id == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'id'" });
 
+        // zjisteni user instance uzivatele kteryho chceme mazat
         var user = Classes.Objects.User.GetById((int) id);
         if(user == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen" });
 
+        // overeni prav obou uzivatelu
+        if(acc.AccountType <= user.AccountType) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš obnovit heslo uživateli s vyššími nebo stejnými právy" });
+
+        // vytvoreni noveho hesla
         var newPassword = Utilities.GenerateRandomPassword();
         var encryptedPassword = Utilities.EncryptPassword(newPassword);
 
+        // db
         using var conn = Database.GetConnection();
         if(conn == null) return new StatusCodeResult(500);
 
@@ -178,10 +202,12 @@ public class APIv1 : Controller {
             UPDATE users SET password=@password WHERE id=@id;
             """, conn
         );
+
         command.Parameters.AddWithValue("@password", encryptedPassword);
         command.Parameters.AddWithValue("@id", user.ID);
         command.ExecuteNonQuery();
 
+        // odeslani emailu
         string webLink = "https://" + Program.ROOT_DOMAIN + "/api/v1/lg?u=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Email + " " + newPassword));
         _ = EmailService.SendHTMLEmailAsync(user.Email, "Obnovení hesla k EDUCHEM LAN Party", "~/Views/Emails/UserResetPassword.cshtml",
             new EmailUserRegisterModel(newPassword, webLink, user.Email)
