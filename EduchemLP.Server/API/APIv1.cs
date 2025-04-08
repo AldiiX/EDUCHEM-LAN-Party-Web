@@ -120,8 +120,8 @@ public class APIv1 : Controller {
 
     [HttpPost("adm/users")]
     public IActionResult AddUser([FromBody] Dictionary<string, object?> body) {
-        var acc = Utilities.GetLoggedAccountFromContextOrNull();
-        if(acc?.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+        var loggedUser = Utilities.GetLoggedAccountFromContextOrNull();
+        if(loggedUser == null || loggedUser.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
         string? email = body.TryGetValue("email", out var _email) ? _email?.ToString() : null;
         string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
@@ -131,10 +131,13 @@ public class APIv1 : Controller {
         bool sendToEmail = body.TryGetValue("sendToEmail", out var _sendToEmail) && bool.TryParse(_sendToEmail?.ToString(), out var _sendToEmail2) && _sendToEmail2;
 
         if(email == null || displayName == null || accountType == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'email', 'displayName' nebo 'accountType'" });
+        var accountTypeParsed = Enum.TryParse(accountType, out User.UserAccountType _ac) ? _ac : Classes.Objects.User.UserAccountType.STUDENT;
 
-        var genderParsed = Enum.TryParse(gender, out EduchemLP.Server.Classes.Objects.User.UserGender _g) ? _g : EduchemLP.Server.Classes.Objects.User.UserGender.OTHER;
-        var user = Classes.Objects.User.Create(email, displayName, @class, genderParsed, accountType, sendToEmail);
-        if(user == null) return new JsonResult(new { success = false, message = "Chyba při vytváření uživatele" }) { StatusCode = 500};
+        if(loggedUser.AccountType < accountTypeParsed && loggedUser.AccountType != Classes.Objects.User.UserAccountType.SUPERADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš vytvořit uživatele s vyššími právy." });
+
+        var genderParsed = Enum.TryParse(gender, out User.UserGender _g) ? _g : Classes.Objects.User.UserGender.OTHER;
+        var user = Classes.Objects.User.Create(email, displayName, @class, genderParsed, accountTypeParsed, sendToEmail);
+        if(user == null) return new JsonResult(new { success = false, message = "Chyba při vytváření uživatele." }) { StatusCode = 500};
 
         return new NoContentResult();
     }
@@ -142,19 +145,19 @@ public class APIv1 : Controller {
     [HttpDelete("adm/users")]
     public IActionResult DeleteUser([FromBody] Dictionary<string, object?> body) {
         // auth sendera
-        var acc = Utilities.GetLoggedAccountFromContextOrNull();
-        if(acc is null) return new UnauthorizedObjectResult(new { success = false, message = "Tuto akci může provést jen přihlášený uživatel." });
+        var loggedUser = Utilities.GetLoggedAccountFromContextOrNull();
+        if(loggedUser is null) return new UnauthorizedObjectResult(new { success = false, message = "Tuto akci může provést jen přihlášený uživatel." });
 
         // zjisteni id uzivatele kteryho chceme mazat
         int? id = body.TryGetValue("id", out var _id) ? int.TryParse(_id?.ToString(), out var _id2) ? _id2 : null : null;
         if(id == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'id'" });
 
         // zjisteni user instance uzivatele kteryho chceme mazat
-        var user = Classes.Objects.User.GetById((int) id);
-        if(user == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen" });
+        var targetUser = Classes.Objects.User.GetById((int) id);
+        if(targetUser == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen" });
 
         // overeni prav
-        if(acc.AccountType <= user.AccountType) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš smazat uživatele s vyššími nebo stejnými právy" });
+        if(loggedUser.AccountType <= targetUser.AccountType && loggedUser.AccountType != Classes.Objects.User.UserAccountType.SUPERADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš smazat uživatele s vyššími nebo stejnými právy." });
 
 
 
@@ -184,10 +187,10 @@ public class APIv1 : Controller {
 
         // zjisteni user instance uzivatele kteryho chceme mazat
         var user = Classes.Objects.User.GetById((int) id);
-        if(user == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen" });
+        if(user == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen." });
 
         // overeni prav obou uzivatelu
-        if(acc.AccountType <= user.AccountType) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš obnovit heslo uživateli s vyššími nebo stejnými právy" });
+        if(acc.AccountType <= user.AccountType) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš obnovit heslo uživateli s vyššími nebo stejnými právy." });
 
         // vytvoreni noveho hesla
         var newPassword = Utilities.GenerateRandomPassword();
@@ -213,6 +216,8 @@ public class APIv1 : Controller {
             new EmailUserRegisterModel(newPassword, webLink, user.Email)
         );
 
-        return new JsonResult(new { success = true, message = "Heslo bylo obnoveno a odesláno na email" });
+        return new JsonResult(new { success = true, message = "Heslo bylo obnoveno a odesláno na email." });
     }
+
+    //TODO: edit uzivatele
 }

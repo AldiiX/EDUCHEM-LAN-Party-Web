@@ -3,5 +3,12 @@ export type LoggedUser = {
     displayName: string,
     class: string | null,
     email: string,
-    accountType: string,
+    accountType: AccountType,
+}
+
+export enum AccountType {
+    STUDENT,
+    TEACHER,
+    ADMIN,
+    SUPERADMIN,
 }

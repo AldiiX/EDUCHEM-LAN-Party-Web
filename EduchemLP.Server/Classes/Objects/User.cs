@@ -11,8 +11,10 @@ namespace EduchemLP.Server.Classes.Objects;
 
 
 public class User {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum UserGender { MALE, FEMALE, OTHER}
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum UserAccountType {
         STUDENT,
         TEACHER,
@@ -150,9 +152,9 @@ public class User {
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public static User? Create(string email, string displayName, string? @class, UserGender gender, string accountType, bool sendToEmail = false) => CreateAsync(email, displayName, @class, gender, accountType, sendToEmail).Result;
+    public static User? Create(string email, string displayName, string? @class, UserGender gender, UserAccountType accountType, bool sendToEmail = false) => CreateAsync(email, displayName, @class, gender, accountType, sendToEmail).Result;
 
-    public static async Task<User?> CreateAsync(string email, string displayName, string? @class, UserGender gender, string accountType, bool sendToEmail = false) {
+    public static async Task<User?> CreateAsync(string email, string displayName, string? @class, UserGender gender, UserAccountType accountType, bool sendToEmail = false) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
 
@@ -168,7 +170,7 @@ public class User {
         cmd.Parameters.AddWithValue("@displayName", displayName);
         cmd.Parameters.AddWithValue("@password", Utilities.EncryptPassword(password));
         cmd.Parameters.AddWithValue("@class", @class);
-        cmd.Parameters.AddWithValue("@accountType", accountType);
+        cmd.Parameters.AddWithValue("@accountType", accountType.ToString().ToUpper());
         cmd.Parameters.AddWithValue("@gender", gender.ToString().ToUpper());
 
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;

@@ -10,16 +10,18 @@ import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 import { ButtonPrimary } from "../../components/buttons/ButtonPrimary.tsx";
 import { toast } from "react-toastify";
 import Switch, { switchClasses } from '@mui/joy/Switch';
+import { AccountType } from "../../interfaces.ts";
 
 export const Administration = () => {
     enum Modals { USER, DELETE_CONFIRMATION, RESETPASSWORD_CONFIRMATION }
+
     interface User {
         id: string,
         name: string,
         email: string,
         avatar: string,
         class: string,
-        accountType: string,
+        accountType: AccountType,
         gender: string,
         lastUpdated: string,
         lastLoggedIn: string,
@@ -41,7 +43,7 @@ export const Administration = () => {
 
     useEffect(() => {
         // Ověření oprávnění
-        if (userAuthed && loggedUser?.accountType !== "ADMIN" && loggedUser?.accountType !== "TEACHER") {
+        if (userAuthed && AccountType[loggedUser?.accountType as unknown as keyof typeof AccountType] < AccountType.TEACHER) {
             navigate("/app");
         }
 
@@ -118,7 +120,7 @@ export const Administration = () => {
     }
 
 
-    if (!userAuthed || (userAuthed && !loggedUser) || (userAuthed && loggedUser?.accountType !== "ADMIN" && loggedUser?.accountType !== "TEACHER")) {
+    if (!userAuthed || (userAuthed && !loggedUser) || (userAuthed && loggedUser?.accountType && AccountType[loggedUser?.accountType as unknown as keyof typeof AccountType] < AccountType.TEACHER)) {
         navigate("/app");
         return null;
     }
@@ -370,12 +372,14 @@ export const Administration = () => {
                                         id: selectedUser?.id,
                                     }),
                                 }).then(async res => {
+                                    const data = await res.json();
+
                                     if (!res.ok) {
                                         console.error("Chyba při resetování hesla");
+                                        toast.error("Chyba při resetování hesla: " + data.message);
                                         return;
                                     }
 
-                                    const data = await res.json();
                                     fetchUsersFromApi();
                                     setOpenedModal(Modals.USER);
                                     toast.success(`Heslo uživatele ${selectedUser?.name} úspěšně resetováno. Nové heslo bylo odesláno na email uživatele.`);

@@ -9,7 +9,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- db
+-- Databáze: `educhem_lan_party_dev`
 --
 CREATE DATABASE IF NOT EXISTS `educhem_lan_party_dev` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE `educhem_lan_party_dev`;
@@ -21,12 +21,11 @@ USE `educhem_lan_party_dev`;
 --
 
 DROP TABLE IF EXISTS `chat`;
-CREATE TABLE IF NOT EXISTS `chat` (
-                                      `user_id` int NOT NULL,
-                                      `message` text NOT NULL,
-                                      `uuid` varchar(256) NOT NULL,
-                                      `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                      PRIMARY KEY (`uuid`)
+CREATE TABLE `chat` (
+                        `user_id` int NOT NULL,
+                        `message` text NOT NULL,
+                        `uuid` varchar(256) NOT NULL,
+                        `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -36,12 +35,11 @@ CREATE TABLE IF NOT EXISTS `chat` (
 --
 
 DROP TABLE IF EXISTS `computers`;
-CREATE TABLE IF NOT EXISTS `computers` (
-                                           `id` varchar(12) NOT NULL,
-                                           `room_id` varchar(12) DEFAULT NULL,
-                                           `is_teachers_pc` tinyint(1) NOT NULL DEFAULT '0',
-                                           `available` tinyint(1) NOT NULL DEFAULT '1',
-                                           PRIMARY KEY (`id`)
+CREATE TABLE `computers` (
+                             `id` varchar(12) NOT NULL,
+                             `room_id` varchar(12) DEFAULT NULL,
+                             `is_teachers_pc` tinyint(1) NOT NULL DEFAULT '0',
+                             `available` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -51,15 +49,12 @@ CREATE TABLE IF NOT EXISTS `computers` (
 --
 
 DROP TABLE IF EXISTS `reservations`;
-CREATE TABLE IF NOT EXISTS `reservations` (
-                                              `user_id` int NOT NULL,
-                                              `room_id` varchar(12) DEFAULT NULL,
-                                              `computer_id` varchar(12) DEFAULT NULL,
-                                              `note` text,
-                                              `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                              PRIMARY KEY (`user_id`),
-                                              UNIQUE KEY `computer_id` (`computer_id`),
-                                              KEY `rooms_fk` (`room_id`)
+CREATE TABLE `reservations` (
+                                `user_id` int NOT NULL,
+                                `room_id` varchar(12) DEFAULT NULL,
+                                `computer_id` varchar(12) DEFAULT NULL,
+                                `note` text,
+                                `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
@@ -155,13 +150,12 @@ DELIMITER ;
 --
 
 DROP TABLE IF EXISTS `rooms`;
-CREATE TABLE IF NOT EXISTS `rooms` (
-                                       `id` varchar(12) NOT NULL,
-                                       `label` varchar(32) DEFAULT NULL,
-                                       `image` varchar(512) DEFAULT NULL,
-                                       `limit_of_seats` tinyint UNSIGNED DEFAULT NULL,
-                                       `available` tinyint(1) NOT NULL DEFAULT '1',
-                                       PRIMARY KEY (`id`)
+CREATE TABLE `rooms` (
+                         `id` varchar(12) NOT NULL,
+                         `label` varchar(32) DEFAULT NULL,
+                         `image` varchar(512) DEFAULT NULL,
+                         `limit_of_seats` tinyint UNSIGNED DEFAULT NULL,
+                         `available` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -171,10 +165,9 @@ CREATE TABLE IF NOT EXISTS `rooms` (
 --
 
 DROP TABLE IF EXISTS `settings`;
-CREATE TABLE IF NOT EXISTS `settings` (
-                                          `property` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-                                          `value` json NOT NULL,
-                                          PRIMARY KEY (`property`)
+CREATE TABLE `settings` (
+                            `property` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+                            `value` json NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -184,19 +177,17 @@ CREATE TABLE IF NOT EXISTS `settings` (
 --
 
 DROP TABLE IF EXISTS `users`;
-CREATE TABLE IF NOT EXISTS `users` (
-                                       `id` int NOT NULL AUTO_INCREMENT,
-                                       `display_name` varchar(64) NOT NULL DEFAULT 'Neznámé jméno',
-                                       `email` varchar(64) DEFAULT NULL,
-                                       `password` varchar(1024) NOT NULL DEFAULT '_',
-                                       `class` varchar(12) DEFAULT NULL,
-                                       `gender` set('MALE','FEMALE','OTHER') DEFAULT NULL,
-                                       `last_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                       `last_logged_in` datetime DEFAULT NULL,
-                                       `account_type` enum('STUDENT','TEACHER','ADMIN') NOT NULL DEFAULT 'STUDENT',
-                                       `avatar` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-                                       PRIMARY KEY (`id`),
-                                       UNIQUE KEY `email` (`email`)
+CREATE TABLE `users` (
+                         `id` int NOT NULL,
+                         `display_name` varchar(64) NOT NULL DEFAULT 'Neznámé jméno',
+                         `email` varchar(64) DEFAULT NULL,
+                         `password` varchar(1024) NOT NULL DEFAULT '_',
+                         `class` varchar(12) DEFAULT NULL,
+                         `gender` set('MALE','FEMALE','OTHER') DEFAULT NULL,
+                         `last_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                         `last_logged_in` datetime DEFAULT NULL,
+                         `account_type` enum('STUDENT','TEACHER','ADMIN','SUPERADMIN') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'STUDENT',
+                         `avatar` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
@@ -211,6 +202,59 @@ CREATE TRIGGER `trg_before_update_users` BEFORE UPDATE ON `users` FOR EACH ROW B
 END
 $$
 DELIMITER ;
+
+--
+-- Indexy pro exportované tabulky
+--
+
+--
+-- Indexy pro tabulku `chat`
+--
+ALTER TABLE `chat`
+    ADD PRIMARY KEY (`uuid`);
+
+--
+-- Indexy pro tabulku `computers`
+--
+ALTER TABLE `computers`
+    ADD PRIMARY KEY (`id`);
+
+--
+-- Indexy pro tabulku `reservations`
+--
+ALTER TABLE `reservations`
+    ADD PRIMARY KEY (`user_id`),
+    ADD UNIQUE KEY `computer_id` (`computer_id`),
+    ADD KEY `rooms_fk` (`room_id`);
+
+--
+-- Indexy pro tabulku `rooms`
+--
+ALTER TABLE `rooms`
+    ADD PRIMARY KEY (`id`);
+
+--
+-- Indexy pro tabulku `settings`
+--
+ALTER TABLE `settings`
+    ADD PRIMARY KEY (`property`);
+
+--
+-- Indexy pro tabulku `users`
+--
+ALTER TABLE `users`
+    ADD PRIMARY KEY (`id`),
+    ADD UNIQUE KEY `email` (`email`);
+
+--
+-- AUTO_INCREMENT pro tabulky
+--
+
+--
+-- AUTO_INCREMENT pro tabulku `users`
+--
+ALTER TABLE `users`
+    MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- Omezení pro exportované tabulky
@@ -233,9 +277,26 @@ COMMIT;
 
 
 
+
 # vytvoreni uctu
 CREATE USER 'educhem_lan_party'@'%' IDENTIFIED BY 'educhem_lan_party';
 
 GRANT ALL PRIVILEGES ON educhem_lan_party_dev.* TO 'educhem_lan_party'@'%';
 
 FLUSH PRIVILEGES;
+
+
+# postnuti veci do db
+INSERT INTO `users`
+(`display_name`, `email`, `password`, `class`, `gender`, `last_updated`, `last_logged_in`, `account_type`, `avatar`)
+VALUES (
+           'Admin',
+           'admin@admin.admin',
+           'b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc864dca00da67c692296690e90c50c96b79',
+           NULL,
+           'OTHER',
+           NOW(),
+           NOW(),
+           'SUPERADMIN',
+        NULL
+       );

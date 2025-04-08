@@ -1,4 +1,5 @@
 import {useStore} from "./store.tsx";
+import {AccountType} from "./interfaces.ts";
 
 export const getCookie = (name: string) => {
     const value = `; ${document.cookie}`;
@@ -38,3 +39,10 @@ export const logout = (setLoggedUser: Function) => {
         setLoggedUser(null);
     });
 }
+
+export function enumEquals(value: string | null | undefined, enumClass: any, targetEnum: any): boolean {
+    if(!value) return false;
+
+    const enumValue = enumClass[value as keyof typeof enumClass];
+    return enumValue === targetEnum;
+} // TODO: dodělat i je vetsi, mensi, vetsi nebo rovno, mensi nebo rovno
