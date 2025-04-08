@@ -1,40 +1,20 @@
 :root:is(.theme-light) {
-    .modal:is(.user-modal) .modal-content > .top > .banner {
-        overflow: hidden;
-
-        &::after {
-            width: 150%;
-            height: 150%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            filter: blur(20px);
-        }
-    }
-
-    .modal:is(.confirmation-modal) .modal-content {
-        max-width: 300px;
-
-        >p {
-            text-align: center;
-            //font-size: 20px;
-
-            >span {
-                font-weight: 600;
-                color: var(--accent-color);
-            }
-        }
-
-        >.buttons {
-            display: flex;
-            gap: 16px;
-            margin-top: 20px;
-
-            >button {
-                flex-grow: 1;
+    .modal:is(.user-modal) .modal-content {
+        >.top > .banner {
+            overflow: hidden;
+    
+            &::after {
+                width: 150%;
+                height: 150%;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                filter: blur(20px);
             }
         }
     }
+
+    
 }
 
 .area-selector {

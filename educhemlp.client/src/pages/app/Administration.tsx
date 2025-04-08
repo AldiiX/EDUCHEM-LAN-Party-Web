@@ -9,6 +9,7 @@ import {ButtonSecondary} from "../../components/buttons/ButtonSecondary.tsx";
 import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 import { ButtonPrimary } from "../../components/buttons/ButtonPrimary.tsx";
 import { toast } from "react-toastify";
+import Switch, { switchClasses } from '@mui/joy/Switch';
 
 export const Administration = () => {
     enum Modals { USER, DELETE_CONFIRMATION, RESETPASSWORD_CONFIRMATION }
@@ -166,6 +167,7 @@ export const Administration = () => {
                                             let cls: string | null = (userModal.querySelector("input[name='class']") as HTMLInputElement).value;
                                             const gender = (userModal.querySelector("select[name='gender']") as HTMLSelectElement).value;
                                             const accountType = (userModal.querySelector("select[name='accountType']") as HTMLSelectElement).value;
+                                            const sendToEmail = (userModal.querySelector("input[name='sendToEmail']") as HTMLInputElement).checked;
 
                                             if(name?.length < 3) {
                                                 toast.error("Jméno musí mít alespoň 3 znaky.");
@@ -192,7 +194,7 @@ export const Administration = () => {
                                                     class: cls,
                                                     accountType: accountType,
                                                     gender: gender,
-                                                    sendToEmail: false,
+                                                    sendToEmail: sendToEmail,
                                                 })
                                             }).then(async res => {
                                                 if (!res.ok) {
@@ -269,6 +271,31 @@ export const Administration = () => {
                                         )
                                     }
                                 </div>
+
+                                {
+                                    userModalCreationMode ? (
+                                        <div className="switch-div">
+                                            <p>Odeslat přihlašovací údaje na email</p>
+
+                                            <Switch slotProps={{ input: { role: 'switch', name: "sendToEmail" } }} defaultChecked={true} sx={{
+                                                '--Switch-thumbSize': '16px',
+                                                '--Switch-trackWidth': '40px',
+                                                '--Switch-trackHeight': '24px',
+                                                '--Switch-trackBackground': 'var(--text-color-darker)',
+                                                '&:hover': {
+                                                  '--Switch-trackBackground': 'var(--text-color-3)',
+                                                },
+                                                [`&.${switchClasses.checked}`]: {
+                                                  '--Switch-trackBackground': 'var(--accent-color)',
+                                                  '&:hover': {
+                                                    '--Switch-trackBackground': 'var(--accent-color-darker)',
+                                                  },
+                                                },
+                                              }}
+                                            />
+                                        </div>
+                                    ) : null
+                                }
                             </div>
 
                             {
