@@ -10,84 +10,152 @@ import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 import { ButtonPrimary } from "../../components/buttons/ButtonPrimary.tsx";
 import { toast } from "react-toastify";
 import Switch, { switchClasses } from '@mui/joy/Switch';
-import { AccountType } from "../../interfaces.ts";
+import {AccountType, Log, LogType} from "../../interfaces.ts";
 import { enumIsGreaterOrEquals } from "../../utils.ts";
+import { create } from "zustand";
 
-export const Administration = () => {
-    enum Modals { USER, DELETE_CONFIRMATION, RESETPASSWORD_CONFIRMATION }
-    enum Tab { USERS, RESERVATIONS, LOGS }
 
-    interface User {
-        id: string,
-        name: string,
-        email: string,
-        avatar: string,
-        class: string,
-        accountType: AccountType,
-        gender: string,
-        lastUpdated: string,
-        lastLoggedIn: string,
+
+
+// region shared veci
+enum Modals { USER, DELETE_CONFIRMATION, RESETPASSWORD_CONFIRMATION }
+
+enum Tab { USERS, RESERVATIONS, LOGS }
+
+interface User {
+    id: string,
+    name: string,
+    email: string,
+    avatar: string,
+    class: string,
+    accountType: AccountType,
+    gender: string,
+    lastUpdated: string,
+    lastLoggedIn: string,
+}
+
+interface AdminStore {
+    selectedUser: User | null;
+    setSelectedUser: (user: User | null) => void;
+
+    userModalOpen: boolean;
+    setUserModalOpen: (open: boolean) => void;
+
+    userEditMode: boolean;
+    setUserEditMode: (edit: boolean) => void;
+
+    userCreationMode: boolean;
+    setUserCreationMode: (create: boolean) => void;
+
+    openedModal: Modals | null;
+    setOpenedModal: (modal: Modals | null) => void;
+
+    userModalEditMode: boolean;
+    setUserModalEditMode: (edit: boolean) => void;
+
+    userModalCreationMode: boolean;
+    setUserModalCreationMode: (create: boolean) => void;
+
+    closeModal: () => void;
+
+    logs: Log[] | null;
+    setLogs: (logs: Log[] | null) => void;
+
+    users: User[] | null;
+    setUsers: (users: User[] | null) => void;
+}
+
+const useAdminStore = create<AdminStore>((set) => ({
+    selectedUser: null,
+    setSelectedUser: (user) => set({ selectedUser: user }),
+
+    userModalOpen: false,
+    setUserModalOpen: (open) => set({ userModalOpen: open }),
+
+    userEditMode: false,
+    setUserEditMode: (edit) => set({ userEditMode: edit }),
+
+    userCreationMode: false,
+    setUserCreationMode: (create) => set({ userCreationMode: create }),
+
+    openedModal: null,
+    setOpenedModal: (modal) => set({ openedModal: modal }),
+
+    userModalEditMode: false,
+    setUserModalEditMode: (edit) => set({ userModalEditMode: edit }),
+
+    userModalCreationMode: false,
+    setUserModalCreationMode: (create) => set({ userModalCreationMode: create }),
+
+    closeModal: () => set({
+        openedModal: null,
+        userModalEditMode: false,
+        userModalCreationMode: false,
+        selectedUser: null
+    }),
+
+    logs: null,
+    setLogs: (logs) => set({ logs: logs }),
+
+    users: null,
+    setUsers: (users) => set({ users: users }),
+}));
+
+function translateGender(gender: string) {
+    switch (gender) {
+        case "MALE": return "Muž";
+        case "FEMALE" : return "Žena";
+        case "OTHER" : return "Ostatní";
+        default: return "Neznámý";
     }
+}
 
-    const navigate = useNavigate();
-    const { loggedUser } = useStore();
-    const { userAuthed, setUserAuthed } = useStore();
-    const [selectedTab, setSelectedTab] = useState<Tab>(Tab.USERS);
-    const [users, setUsers] = useState<any[] | null>(null);
-    const [openedModal, setOpenedModal] = useState<Modals | null>(null);
-    const [userModalEditMode, setUserModalEditMode] = useState(false);
-    const [userModalCreationMode, setUserModalCreationMode] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+function fetchUsersFromApi(setUsers?: Function | null) {
+    fetch("/api/v1/adm/users").then(async res => {
+        if (!res.ok) {
+            console.error("Chyba při načítání uživatelů");
+            return;
+        }
+
+        const data = await res.json();
+        if(setUsers) setUsers(data);
+    });
+}
+// endregion
+
+
+
+
+
+
+
+
+
+
+
+
+
+// region komponenty
+// users tab
+const UsersTab = () => {
+    const users = useAdminStore((state) => state.users);
+    const setUsers = useAdminStore((state) => state.setUsers);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState("asc");
 
+    const closeModal = useAdminStore((state) => state.closeModal);
+    const loggedUser = useAdminStore((state) => state.selectedUser);
 
-    useEffect(() => {
-        // Ověření oprávnění
-        if (userAuthed && AccountType[loggedUser?.accountType as unknown as keyof typeof AccountType] < AccountType.TEACHER) {
-            navigate("/app");
-        }
+    const selectedUser = useAdminStore((state) => state.selectedUser);
+    const setSelectedUser = useAdminStore((state) => state.setSelectedUser);
 
-    }, [userAuthed, navigate]);
-
-    useEffect(() => {
-        switch (selectedTab) {
-            case Tab.USERS: {
-                fetchUsersFromApi();
-            } break;
-        }
-    }, [selectedTab]);
-
-
-
-    function fetchUsersFromApi() {
-        fetch("/api/v1/adm/users").then(async res => {
-            if (!res.ok) {
-                console.error("Chyba při načítání uživatelů");
-                return;
-            }
-
-            const data = await res.json();
-            setUsers(data);
-        });
-    }
-
-    function closeModal() {
-        setOpenedModal(null);
-        setUserModalEditMode(false);
-        setUserModalCreationMode(false);
-        setSelectedUser(null);
-    }
-
-    function translateGender(gender: string) {
-        switch (gender) {
-            case "MALE": return "Muž";
-            case "FEMALE" : return "Žena";
-            case "OTHER" : return "Ostatní";
-            default: return "Neznámý";
-        }
-    }
+    const openedModal = useAdminStore((state) => state.openedModal);
+    const setOpenedModal = useAdminStore((state) => state.setOpenedModal);
+    const userModalEditMode = useAdminStore((state) => state.userModalEditMode);
+    const setUserModalEditMode = useAdminStore((state) => state.setUserModalEditMode);
+    const userModalCreationMode = useAdminStore((state) => state.userModalCreationMode);
+    const setUserModalCreationMode = useAdminStore((state) => state.setUserModalCreationMode);
 
     const handleSearchChange = (event: any) => {
         setSearchTerm(event.target.value);
@@ -106,10 +174,10 @@ export const Administration = () => {
         )
         .sort((a, b) => {
             if (!sortColumn) return 0;
-            const aValue = a[sortColumn] || "";
-            const bValue = b[sortColumn] || "";
+            const aValue: any = a[sortColumn] || "";
+            const bValue: any = b[sortColumn] || "";
             return (
-                aValue.toString().localeCompare(bValue.toString(), "cs", { numeric: true }) *
+                aValue?.toString().localeCompare(bValue?.toString(), "cs", { numeric: true }) *
                 (sortDirection === "asc" ? 1 : -1)
             );
     });
@@ -122,14 +190,14 @@ export const Administration = () => {
     }
 
 
-    if (!userAuthed || (userAuthed && !loggedUser) || (userAuthed && loggedUser?.accountType && AccountType[loggedUser?.accountType as unknown as keyof typeof AccountType] < AccountType.TEACHER)) {
-        navigate("/app");
-        return null;
-    }
+
+
+    useEffect(() => {
+        fetchUsersFromApi(setUsers);
+    }, []);
 
     return (
-        <AppLayout>
-
+        <>
             <Modal onClose={closeModal} enabled={openedModal === Modals.USER } className="user-modal">
                 { selectedUser !== null ? (
                     <>
@@ -143,7 +211,7 @@ export const Administration = () => {
                             {
                                 !userModalCreationMode ?
                                     <Avatar size={"200px"} src={selectedUser?.avatar} name={selectedUser?.name} />
-                                : <Avatar size={"200px"} name="?" backgroundColor="var(--accent-color)" />
+                                    : <Avatar size={"200px"} name="?" backgroundColor="var(--accent-color)" />
                             }
                         </div>
 
@@ -208,7 +276,7 @@ export const Administration = () => {
 
                                                 //const data = await res.json();
                                                 closeModal();
-                                                fetchUsersFromApi();
+                                                //fetchUsersFromApi();
                                                 toast.success(`Uživatel ${name} úspěšně vytvořen.`);
                                             })
                                         }}>Vytvořit uživatele</button>
@@ -281,7 +349,7 @@ export const Administration = () => {
                                                         <option value="ADMIN">Admin</option>
                                                     ) : null
                                                 }
-                                                
+
                                                 {
                                                     enumIsGreaterOrEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.ADMIN) ? (
                                                         <option value="SUPERADMIN">Superadmin</option>
@@ -354,7 +422,7 @@ export const Administration = () => {
                         </>
                     ) : null
                 }
-                
+
                 <div className="buttons">
                     <ButtonPrimary text="Ano" onClick={() => {
                         switch (openedModal) {
@@ -379,7 +447,7 @@ export const Administration = () => {
                                     toast.success(`Uživatel ${selectedUser?.name} úspěšně smazán.`);
                                 });
                             } break;
-                            
+
                             case Modals.RESETPASSWORD_CONFIRMATION: {
                                 fetch(`/api/v1/adm/users/passwordreset`, {
                                     method: "POST",
@@ -409,8 +477,150 @@ export const Administration = () => {
                 </div>
             </Modal>
 
+            <div className="users-wrapper">
+                <div className="inputs">
+                    <p className="user-count">Uživatelé ({ filteredAndSortedUsers?.length ?? 0 })</p>
+
+                    <input
+                        type="text"
+                        placeholder="Hledat uživatele..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                    />
+
+                    <p className="add-user" onClick={() => addUser()}>+ Přidat uživatele</p>
+                </div>
+
+                <table>
+                    <thead>
+                    <tr>
+                        <th onClick={() => handleSort("name")}>Jméno a příjmení</th>
+                        <th onClick={() => handleSort("email")}>Email</th>
+                        <th onClick={() => handleSort("gender")}>Pohlaví</th>
+                        <th onClick={() => handleSort("class")}>Třída</th>
+                        <th onClick={() => handleSort("accountType")}>Typ účtu</th>
+                        <th onClick={() => handleSort("lastUpdated")}>Naposledy upraven</th>
+                        <th onClick={() => handleSort("lastLoggedIn")}>Naposledy přihlášen</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {filteredAndSortedUsers?.map((user) => (
+                        <tr
+                            key={user.id}
+                            className={loggedUser?.id === user.id ? "loggeduser" : ""}
+                            onClick={() => {
+                                setSelectedUser(user);
+                                setOpenedModal(Modals.USER);
+                            }}
+                        >
+                            <td>
+                                <div className="name">
+                                    <Avatar size={"28px"} name={user.name} src={user.avatar} />
+                                    <p>{user.name}</p>
+                                </div>
+                            </td>
+                            <td>{user.email}</td>
+                            <td >{translateGender(user.gender)}</td>
+                            <td>{user.class}</td>
+                            <td>{user.accountType}</td>
+                            <td>{new Date(user.lastUpdated).toLocaleString()}</td>
+                            <td>{user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : null}</td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
+        </>
+    )
+}
 
 
+
+
+
+// log tab
+const LogsTab = () => {
+    const logs = useAdminStore((state) => state.logs);
+    const setLogs = useAdminStore((state) => state.setLogs);
+
+    function fetchLogsFromApi() {
+        fetch("/api/v1/adm/logs").then(async res => {
+            if (!res.ok) {
+                console.error("Chyba při načítání logů");
+                return;
+            }
+
+            const data = await res.json();
+            setLogs(data);
+        });
+    }
+
+    useEffect(() => {
+        fetchLogsFromApi();
+    }, []);
+
+
+    return (
+        <div className="users-wrapper">
+            <table>
+                <thead>
+                <tr>
+                    <th>Typ</th>
+                    <th>Přesný typ</th>
+                    <th>Zpráva</th>
+                    <th>Datum</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {logs?.map((log: Log) => (
+                    <tr
+                        key={log.id}
+                    >
+                        <td className={ log.type.toString().toLowerCase() }>{ log.type }</td>
+                        <td>{ log.exactType }</td>
+                        <td>{ log.message }</td>
+                        <td>{new Date(log.date).toLocaleString()}</td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+
+
+
+
+// main komponent
+export const Administration = () => {
+    const navigate = useNavigate();
+    const { loggedUser } = useStore();
+    const { userAuthed, setUserAuthed } = useStore();
+    const [selectedTab, setSelectedTab] = useState<Tab>(Tab.USERS);
+
+
+    useEffect(() => {
+        // Ověření oprávnění
+        if (userAuthed && AccountType[loggedUser?.accountType as unknown as keyof typeof AccountType] < AccountType.TEACHER) {
+            navigate("/app");
+        }
+
+    }, [userAuthed, navigate]);
+
+
+
+
+
+    if (!userAuthed || (userAuthed && !loggedUser) || (userAuthed && loggedUser?.accountType && AccountType[loggedUser?.accountType as unknown as keyof typeof AccountType] < AccountType.TEACHER)) {
+        navigate("/app");
+        return null;
+    }
+
+    return (
+        <AppLayout>
             <h1>Administrace</h1>
 
             <div className="area-selector">
@@ -421,60 +631,9 @@ export const Administration = () => {
 
             {
                 selectedTab === Tab.USERS ? (
-                    <div className="users-wrapper">
-                        <div className="inputs">
-                            <p className="user-count">Uživatelé ({ filteredAndSortedUsers?.length ?? 0 })</p>
-
-                            <input
-                                type="text"
-                                placeholder="Hledat uživatele..."
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                            />
-
-                            <p className="add-user" onClick={() => addUser()}>+ Přidat uživatele</p>
-                        </div>
-
-                        <table>
-                            <thead>
-                            <tr>
-                                <th onClick={() => handleSort("name")}>Jméno a příjmení</th>
-                                <th onClick={() => handleSort("email")}>Email</th>
-                                <th onClick={() => handleSort("gender")}>Pohlaví</th>
-                                <th onClick={() => handleSort("class")}>Třída</th>
-                                <th onClick={() => handleSort("accountType")}>Typ účtu</th>
-                                <th onClick={() => handleSort("lastUpdated")}>Naposledy upraven</th>
-                                <th onClick={() => handleSort("lastLoggedIn")}>Naposledy přihlášen</th>
-                            </tr>
-                            </thead>
-
-                            <tbody>
-                                {filteredAndSortedUsers?.map((user) => (
-                                    <tr
-                                        key={user.id}
-                                        className={loggedUser.id === user.id ? "loggeduser" : ""}
-                                        onClick={() => {
-                                            setSelectedUser(user);
-                                            setOpenedModal(Modals.USER);
-                                        }}
-                                    >
-                                        <td>
-                                            <div className="name">
-                                                <Avatar size={"28px"} name={user.name} src={user.avatar} />
-                                                <p>{user.name}</p>
-                                            </div>
-                                        </td>
-                                        <td>{user.email}</td>
-                                        <td >{translateGender(user.gender)}</td>
-                                        <td>{user.class}</td>
-                                        <td>{user.accountType}</td>
-                                        <td>{new Date(user.lastUpdated).toLocaleString()}</td>
-                                        <td>{user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : null}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                    <UsersTab />
+                ) : selectedTab === Tab.LOGS ? (
+                    <LogsTab />
                 ) : null
             }
         </AppLayout>
@@ -482,3 +641,4 @@ export const Administration = () => {
 };
 
 export default Administration;
+// endregion
