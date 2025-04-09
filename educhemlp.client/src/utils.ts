@@ -45,4 +45,32 @@ export function enumEquals(value: string | null | undefined, enumClass: any, tar
 
     const enumValue = enumClass[value as keyof typeof enumClass];
     return enumValue === targetEnum;
-} // TODO: dodělat i je vetsi, mensi, vetsi nebo rovno, mensi nebo rovno
+}
+
+export function enumIsGreater(value: string | null | undefined, enumClass: any, targetEnum: any): boolean {
+    if(!value) return false;
+
+    const enumValue = enumClass[value as keyof typeof enumClass];
+    return enumValue > targetEnum;
+}
+
+export function enumIsGreaterOrEquals(value: string | null | undefined, enumClass: any, targetEnum: any): boolean {
+    if(!value) return false;
+
+    const enumValue = enumClass[value as keyof typeof enumClass];
+    return enumValue >= targetEnum;
+}
+
+export function enumIsSmaller(value: string | null | undefined, enumClass: any, targetEnum: any): boolean {
+    if(!value) return false;
+
+    const enumValue = enumClass[value as keyof typeof enumClass];
+    return enumValue < targetEnum;
+}
+
+export function enumIsSmallerOrEquals(value: string | null | undefined, enumClass: any, targetEnum: any): boolean {
+    if(!value) return false;
+
+    const enumValue = enumClass[value as keyof typeof enumClass];
+    return enumValue <= targetEnum;
+}

@@ -139,6 +139,9 @@ public class APIv1 : Controller {
         var user = Classes.Objects.User.Create(email, displayName, @class, genderParsed, accountTypeParsed, sendToEmail);
         if(user == null) return new JsonResult(new { success = false, message = "Chyba při vytváření uživatele." }) { StatusCode = 500};
 
+        // zapassani do logu
+        DbLogger.Log(DbLogger.LogType.INFO, $"Uživatel {user.DisplayName} ({user.Email}) byl vytvořen uživatelem {loggedUser.DisplayName} ({loggedUser.Email}).", "user-create");
+
         return new NoContentResult();
     }
 
@@ -171,6 +174,9 @@ public class APIv1 : Controller {
         );
         command.Parameters.AddWithValue("@id", id);
         command.ExecuteNonQuery();
+
+        // zapsani do logu
+        DbLogger.Log(DbLogger.LogType.INFO, $"Uživatel {targetUser.DisplayName} ({targetUser.Email}) byl smazán uživatelem {loggedUser.DisplayName} ({loggedUser.Email}).", "user-delete");
 
         return new NoContentResult();
     }
@@ -215,6 +221,9 @@ public class APIv1 : Controller {
         _ = EmailService.SendHTMLEmailAsync(user.Email, "Obnovení hesla k EDUCHEM LAN Party", "~/Views/Emails/UserResetPassword.cshtml",
             new EmailUserRegisterModel(newPassword, webLink, user.Email)
         );
+
+        // zapsani do logu
+        DbLogger.Log(DbLogger.LogType.INFO, $"Heslo uživatele {user.DisplayName} ({user.Email}) bylo resetováno uživatelem {acc.DisplayName} ({acc.Email}).", "password-reset");
 
         return new JsonResult(new { success = true, message = "Heslo bylo obnoveno a odesláno na email." });
     }

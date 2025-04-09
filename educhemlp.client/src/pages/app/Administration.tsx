@@ -11,9 +11,11 @@ import { ButtonPrimary } from "../../components/buttons/ButtonPrimary.tsx";
 import { toast } from "react-toastify";
 import Switch, { switchClasses } from '@mui/joy/Switch';
 import { AccountType } from "../../interfaces.ts";
+import { enumIsGreaterOrEquals } from "../../utils.ts";
 
 export const Administration = () => {
     enum Modals { USER, DELETE_CONFIRMATION, RESETPASSWORD_CONFIRMATION }
+    enum Tab { USERS, RESERVATIONS, LOGS }
 
     interface User {
         id: string,
@@ -30,7 +32,7 @@ export const Administration = () => {
     const navigate = useNavigate();
     const { loggedUser } = useStore();
     const { userAuthed, setUserAuthed } = useStore();
-    const [selectedTab, setSelectedTab] = useState<string>("users");
+    const [selectedTab, setSelectedTab] = useState<Tab>(Tab.USERS);
     const [users, setUsers] = useState<any[] | null>(null);
     const [openedModal, setOpenedModal] = useState<Modals | null>(null);
     const [userModalEditMode, setUserModalEditMode] = useState(false);
@@ -51,7 +53,7 @@ export const Administration = () => {
 
     useEffect(() => {
         switch (selectedTab) {
-            case "users": {
+            case Tab.USERS: {
                 fetchUsersFromApi();
             } break;
         }
@@ -267,8 +269,24 @@ export const Administration = () => {
                                         ) : (
                                             <select name="accountType"  defaultValue={selectedUser?.accountType}>
                                                 <option value="STUDENT">Student</option>
-                                                <option value="TEACHER">Učitel</option>
-                                                <option value="ADMIN">Admin</option>
+
+                                                {
+                                                    enumIsGreaterOrEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.TEACHER) ? (
+                                                        <option value="TEACHER">Učitel</option>
+                                                    ) : null
+                                                }
+
+                                                {
+                                                    enumIsGreaterOrEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.ADMIN) ? (
+                                                        <option value="ADMIN">Admin</option>
+                                                    ) : null
+                                                }
+                                                
+                                                {
+                                                    enumIsGreaterOrEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.ADMIN) ? (
+                                                        <option value="SUPERADMIN">Superadmin</option>
+                                                    ) : null
+                                                }
                                             </select>
                                         )
                                     }
@@ -396,12 +414,13 @@ export const Administration = () => {
             <h1>Administrace</h1>
 
             <div className="area-selector">
-                <p onClick={() => setSelectedTab("users")} className={selectedTab === "users" ? "active" : ""}>Uživatelé</p>
-                <p onClick={() => setSelectedTab("reservations")} className={selectedTab === "reservations" ? "active" : ""}>Rezervace</p>
+                <p onClick={() => setSelectedTab(Tab.USERS)} className={selectedTab === Tab.USERS ? "active" : ""}>Uživatelé</p>
+                <p onClick={() => setSelectedTab(Tab.RESERVATIONS)} className={selectedTab === Tab.RESERVATIONS ? "active" : ""}>Rezervace</p>
+                <p onClick={() => setSelectedTab(Tab.LOGS)} className={selectedTab === Tab.LOGS ? "active" : ""}>Bezpečnostní logy</p>
             </div>
 
             {
-                selectedTab === "users" ? (
+                selectedTab === Tab.USERS ? (
                     <div className="users-wrapper">
                         <div className="inputs">
                             <p className="user-count">Uživatelé ({ filteredAndSortedUsers?.length ?? 0 })</p>
