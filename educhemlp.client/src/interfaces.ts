@@ -12,3 +12,15 @@ export enum AccountType {
     ADMIN,
     SUPERADMIN,
 }
+
+export interface Log {
+    id: number,
+    type: LogType,
+    exactType: string,
+    message: string,
+    date: string,
+}
+
+export enum LogType {
+    INFO, WARN, ERROR
+}

@@ -22,4 +22,8 @@ public static class DbLogger {
     }
 
     public static bool Log(LogType type, string message, string exactType = "basic") => LogAsync(type, message, exactType).Result;
+
+    public static async Task<bool> LogErrorAsync(string message, string exactType = "basic") => await LogAsync(LogType.ERROR, message, exactType);
+
+    public static bool LogError(string message, string exactType = "basic") => LogAsync(LogType.ERROR, message, exactType).Result;
 }

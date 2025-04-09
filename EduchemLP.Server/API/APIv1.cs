@@ -228,5 +228,38 @@ public class APIv1 : Controller {
         return new JsonResult(new { success = true, message = "Heslo bylo obnoveno a odesláno na email." });
     }
 
+    [HttpGet("adm/logs")]
+    public IActionResult GetLogs() {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc == null || acc.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit logy, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+
+        using var conn = Database.GetConnection();
+        if(conn == null) return new StatusCodeResult(500);
+
+        var command = new MySqlCommand(
+            """
+            SELECT * FROM logs ORDER BY `date` DESC;
+            """, conn
+        );
+
+        using var reader = command.ExecuteReader();
+        if(reader == null) return new StatusCodeResult(500);
+
+        var array = new JsonArray();
+        while(reader.Read()) {
+            var obj = new JsonObject {
+                ["id"] = reader.GetInt32("id"),
+                ["type"] = (Enum.TryParse(reader.GetString("exact_type"), out DbLogger.LogType _type) ? _type : DbLogger.LogType.INFO).ToString(),
+                ["exactType"] = reader.GetString("exact_type"),
+                ["message"] = reader.GetString("message"),
+                ["date"] = reader.GetDateTime("date"),
+            };
+
+            array.Add(obj);
+        }
+
+        return new JsonResult(array);
+    }
+
     //TODO: edit uzivatele
 }

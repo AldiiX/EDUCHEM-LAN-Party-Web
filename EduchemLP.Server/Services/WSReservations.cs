@@ -19,7 +19,7 @@ public static class WSReservations {
     private static readonly JsonSerializerOptions JSON_OPTIONS = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     static WSReservations() {
-        statusTimer = new Timer(Status!, null, 0, 1000);
+        statusTimer = new Timer(Status!, null, 0, 60 * 1000);
     }
 
 
@@ -43,6 +43,7 @@ public static class WSReservations {
 
         lock(ConnectedUsers) ConnectedUsers.Add(client);
         client.SendFullReservationInfoAsync().Wait();
+        Status(null!);
 
 
 
@@ -99,6 +100,9 @@ public static class WSReservations {
                             c.SendFullReservationInfoAsync().Wait();
                         }
                     }
+
+                    // lognuti rezervace
+                    _ = DbLogger.LogAsync(DbLogger.LogType.INFO, $"Uživatel {sessionAccount?.DisplayName} ({sessionAccount?.Email}) rezervoval {room ?? computer}.", "reservation");
                 } break;
 
                 case "deleteReservation": {
@@ -119,6 +123,9 @@ public static class WSReservations {
                             c.SendFullReservationInfoAsync().Wait();
                         }
                     }
+
+                    // lognuti
+                    _ = DbLogger.LogAsync(DbLogger.LogType.INFO, $"Uživatel {sessionAccount?.DisplayName} ({sessionAccount?.Email}) zrušil rezervaci.", "reservation");
                 } break;
             }
         }
@@ -127,6 +134,7 @@ public static class WSReservations {
 
         // pri ukonceni socketu
         lock (ConnectedUsers) ConnectedUsers.Remove(client);
+        Status(null!);
     }
 
 
@@ -156,7 +164,7 @@ public static class WSReservations {
                     connectedUsers.Add(new JsonObject {
                         ["id"] = client.ID,
                         ["displayName"] = client.DisplayName,
-                        ["class"] = user.AccountType != "USER" ?  client.Class : null,
+                        ["class"] = user.AccountType != "STUDENT" ?  client.Class : null,
                     });
                 }
 
@@ -169,7 +177,6 @@ public static class WSReservations {
                 BroadcastMessageAsync(user, message).Wait();
             }
         }
-
     }
 
 
