@@ -5,7 +5,6 @@ using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
 using MySql.Data.MySqlClient;
-using MySqlX.XDevAPI;
 
 /*
  * V pripade ze se uzivatel pripoji do socketu, tak se mu zobrazi poslednich 10 sprav
@@ -21,13 +20,17 @@ public static class WSChat {
     //handle 
     public static async Task HandleQueueAsync(WebSocket webSocket) {
         User? sessionAccount = await Auth.ReAuthUserAsync();
+        if (sessionAccount == null) {
+            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Unauthorized", CancellationToken.None);
+            return;
+        }
 
         var client = new WSClient(
-            sessionAccount?.ID ?? new Random().Next(10000, int.MaxValue),
-            sessionAccount?.DisplayName ?? "Guest",
+            sessionAccount.ID,
+            sessionAccount.DisplayName,
             webSocket,
-            sessionAccount?.AccountType.ToString().ToUpper() ?? "GUEST",
-            sessionAccount?.Class
+            sessionAccount.AccountType.ToString().ToUpper(),
+            sessionAccount.Class
         );
 
 

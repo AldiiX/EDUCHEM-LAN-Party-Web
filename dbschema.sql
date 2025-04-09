@@ -45,6 +45,21 @@ CREATE TABLE `computers` (
 -- --------------------------------------------------------
 
 --
+-- Struktura tabulky `logs`
+--
+
+DROP TABLE IF EXISTS `logs`;
+CREATE TABLE `logs` (
+                        `id` int UNSIGNED NOT NULL,
+                        `type` set('INFO','ERROR','WARN') NOT NULL DEFAULT 'INFO',
+                        `exact_type` varchar(32) NOT NULL DEFAULT 'basic',
+                        `message` text NOT NULL,
+                        `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Struktura tabulky `reservations`
 --
 
@@ -220,6 +235,12 @@ ALTER TABLE `computers`
     ADD PRIMARY KEY (`id`);
 
 --
+-- Indexy pro tabulku `logs`
+--
+ALTER TABLE `logs`
+    ADD PRIMARY KEY (`id`);
+
+--
 -- Indexy pro tabulku `reservations`
 --
 ALTER TABLE `reservations`
@@ -251,6 +272,12 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT pro tabulku `logs`
+--
+ALTER TABLE `logs`
+    MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT pro tabulku `users`
 --
 ALTER TABLE `users`
@@ -272,6 +299,21 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

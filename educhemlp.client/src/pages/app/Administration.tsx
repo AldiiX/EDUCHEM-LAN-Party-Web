@@ -10,8 +10,8 @@ import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 import { ButtonPrimary } from "../../components/buttons/ButtonPrimary.tsx";
 import { toast } from "react-toastify";
 import Switch, { switchClasses } from '@mui/joy/Switch';
-import {AccountType, Log, LogType} from "../../interfaces.ts";
-import { enumIsGreaterOrEquals } from "../../utils.ts";
+import {AccountType, Log} from "../../interfaces.ts";
+import {enumIsGreaterOrEquals, enumIsSmaller} from "../../utils.ts";
 import { create } from "zustand";
 
 
@@ -63,6 +63,7 @@ interface AdminStore {
 
     users: User[] | null;
     setUsers: (users: User[] | null) => void;
+    fetchUsersFromApi: () => Promise<void>;
 }
 
 const useAdminStore = create<AdminStore>((set) => ({
@@ -99,6 +100,17 @@ const useAdminStore = create<AdminStore>((set) => ({
 
     users: null,
     setUsers: (users) => set({ users: users }),
+
+    fetchUsersFromApi: async () => {
+        const res = await fetch("/api/v1/adm/users");
+        if (!res.ok) {
+            console.error("Chyba při načítání uživatelů");
+            return;
+        }
+
+        const data = await res.json();
+        set({ users: data });
+    }
 }));
 
 function translateGender(gender: string) {
@@ -108,18 +120,6 @@ function translateGender(gender: string) {
         case "OTHER" : return "Ostatní";
         default: return "Neznámý";
     }
-}
-
-function fetchUsersFromApi(setUsers?: Function | null) {
-    fetch("/api/v1/adm/users").then(async res => {
-        if (!res.ok) {
-            console.error("Chyba při načítání uživatelů");
-            return;
-        }
-
-        const data = await res.json();
-        if(setUsers) setUsers(data);
-    });
 }
 // endregion
 
@@ -145,10 +145,11 @@ const UsersTab = () => {
     const [sortDirection, setSortDirection] = useState("asc");
 
     const closeModal = useAdminStore((state) => state.closeModal);
-    const loggedUser = useAdminStore((state) => state.selectedUser);
+    const loggedUser = useStore((state => state.loggedUser));
 
     const selectedUser = useAdminStore((state) => state.selectedUser);
     const setSelectedUser = useAdminStore((state) => state.setSelectedUser);
+    const fetchUsersFromApi = useAdminStore((state) => state.fetchUsersFromApi);
 
     const openedModal = useAdminStore((state) => state.openedModal);
     const setOpenedModal = useAdminStore((state) => state.setOpenedModal);
@@ -193,7 +194,7 @@ const UsersTab = () => {
 
 
     useEffect(() => {
-        fetchUsersFromApi(setUsers);
+        fetchUsersFromApi().then();
     }, []);
 
     return (
@@ -276,7 +277,7 @@ const UsersTab = () => {
 
                                                 //const data = await res.json();
                                                 closeModal();
-                                                //fetchUsersFromApi();
+                                                fetchUsersFromApi().then();
                                                 toast.success(`Uživatel ${name} úspěšně vytvořen.`);
                                             })
                                         }}>Vytvořit uživatele</button>
@@ -443,7 +444,7 @@ const UsersTab = () => {
                                     }
 
                                     closeModal();
-                                    fetchUsersFromApi();
+                                    fetchUsersFromApi().then();
                                     toast.success(`Uživatel ${selectedUser?.name} úspěšně smazán.`);
                                 });
                             } break;
@@ -466,7 +467,7 @@ const UsersTab = () => {
                                         return;
                                     }
 
-                                    fetchUsersFromApi();
+                                    fetchUsersFromApi().then();
                                     setOpenedModal(Modals.USER);
                                     toast.success(`Heslo uživatele ${selectedUser?.name} úspěšně resetováno. Nové heslo bylo odesláno na email uživatele.`);
                                 });
@@ -594,6 +595,21 @@ const LogsTab = () => {
 
 
 
+
+// reservations tab
+const ReservationsTab = () => {
+
+    // TODO: dodělat
+
+    return (
+        <p style={{ opacity: 0.2 }}>sdhfiudsfusdfhudsfdish iuhf musi byt dokonceno nekdy</p>
+    )
+}
+
+
+
+
+
 // main komponent
 export const Administration = () => {
     const navigate = useNavigate();
@@ -602,22 +618,23 @@ export const Administration = () => {
     const [selectedTab, setSelectedTab] = useState<Tab>(Tab.USERS);
 
 
+    // zamezení přístupu k administraci spatnym uzivatelum
     useEffect(() => {
-        // Ověření oprávnění
-        if (userAuthed && AccountType[loggedUser?.accountType as unknown as keyof typeof AccountType] < AccountType.TEACHER) {
+        if (userAuthed && !loggedUser) {
             navigate("/app");
+            return;
         }
 
-    }, [userAuthed, navigate]);
+        if (loggedUser && enumIsSmaller(loggedUser?.accountType, AccountType, AccountType.TEACHER)) {
+            navigate("/app");
+        }
+    }, [userAuthed, loggedUser, navigate]);
 
-
-
-
-
-    if (!userAuthed || (userAuthed && !loggedUser) || (userAuthed && loggedUser?.accountType && AccountType[loggedUser?.accountType as unknown as keyof typeof AccountType] < AccountType.TEACHER)) {
-        navigate("/app");
+    if (!userAuthed || !loggedUser) {
         return null;
     }
+
+
 
     return (
         <AppLayout>
@@ -634,6 +651,8 @@ export const Administration = () => {
                     <UsersTab />
                 ) : selectedTab === Tab.LOGS ? (
                     <LogsTab />
+                ) : selectedTab === Tab.RESERVATIONS ? (
+                    <ReservationsTab />
                 ) : null
             }
         </AppLayout>

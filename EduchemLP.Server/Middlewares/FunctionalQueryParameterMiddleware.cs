@@ -1,7 +1,4 @@
-﻿using System.Text;
-using EduchemLP.Server.Classes;
-
-namespace EduchemLP.Server.Middlewares;
+﻿namespace EduchemLP.Server.Middlewares;
 
 public class FunctionalQueryParameterMiddleware(RequestDelegate next) {
 

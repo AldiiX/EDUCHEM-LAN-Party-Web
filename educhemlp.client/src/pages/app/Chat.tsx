@@ -10,15 +10,10 @@ export const Chat = () => {
     const { loggedUser } = useStore();
     const { userAuthed, setUserAuthed } = useStore();
     const [messages, setMessages] = useState<any[]>([]);
-    
-
-    useEffect(() => {
-        if (userAuthed && loggedUser === null) {
-            navigate("/app");
-        }
-    }, [userAuthed, loggedUser, navigate]);
 
 
+
+    // websocket
     useEffect(() => {
         const ws = new WebSocket(
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/chat`
@@ -62,19 +57,27 @@ export const Chat = () => {
         ws.onclose = () => {
             //console.log("disconnected");
         };
-        
+
         return () => {
             ws.close();
         };
     }, []);
+    
 
 
+    // zamezení přístupu k administraci spatnym uzivatelum
+    useEffect(() => {
+        if (userAuthed && !loggedUser) {
+            navigate("/app");
+            return;
+        }
+    }, [userAuthed, loggedUser, navigate]);
 
-
-    if (!userAuthed || (userAuthed && !loggedUser)) {
-        navigate("/app");
+    if (!userAuthed || !loggedUser) {
         return null;
     }
+
+
 
     return (
         <AppLayout>
