@@ -221,7 +221,7 @@ const UsersTab = () => {
                                 !userModalEditMode ? (
                                     <h1>{ selectedUser?.name }</h1>
                                 ) : (
-                                    <input name="name" style={{fontSize: 24, fontFamily: "leaguespartan"}} defaultValue={selectedUser?.name} type={"text"}  required placeholder="Jméno" maxLength={30} />
+                                    <input name="name" style={{fontSize: 28, fontFamily: "gabarito, sans", fontWeight: 750, height: 50 }} defaultValue={selectedUser?.name} type={"text"}  required placeholder="Jméno" maxLength={30} />
                                 )
                             }
 
