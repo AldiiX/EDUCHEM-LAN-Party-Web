@@ -304,6 +304,7 @@ const UsersTab = () => {
                                             }
 
                                             if(cls.length == 0) cls = null;
+                                            //console.log(name, email, cls, gender, accountType);
                                             
                                             fetch(`/api/v1/adm/users/`, {
                                                 method: "PUT",

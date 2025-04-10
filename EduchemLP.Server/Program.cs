@@ -121,7 +121,6 @@ public static class Program {
         App.UseRouting();
         //App.UseAuthorization();
         //App.UseMiddleware<ErrorHandlingMiddleware>();
-        App.UseMiddleware<FunctionalQueryParameterMiddleware>();
         App.MapControllerRoute(name: "default", pattern: "/");
 
         App.Run();

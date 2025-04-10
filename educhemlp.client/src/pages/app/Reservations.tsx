@@ -11,6 +11,7 @@ import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import {ButtonSecondary} from "../../components/buttons/ButtonSecondary.tsx";
 import {Link} from "react-router-dom";
 import MoveableMap from "../../components/MoveableMap.tsx";
+import {toast} from "react-toastify";
 
 
 export const Reservations = () => {
@@ -65,7 +66,7 @@ export const Reservations = () => {
 
     const reserve = async (room: string | null, computer: string | null) => {
         if(!socket) {
-            // TODO: error toast
+            toast.error("Rezervace není dostupná, zkuste to prosím později.");
             return;
         }
 

@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
@@ -206,7 +207,11 @@ public class APIv1 : Controller {
 
         var command = new MySqlCommand(
             """
-            UPDATE users SET password=@password WHERE id=@id;
+            UPDATE users 
+            SET 
+                password = @password,
+                last_updated = NOW()
+            WHERE id=@id;
             """, conn
         );
 
@@ -248,10 +253,11 @@ public class APIv1 : Controller {
         string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
         var accountType = body.TryGetValue("accountType", out var _accountType) ? Enum.TryParse(_accountType?.ToString(), out Classes.Objects.User.UserAccountType _ac) ? _ac : Classes.Objects.User.UserAccountType.STUDENT : Classes.Objects.User.UserAccountType.STUDENT;
-        var gender = body.TryGetValue("accountType", out var _gender) ? Enum.TryParse(_gender?.ToString(), out Classes.Objects.User.UserGender _g) ? _g : Classes.Objects.User.UserGender.OTHER : Classes.Objects.User.UserGender.OTHER;
+        var gender = body.TryGetValue("accountType", out var _gender) ? Enum.TryParse(_gender?.ToString(), out User.UserGender _g) ? _g : Classes.Objects.User.UserGender.OTHER : Classes.Objects.User.UserGender.OTHER;
         email = email == "" ? null : email?.Trim();
         displayName = displayName == "" ? null : displayName?.Trim();
         @class = @class == "" ? null : @class?.Trim();
+
 
 
         // zapsani do db
@@ -264,7 +270,7 @@ public class APIv1 : Controller {
             SET 
                 `email`=IF(@email IS NULL, email, @email),
                 `display_name`=IF(@displayName IS NULL, display_name, @displayName),
-                `class`=IF(@class IS NULL, class, @class),
+                `class`=@class,
                 `account_type`=IF(@accountType IS NULL, account_type, @accountType),
                 `gender`=IF(@gender IS NULL, gender, @gender),
                 `last_updated`=NOW()
@@ -276,12 +282,12 @@ public class APIv1 : Controller {
         command.Parameters.AddWithValue("@email", email);
         command.Parameters.AddWithValue("@displayName", displayName);
         command.Parameters.AddWithValue("@class", @class);
-        command.Parameters.AddWithValue("@accountType", accountType);
-        command.Parameters.AddWithValue("@gender", gender);
+        command.Parameters.AddWithValue("@accountType", accountType.ToString().ToUpper());
+        command.Parameters.AddWithValue("@gender", gender.ToString().ToUpper());
 
 
         // zapsani do logu
-        //TODO: dodělat 
+        DbLogger.LogInfo($"Uživatel {user.DisplayName} ({user.Email}) byl upraven uživatelem {acc.DisplayName} ({acc.Email}).", "user-edit");
         
         var r = command.ExecuteNonQuery();
         return r > 0 ? new JsonResult(new { success = true, message = "Uživatel byl upraven." }) : new JsonResult(new { success = false, message = "Uživatel nebyl upraven." }) { StatusCode = 400 };
@@ -319,6 +325,4 @@ public class APIv1 : Controller {
 
         return new JsonResult(array);
     }
-
-    //TODO: edit uzivatele
 }

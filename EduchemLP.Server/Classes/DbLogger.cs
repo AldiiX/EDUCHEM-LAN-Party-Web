@@ -3,11 +3,9 @@ using MySql.Data.MySqlClient;
 namespace EduchemLP.Server.Classes;
 
 public static class DbLogger {
-    // TODO: dodelat
 
-    public enum LogType {
-        INFO, WARN, ERROR
-    }
+
+    public enum LogType { INFO, WARN, ERROR }
 
     public async static Task<bool> LogAsync(LogType type, string message, string exactType = "basic") {
         await using var conn = await Database.GetConnectionAsync();
@@ -26,4 +24,8 @@ public static class DbLogger {
     public static async Task<bool> LogErrorAsync(string message, string exactType = "basic") => await LogAsync(LogType.ERROR, message, exactType);
 
     public static bool LogError(string message, string exactType = "basic") => LogAsync(LogType.ERROR, message, exactType).Result;
+
+    public static async Task<bool> LogInfoAsync(string message, string exactType = "basic") => await LogAsync(LogType.INFO, message, exactType);
+
+    public static bool LogInfo(string message, string exactType = "basic") => LogAsync(LogType.INFO, message, exactType).Result;
 }
