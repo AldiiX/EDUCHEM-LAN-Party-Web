@@ -1,6 +1,6 @@
 import {useStore} from "../../store.tsx";
 
-export const SpiralUpper = ({ onHoverReservation }: { onHoverReservation: Function }) => {
+export const SpiralUpper = ({ onHoverReservation = () => {} }: { onHoverReservation?: Function }) => {
     return <>
         <line id="Line 1" x1="253" y1="1216" x2="253" y2="750"  strokeWidth="8"/>
         <line id="Line 2" x1="387" y1="752.5" x2="1370" y2="752.5"  strokeWidth="5"/>

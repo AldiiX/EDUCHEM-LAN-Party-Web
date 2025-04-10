@@ -226,6 +226,67 @@ public class APIv1 : Controller {
         return new JsonResult(new { success = true, message = "Heslo bylo obnoveno a odesláno na email." });
     }
 
+    [HttpPut("adm/users")]
+    public IActionResult EditUser([FromBody] Dictionary<string, object?> body) {
+        // zjisteni prihlasenyho uzivatele + jeho perms
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc == null || acc.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+
+        // zjisteni id uzivatele kteryho chceme mazat
+        int? id = body.TryGetValue("id", out var _id) ? int.TryParse(_id?.ToString(), out var _id2) ? _id2 : null : null;
+        if(id == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'id'" });
+
+        // zjisteni user instance uzivatele kteryho chceme mazat
+        var user = Classes.Objects.User.GetById((int) id);
+        if(user == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen." });
+
+        // overeni prav obou uzivatelu
+        if(acc.AccountType <= user.AccountType) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš obnovit heslo uživateli s vyššími nebo stejnými právy." });
+
+        // overeni parametru
+        string? email = body.TryGetValue("email", out var _email) ? _email?.ToString() : null;
+        string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
+        string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
+        var accountType = body.TryGetValue("accountType", out var _accountType) ? Enum.TryParse(_accountType?.ToString(), out Classes.Objects.User.UserAccountType _ac) ? _ac : Classes.Objects.User.UserAccountType.STUDENT : Classes.Objects.User.UserAccountType.STUDENT;
+        var gender = body.TryGetValue("accountType", out var _gender) ? Enum.TryParse(_gender?.ToString(), out Classes.Objects.User.UserGender _g) ? _g : Classes.Objects.User.UserGender.OTHER : Classes.Objects.User.UserGender.OTHER;
+        email = email == "" ? null : email?.Trim();
+        displayName = displayName == "" ? null : displayName?.Trim();
+        @class = @class == "" ? null : @class?.Trim();
+
+
+        // zapsani do db
+        var conn = Database.GetConnection();
+        if(conn == null) return new StatusCodeResult(500);
+
+        var command = new MySqlCommand(
+            """
+            UPDATE `users` 
+            SET 
+                `email`=IF(@email IS NULL, email, @email),
+                `display_name`=IF(@displayName IS NULL, display_name, @displayName),
+                `class`=IF(@class IS NULL, class, @class),
+                `account_type`=IF(@accountType IS NULL, account_type, @accountType),
+                `gender`=IF(@gender IS NULL, gender, @gender),
+                `last_updated`=NOW()
+            WHERE id=@id;
+            """, conn
+        );
+
+        command.Parameters.AddWithValue("@id", id);
+        command.Parameters.AddWithValue("@email", email);
+        command.Parameters.AddWithValue("@displayName", displayName);
+        command.Parameters.AddWithValue("@class", @class);
+        command.Parameters.AddWithValue("@accountType", accountType);
+        command.Parameters.AddWithValue("@gender", gender);
+
+
+        // zapsani do logu
+        //TODO: dodělat 
+        
+        var r = command.ExecuteNonQuery();
+        return r > 0 ? new JsonResult(new { success = true, message = "Uživatel byl upraven." }) : new JsonResult(new { success = false, message = "Uživatel nebyl upraven." }) { StatusCode = 400 };
+    }
+
     [HttpGet("adm/logs")]
     public IActionResult GetLogs() {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();

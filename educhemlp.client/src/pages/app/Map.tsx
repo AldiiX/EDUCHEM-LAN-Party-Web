@@ -8,6 +8,7 @@ import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import {Link} from "react-router-dom";
 import {SpiralUpper} from "../../components/reservation_areas/SpiralUpper.tsx";
 import {SpiralLower} from "../../components/reservation_areas/SpiralLower.tsx";
+import MoveableMap from "../../components/MoveableMap.tsx";
 
 export const Map = () => {
     const areas = [
@@ -114,39 +115,19 @@ export const Map = () => {
                 ))}
             </div>
 
-            <div className="map" ref={mapRef}>
-                <div className="zoomsettings">
-                    <div className="zoom-in" onClick={() => forceZoom(0.1)}></div>
-                    <div className="zoom-out" onClick={() => forceZoom(-0.1)}></div>
-                </div>
-
-
-                {/*mapka*/}
-                <svg
-                    id="spiral-upper"
-                    width="1960"
-                    height="1216"
-                    viewBox="0 0 1960 1216"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    onWheel={handleZoom}
-                    onMouseDown={handleMouseDown}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
-                    style={{ cursor: isDragging ? "grabbing" : "grab" }}
-                >
-                    <g transform={`translate(${translate.x}, ${translate.y}) scale(${scale})`}>
-                        <g className="scaleTransition">
-                            {selectedArea === "spiral-upper" ? (
-                                <SpiralUpper onHoverReservation={(element: HTMLElement) => { }} />
-                            ) : selectedArea === "spiral-lower" ? (
-                                <SpiralLower />
-                            ) : null}
-                        </g>
-                    </g>
-                </svg>
+            <div className="map">
+                <MoveableMap displayControls={true}>
+                    { 
+                        selectedArea === "spiral-upper" ? (
+                            <SpiralUpper />
+                        ) : selectedArea === "spiral-lower" ? (
+                            // <SpiralLower />
+                            null
+                        ) : null
+                    }
+                </MoveableMap>
             </div>
+
         </AppLayout>
     )
 }

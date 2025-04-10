@@ -285,7 +285,50 @@ const UsersTab = () => {
                                     </div>
                                 ) : (
                                     <div className="edit-delete-buttons-div">
-                                        <button className="button-tertiary" style={{ flexGrow: 1 }} type="button">Uložit změny</button>
+                                        <button className="button-tertiary" style={{ flexGrow: 1 }} type="button" onClick={() => {
+                                            const userModal = document.querySelector(".user-modal") as HTMLDivElement;
+                                            const name = (userModal.querySelector("input[name='name']") as HTMLInputElement).value;
+                                            const email = (userModal.querySelector("input[name='email']") as HTMLInputElement).value;
+                                            let cls: string | null = (userModal.querySelector("input[name='class']") as HTMLInputElement).value;
+                                            const gender = (userModal.querySelector("select[name='gender']") as HTMLSelectElement).value;
+                                            const accountType = (userModal.querySelector("select[name='accountType']") as HTMLSelectElement).value;
+
+                                            if(name?.length < 3) {
+                                                toast.error("Jméno musí mít alespoň 3 znaky.");
+                                                return;
+                                            }
+
+                                            if(email?.length < 5) {
+                                                toast.error("Email musí mít alespoň 5 znaků.");
+                                                return;
+                                            }
+
+                                            if(cls.length == 0) cls = null;
+                                            
+                                            fetch(`/api/v1/adm/users/`, {
+                                                method: "PUT",
+                                                headers: {
+                                                    "Content-Type": "application/json"
+                                                },
+                                                body: JSON.stringify({
+                                                    id: selectedUser?.id,
+                                                    email: email,
+                                                    displayName: name,
+                                                    class: cls,
+                                                    accountType: accountType,
+                                                    gender: gender,
+                                                })
+                                            }).then(async res => {
+                                                if (!res.ok) {
+                                                    toast.error("Chyba při aktualizaci uživatele.");
+                                                    return;
+                                                }
+
+                                                closeModal();
+                                                fetchUsersFromApi().then();
+                                                toast.success(`Uživatel ${name} úspěšně upraven.`);
+                                            })
+                                        }}>Uložit změny</button>
                                         <button className="button-tertiary" type="button" onClick={() => setUserModalEditMode(false)}>Zrušit změny</button>
                                     </div>
                                 )
