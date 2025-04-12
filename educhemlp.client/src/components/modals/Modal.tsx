@@ -8,8 +8,8 @@ interface ModalProps {
     className?: string;
 }
 
-export const Modal = ({ children, onClose, enabled, className = "" }: ModalProps) => {
-    if (!enabled) return null; // Pokud není modal povolený, nevykresluj ho
+export const Modal: React.FC<ModalProps> = ({ children, onClose, enabled, className = "" }: ModalProps) => {
+    if (!enabled) return null; // pokud není modal povolený nebude renderovanej
 
     return (
         <div className={"modal" + (className ? " " + className : "")}>

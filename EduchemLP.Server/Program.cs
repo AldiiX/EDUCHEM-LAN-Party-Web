@@ -64,6 +64,7 @@ public static class Program {
         builder.Services.AddControllersWithViews();
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddRazorPages();
+        //builder.Services.AddOpenApi("v1");
         builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
         builder.Services.AddDataProtection()
@@ -108,6 +109,7 @@ public static class Program {
             App.UseExceptionHandler("/error");
             App.UseStatusCodePagesWithReExecute("/error/{0}");
             App.UseHsts();
+            App.MapOpenApi();
         }
 
         //App.UseHttpsRedirection();

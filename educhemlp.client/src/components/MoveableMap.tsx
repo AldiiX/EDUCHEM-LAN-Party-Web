@@ -123,7 +123,7 @@ export const MoveableMap: React.FC<MapProps> = ({ children = null, displayContro
                 document.documentElement.classList.add('noselect');
             }
         } else if (e.touches.length === 2) {
-            const distance = getDistance(e.touches[0], e.touches[1]);
+            const distance = getDistance(e.touches[0] as Touch, e.touches[1] as Touch);
             setInitialDistance(distance);
             setInitialScale(scale);
         }
@@ -140,7 +140,7 @@ export const MoveableMap: React.FC<MapProps> = ({ children = null, displayContro
                 y: touchY - containerCenter.y - touchStartPos.y,
             });
         } else if (e.touches.length === 2 && initialDistance !== null) {
-            const newDistance = getDistance(e.touches[0], e.touches[1]);
+            const newDistance = getDistance(e.touches[0] as Touch, e.touches[1] as Touch);
             const scaleFactor = newDistance / initialDistance;
             const newScale = Math.min(1.5, Math.max(0.7, initialScale * scaleFactor));
             setScale(newScale);

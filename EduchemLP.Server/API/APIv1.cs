@@ -1,13 +1,12 @@
 ﻿using System.Data;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
-using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Models;
 using EduchemLP.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
+using User = EduchemLP.Server.Classes.Objects.User;
 
 namespace EduchemLP.Server.API;
 
