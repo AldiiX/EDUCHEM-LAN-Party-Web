@@ -88,15 +88,20 @@
         box-shadow: 0 0 6px rgba(0, 0, 0, 0.025);
         overflow: hidden;
 
-        thead th {
-            padding: 20px 12px;
-            user-select: none;
-            cursor: pointer;
-            transition-duration: 0.2s;
-
-            &:hover {
-                background-color: var(--element-bg-colored);
+        thead {
+            &:is(.clickable) th {
+                user-select: none;
+                cursor: pointer;
                 transition-duration: 0.2s;
+
+                &:hover {
+                    background-color: var(--element-bg-colored);
+                    transition-duration: 0.2s;
+                }
+            }
+
+            th {
+                padding: 20px 12px;
             }
         }
 
@@ -114,37 +119,41 @@
             border-bottom: 1px solid var(--element-bg-colored);
         }
 
-        tbody tr {
-            transition-duration: 0.2s;
-            cursor: pointer;
-            background-color: var(--background-bg-2);
+        tbody {
+            &:is(.clickable) tr {
+                transition-duration: 0.2s;
+                cursor: pointer;
+                user-select: none;
+                background-color: var(--background-bg-2);
 
-            &:nth-child(even) {
-                background-color: var(--element-bg);
-            }
-
-            &:hover {
-                background-color: var(--element-bg-colored);
-            }
-
-
-            &:is(.loggeduser) {
-                .name >p {
-                    font-weight: bold;
-
-                    &::after {
-                        content: '(Ty)';
-                        margin-left: 12px;
-                        color: var(--accent-color);
-                        font-weight: 600;
-                    }
+                &:hover {
+                    background-color: var(--element-bg-colored);
                 }
             }
 
-            .name {
-                display: flex;
-                gap: 12px;
-                align-items: center;
+            tr {
+                &:nth-child(even) {
+                    background-color: var(--element-bg);
+                }
+
+                &:is(.loggeduser) {
+                    .name >p {
+                        font-weight: bold;
+
+                        &::after {
+                            content: '(Ty)';
+                            margin-left: 12px;
+                            color: var(--accent-color);
+                            font-weight: 600;
+                        }
+                    }
+                }
+
+                .name {
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                }
             }
         }
     }

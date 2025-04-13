@@ -222,3 +222,22 @@ input, select, textarea {
         width: 4px;
     }
 }
+
+@media (max-width: 299px) {
+    #root {
+        display: none;
+    }
+
+    html:before {
+        content: "Vaše zařízení je moc malé na zobrazení aplikace. Použijte prosím větší zařízení.";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        color: var(--text-color);
+        width: 90vw;
+        text-align: center;
+        font-family: 'Gabarito', calibri, arial, sans-serif;
+    }
+}

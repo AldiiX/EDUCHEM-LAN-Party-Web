@@ -577,35 +577,35 @@ const UsersTab = () => {
                 </div>
 
                 <table>
-                    <thead>
-                    <tr>
-                        <th onClick={() => handleSort("name")}>Jméno a příjmení</th>
-                        <th onClick={() => handleSort("email")}>Email</th>
-                        <th onClick={() => handleSort("gender")}>Pohlaví</th>
-                        <th onClick={() => handleSort("class")}>Třída</th>
-                        <th onClick={() => handleSort("accountType")}>Typ účtu</th>
-                        <th onClick={() => handleSort("lastUpdated")}>Naposledy upraven</th>
-                        <th onClick={() => handleSort("lastLoggedIn")}>Naposledy přihlášen</th>
-                    </tr>
+                    <thead className="clickable">
+                        <tr>
+                            <th onClick={() => handleSort("name")}>Jméno a příjmení</th>
+                            <th onClick={() => handleSort("email")}>Email</th>
+                            <th onClick={() => handleSort("gender")}>Pohlaví</th>
+                            <th onClick={() => handleSort("class")}>Třída</th>
+                            <th onClick={() => handleSort("accountType")}>Typ účtu</th>
+                            <th onClick={() => handleSort("lastUpdated")}>Naposledy upraven</th>
+                            <th onClick={() => handleSort("lastLoggedIn")}>Naposledy přihlášen</th>
+                        </tr>
                     </thead>
 
-                    <tbody>
-                    {filteredAndSortedUsers?.map((user) => (
-                        <tr key={user.id} className={loggedUser?.id === user.id ? "loggeduser" : ""} onClick={() => { setSelectedUser(user); setOpenedModal(Modals.USER) }}>
-                            <td>
-                                <div className="name">
-                                    <Avatar size={"28px"} name={user.name} src={user.avatar}/>
-                                    <p>{user.name}</p>
-                                </div>
-                            </td>
-                            <td>{user.email}</td>
-                            <td>{translateGender(user.gender)}</td>
-                            <td>{user.class}</td>
-                            <td>{user.accountType}</td>
-                            <td>{new Date(user.lastUpdated).toLocaleString()}</td>
-                            <td>{user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : null}</td>
-                        </tr>
-                    ))}
+                    <tbody className="clickable">
+                        {filteredAndSortedUsers?.map((user) => (
+                            <tr key={user.id} className={loggedUser?.id === user.id ? "loggeduser" : ""} onClick={() => { setSelectedUser(user); setOpenedModal(Modals.USER) }}>
+                                <td>
+                                    <div className="name">
+                                        <Avatar size={"28px"} name={user.name} src={user.avatar}/>
+                                        <p>{user.name}</p>
+                                    </div>
+                                </td>
+                                <td>{user.email}</td>
+                                <td>{translateGender(user.gender)}</td>
+                                <td>{user.class}</td>
+                                <td>{user.accountType}</td>
+                                <td>{new Date(user.lastUpdated).toLocaleString()}</td>
+                                <td>{user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : null}</td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
@@ -639,26 +639,26 @@ const LogsTab = () => {
     return (
         <div className="users-wrapper">
             <table>
-                <thead>
-                <tr>
-                    <th>Typ</th>
-                    <th>Přesný typ</th>
-                    <th>Zpráva</th>
-                    <th>Datum</th>
-                </tr>
+                <thead className="clickable">
+                    <tr>
+                        <th>Typ</th>
+                        <th>Přesný typ</th>
+                        <th>Zpráva</th>
+                        <th>Datum</th>
+                    </tr>
                 </thead>
 
                 <tbody>
-                {logs?.map((log: Log) => (
-                    <tr
-                        key={log.id}
-                    >
-                        <td className={log.type.toString().toLowerCase()}>{log.type}</td>
-                        <td>{log.exactType}</td>
-                        <td>{log.message}</td>
-                        <td>{new Date(log.date).toLocaleString()}</td>
-                    </tr>
-                ))}
+                    {logs?.map((log: Log) => (
+                        <tr
+                            key={log.id}
+                        >
+                            <td className={log.type.toString().toLowerCase()}>{log.type}</td>
+                            <td>{log.exactType}</td>
+                            <td>{log.message}</td>
+                            <td>{new Date(log.date).toLocaleString()}</td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </div>

@@ -82,8 +82,8 @@ export const Chat = () => {
     return (
         <AppLayout>
             <h1>Chat</h1>
-            <div className={"chat-parent"}>
-                <div className={"messages"}>
+            <div className="chat-parent">
+                <div className="messages">
                     {
                         messages.map((message, index) => (
                             <div key={index} className={`chat-message ${message.author.id === loggedUser.id ? "own-message" : "other-message"}`}>
@@ -106,9 +106,9 @@ export const Chat = () => {
                         ))
                     }
                 </div>
-                <div className={"inputdiv"}>
+                <div className="inputdiv">
                     <input type="text" placeholder="Napiš zprávu..."/>
-                    <button className={"sent-message-button"} /*onClick={sendMessage}*/></button>
+                    <button className="sent-message-button" /*onClick={sendMessage}*/></button>
                 </div>
             </div>
         </AppLayout>

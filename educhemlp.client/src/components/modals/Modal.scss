@@ -140,7 +140,7 @@
             .edit-delete-buttons-div {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 10px;
+                gap: 8px;
                 margin-top: 16px;
 
                 &:not(&:has(*)) {
@@ -151,7 +151,7 @@
             .info {
                 display: flex;
                 flex-direction: column;
-                gap: 10px;
+                gap: 8px;
                 margin-top: 16px;
 
                 .child {
@@ -186,7 +186,8 @@
 
             .buttons {
                 display: flex;
-                gap: 32px;
+                gap: 8px 32px;
+                flex-wrap: wrap;
                 margin-top: 16px;
                 justify-content: space-between;
             }
