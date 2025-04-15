@@ -50,15 +50,18 @@ export const MoveableMap: React.FC<MapProps> = ({ children = null, displayContro
 
     // Při zoomu chceme zajistit, aby bod pod kurzorem zůstal fixní. Vzorec vychází z rovnice:
     // nová_dragOffset = dragOffset + (1 - newScale/scale) * (mousePosition - containerCenter)
-    const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
-        e.preventDefault();
-        const scaleFactor = 0.07;
-        const newScale =
-            e.deltaY < 0 ? Math.min(1.2, scale + scaleFactor) : Math.max(0.4, scale - scaleFactor);
 
-        if (containerRef.current) {
-            const rect = containerRef.current.getBoundingClientRect();
-            // Pozice myši relativně ke kontejneru
+    // registrace eventu na kolečko myši
+    useEffect(() => {
+        const svgEl = svgRef.current;
+        if (!svgEl) return;
+
+        const wheelHandler = (e: WheelEvent) => {
+            e.preventDefault();
+            const scaleFactor = 0.07;
+            const newScale = e.deltaY < 0 ? Math.min(1.2, scale + scaleFactor) : Math.max(0.4, scale - scaleFactor);
+
+            const rect = svgEl.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
@@ -66,9 +69,16 @@ export const MoveableMap: React.FC<MapProps> = ({ children = null, displayContro
                 x: prev.x + (1 - newScale / scale) * (mouseX - containerCenter.x),
                 y: prev.y + (1 - newScale / scale) * (mouseY - containerCenter.y),
             }));
-        }
-        setScale(newScale);
-    };
+
+            setScale(newScale);
+        };
+
+        svgEl.addEventListener('wheel', wheelHandler, { passive: false });
+
+        return () => {
+            svgEl.removeEventListener('wheel', wheelHandler);
+        };
+    }, [scale, containerCenter]);
 
     const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
         setIsDragging(true);
@@ -90,7 +100,7 @@ export const MoveableMap: React.FC<MapProps> = ({ children = null, displayContro
         const rect = containerRef.current.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
-        // Nový dragOffset = myš - (containerCenter + startPos)
+
         setDragOffset({
             x: mouseX - containerCenter.x - startPos.x,
             y: mouseY - containerCenter.y - startPos.y,
@@ -188,7 +198,6 @@ export const MoveableMap: React.FC<MapProps> = ({ children = null, displayContro
                 width={SVG_WIDTH}
                 height={SVG_HEIGHT}
                 viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-                onWheel={handleWheel}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -201,10 +210,6 @@ export const MoveableMap: React.FC<MapProps> = ({ children = null, displayContro
                     touchAction: 'none',
                 }}
             >
-                {/* Transformace složená z:
-                    1. Přeložení do středu kontejneru + dragOffset
-                    2. Aplikace měřítka (scale)
-                    3. Posunutí tak, aby se střed SVG (SVG_WIDTH/2, SVG_HEIGHT/2) vykreslil ve středu */}
                 <g
                     style={{
                         transform: `translate(${containerCenter.x + dragOffset.x}px, ${
