@@ -15,7 +15,17 @@
         overflow-x: hidden;
         overflow-y: auto;
         flex-grow: 1;
-
+        >.date-divider {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 14px;
+            color: var(--text-color);
+            position: relative;
+            span {
+                background-color: var(--background-bg);
+                padding: 0 10px;
+            }
+        }
         >.chat-message {
             max-width: 60%;
             padding: 12px;
@@ -31,18 +41,29 @@
             }
 
             >.texts {
+                >.message-meta {
+                    font-size: 14px;
+                    color: var(--text-color-darker);
+                    text-align: right;
+                    margin-top: 4px;
+                    display: block;
+                }
                 h1 {
                     font-size: 16px;
                 }
             }
+            
+            
 
             &.own-message {
                 align-self: flex-end;
                 background-color: var(--accent-color);
                 color: var(--accent-color-text);
-
                 >p {
                     color: var(--accent-color-text);
+                }
+                .message-meta {
+                    color: var(--text-color-secondary);
                 }
             }
 
@@ -50,9 +71,11 @@
                 align-self: flex-start;
                 background-color: var(--element-bg);
                 color: black;
+                
 
                 article {
                     color: var(--text-color-darker);
+                    padding: 4px 0 0 0;
                 }
             }
         }

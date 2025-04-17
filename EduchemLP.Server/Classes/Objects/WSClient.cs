@@ -18,5 +18,5 @@ public class WSClient
             Class = @class;
             AccountType = accountType;
         }
-    
+        
 }

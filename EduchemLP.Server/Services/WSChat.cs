@@ -24,7 +24,7 @@ public static class WSChat {
             await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Unauthorized", CancellationToken.None);
             return;
         }
-
+        
         var client = new WSClient(
             sessionAccount.ID,
             sessionAccount.DisplayName,
@@ -66,9 +66,30 @@ public static class WSChat {
             var action = messageJson?["action"]?.ToString();
             if (action == null) continue;
 
-            switch (action) {
-                case "status":
-                    /*await client.SendFullReservationInfoAsync();*/
+            switch (action)
+            {
+                case "sendMessage":
+                    var messageText = messageJson?["message"]?.ToString();
+                    if (string.IsNullOrWhiteSpace(messageText))
+                        break;
+                    
+                    var user = User.FromWSClient(client);
+                    var savedMessage = await SaveMessageToDb(user, messageText);
+                    if (savedMessage == null)
+                        break;
+
+                    var messageJsonString = savedMessage.ToString();
+                    List<Task> broadcastTasks = new();
+
+                    lock (ConnectedUsers)
+                    {
+                        foreach (var connectedClient in ConnectedUsers)
+                        {
+                            broadcastTasks.Add(connectedClient.BroadcastMessageAsync(messageJsonString));
+                        }
+                    }
+
+                    await Task.WhenAll(broadcastTasks); // Počká na všechny zprávy
                     break;
             }
         }
@@ -78,6 +99,7 @@ public static class WSChat {
         // pri ukonceni socketu
         lock (ConnectedUsers) ConnectedUsers.Remove(client);
     }
+    
 
     //metodiky 
     private static async Task BroadcastMessageAsync(this WSClient client, string message) {
@@ -128,7 +150,40 @@ public static class WSChat {
         }.ToString());
         return true;
     }
+
+    private static async Task<JsonObject?> SaveMessageToDb(User user, string message)
+    {
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return null;
+        await using var cmd = conn.CreateCommand();
     
+        var uuid = Guid.NewGuid().ToString();
+        cmd.CommandText = """
+                          INSERT INTO chat (uuid, user_id, message, date)
+                          VALUES (@uuid, @userId, @message, NOW())
+                          """;
+        cmd.Parameters.AddWithValue("@uuid", uuid);
+        cmd.Parameters.AddWithValue("@userId", user.ID);
+        cmd.Parameters.AddWithValue("@message", message);
+
+        await cmd.ExecuteNonQueryAsync();
+
+        return new JsonObject {
+            ["action"] = "sendMessages",
+            ["messages"] = new JsonArray {
+                new JsonObject {
+                    ["uuid"] = uuid,
+                    ["author"] = new JsonObject {
+                        ["id"] = user.ID,
+                        ["name"] = user.DisplayName,
+                        ["avatar"] = user.Avatar
+                    },
+                    ["message"] = message,
+                    ["date"] = DateTime.Now
+                }
+            }
+        };
+    }
     /*static WSChat() {
         statusTimer = new Timer(Status!, null, 0, 1000);
     }*/

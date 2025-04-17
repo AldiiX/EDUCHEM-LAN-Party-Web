@@ -35,7 +35,19 @@ public class User {
         Avatar = avatar;
         //Gender = gender;
     }
-
+    public static User FromWSClient(WSClient client)
+    {
+        return new User(
+            client.ID,
+            client.DisplayName,
+            client.DisplayName + "@noemail.local",
+            "", // neznámé heslo
+            client.Class,
+            Enum.TryParse(client.AccountType, out UserAccountType type) ? type : UserAccountType.STUDENT,
+            DateTime.Now,
+            null
+        );
+    }
 
     public int ID { get; private set; }
     public string DisplayName { get; private set; }
