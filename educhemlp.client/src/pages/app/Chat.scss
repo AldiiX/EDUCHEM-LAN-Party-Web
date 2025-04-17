@@ -15,6 +15,7 @@
         overflow-x: hidden;
         overflow-y: auto;
         flex-grow: 1;
+
         >.date-divider {
             text-align: center;
             margin: 20px 0;
@@ -26,6 +27,7 @@
                 padding: 0 10px;
             }
         }
+
         >.chat-message {
             max-width: 60%;
             padding: 12px;
@@ -41,29 +43,44 @@
             }
 
             >.texts {
-                >.message-meta {
-                    font-size: 14px;
-                    color: var(--text-color-darker);
-                    text-align: right;
-                    margin-top: 4px;
-                    display: block;
+                >.name-and-date {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 32px;
+                    align-items: center;
+
+                    >.msg-time {
+                        font-size: 14px;
+                        text-align: right;
+                        display: block;
+                    }
+
+                    h1 {
+                        font-size: 16px;
+                    }
                 }
-                h1 {
-                    font-size: 16px;
-                }
+
             }
             
             
 
-            &.own-message {
+            &:is(.own-message) {
                 align-self: flex-end;
                 background-color: var(--accent-color);
                 color: var(--accent-color-text);
-                >p {
+
+                .msg-time {
+                    position: relative;
+                    display: block;
                     color: var(--accent-color-text);
+                    font-size: 14px;
+                    opacity: 0.25;
+                    margin-top: 4px;
+                    text-align: right;
                 }
-                .message-meta {
-                    color: var(--text-color-secondary);
+
+                p, span {
+                    color: var(--accent-color-text);
                 }
             }
 
@@ -71,7 +88,12 @@
                 align-self: flex-start;
                 background-color: var(--element-bg);
                 color: black;
-                
+
+                .name-and-date {
+                    >.msg-time {
+                        color: var(--text-color-3);
+                    }
+                }
 
                 article {
                     color: var(--text-color-darker);

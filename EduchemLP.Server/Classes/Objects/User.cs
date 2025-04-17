@@ -35,19 +35,8 @@ public class User {
         Avatar = avatar;
         //Gender = gender;
     }
-    public static User FromWSClient(WSClient client)
-    {
-        return new User(
-            client.ID,
-            client.DisplayName,
-            client.DisplayName + "@noemail.local",
-            "", // neznámé heslo
-            client.Class,
-            Enum.TryParse(client.AccountType, out UserAccountType type) ? type : UserAccountType.STUDENT,
-            DateTime.Now,
-            null
-        );
-    }
+
+
 
     public int ID { get; private set; }
     public string DisplayName { get; private set; }
@@ -126,12 +115,12 @@ public class User {
 
     public static async Task<List<User?>> GetAllAsync() {
         await using var conn = await Database.GetConnectionAsync();
-        if (conn == null) return new List<User?>();
+        if (conn == null) return [];
 
         await using var cmd = new MySqlCommand(@"SELECT * FROM users", conn);
 
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
-        if (reader == null) return new List<User?>();
+        if (reader == null) return [];
 
         var list = new List<User?>();
         while (await reader.ReadAsync()) {

@@ -66,31 +66,22 @@ public static class WSChat {
             var action = messageJson?["action"]?.ToString();
             if (action == null) continue;
 
-            switch (action)
-            {
-                case "sendMessage":
+            switch (action) {
+                case "sendMessage": {
                     var messageText = messageJson?["message"]?.ToString();
                     if (string.IsNullOrWhiteSpace(messageText))
                         break;
-                    
-                    var user = User.FromWSClient(client);
-                    var savedMessage = await SaveMessageToDb(user, messageText);
+
+                    var savedMessage = await SaveMessageToDb(client.ID, messageText);
                     if (savedMessage == null)
                         break;
 
                     var messageJsonString = savedMessage.ToString();
-                    List<Task> broadcastTasks = new();
 
-                    lock (ConnectedUsers)
-                    {
-                        foreach (var connectedClient in ConnectedUsers)
-                        {
-                            broadcastTasks.Add(connectedClient.BroadcastMessageAsync(messageJsonString));
-                        }
+                    lock (ConnectedUsers) foreach (var connectedClient in ConnectedUsers) {
+                        connectedClient.BroadcastMessageAsync(messageJsonString).Wait();
                     }
-
-                    await Task.WhenAll(broadcastTasks); // Počká na všechny zprávy
-                    break;
+                } break;
             }
         }
         
@@ -151,22 +142,37 @@ public static class WSChat {
         return true;
     }
 
-    private static async Task<JsonObject?> SaveMessageToDb(User user, string message)
-    {
+    private static async Task<JsonObject?> SaveMessageToDb(int userId, string message) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
         await using var cmd = conn.CreateCommand();
     
         var uuid = Guid.NewGuid().ToString();
-        cmd.CommandText = """
-                          INSERT INTO chat (uuid, user_id, message, date)
-                          VALUES (@uuid, @userId, @message, NOW())
-                          """;
+        cmd.CommandText =
+            """
+                INSERT INTO chat (uuid, user_id, message, date)
+                VALUES (@uuid, @userId, @message, NOW());
+
+                SELECT c.*, u.display_name as author_name, u.avatar as author_avatar
+                FROM chat c
+                LEFT JOIN users u ON c.user_id = u.id
+                WHERE c.uuid = @uuid
+            """;
         cmd.Parameters.AddWithValue("@uuid", uuid);
-        cmd.Parameters.AddWithValue("@userId", user.ID);
+        cmd.Parameters.AddWithValue("@userId", userId);
         cmd.Parameters.AddWithValue("@message", message);
 
-        await cmd.ExecuteNonQueryAsync();
+        var result = await cmd.ExecuteReaderAsync() as MySqlDataReader;
+        if (result == null) return null;
+
+        if (!await result.ReadAsync()) return null;
+        if(result.GetValueOrNull<int>("user_id") == null || result.GetStringOrNull("author_name") == null) return null;
+
+        var user = new {
+            ID = result.GetInt32("user_id"),
+            DisplayName = result.GetString("author_name"),
+            Avatar = result.GetStringOrNull("author_avatar")
+        };
 
         return new JsonObject {
             ["action"] = "sendMessages",
@@ -174,7 +180,7 @@ public static class WSChat {
                 new JsonObject {
                     ["uuid"] = uuid,
                     ["author"] = new JsonObject {
-                        ["id"] = user.ID,
+                        ["id"] = userId,
                         ["name"] = user.DisplayName,
                         ["avatar"] = user.Avatar
                     },

@@ -133,15 +133,17 @@ export const Chat = () => {
                                             <>
                                                 <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
                                                 <div className="texts">
-                                                    <h1>{message.author.name}</h1>
+                                                    <div className="name-and-date">
+                                                        <h1>{message.author.name}</h1>
+                                                        <span className="msg-time">{time}</span>
+                                                    </div>
                                                     <article>{ message.message }</article>
-                                                    <span className="message-meta">{time}</span>
                                                 </div>
                                             </>
                                         ) : (
                                             <div className="texts">
                                                 <p>{message.message}</p>
-                                                <span className="message-meta">{time}</span>
+                                                <span className="msg-time">{time}</span>
                                             </div>
                                         )}
                                     </div>
