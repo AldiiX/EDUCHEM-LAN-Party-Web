@@ -19,6 +19,8 @@ export const Chat = () => {
     const { userAuthed, setUserAuthed } = useStore();
     const [messages, setMessages] = useState<any[]>([]);
     const [socketLoading, setSocketLoading] = useState(true);
+    const [moreMessagesLoading, setMoreMessagesLoading] = useState<boolean>(false);
+    const [noMoreMessagesToFetch, setNoMoreMessagesToFetch] = useState<boolean>(false);
     const messagesRef = useRef<any[]>([]);
     const wsRef = useRef<WebSocket | null>(null);
     const [inputText, setInputText] = useState("");
@@ -51,6 +53,7 @@ export const Chat = () => {
 
         // loadovani starsich zprav pri scrollu
         if (!firstMessageRender.current && scrollContainer.scrollTop === 0 && wsRef.current?.readyState === WebSocket.OPEN && messagesRef.current.length > 0) {
+            setMoreMessagesLoading(true);
             const oldestMessage = messagesRef.current[0];
 
             wsRef.current.send(JSON.stringify({
@@ -138,12 +141,15 @@ export const Chat = () => {
                         firstMessageRender.current = false;
                     }, 100);
                 }
+
+                // ostatni veci
+                setMoreMessagesLoading(false);
+                setNoMoreMessagesToFetch(false);
             }
 
             else if (action === "noMoreMessagesToFetch") {
-                toast.warn("Žádné další zprávy k načtení.", {
-                    autoClose: 1500,
-                });
+                setNoMoreMessagesToFetch(true);
+                setMoreMessagesLoading(false);
             }
         };
 
@@ -211,6 +217,18 @@ export const Chat = () => {
                 {
                     !socketLoading ? (
                         <div className="messages">
+                            {
+                                moreMessagesLoading ? (
+                                    <div className="moremessages-loading"></div>
+                                ) : null
+                            }
+
+                            {
+                                noMoreMessagesToFetch ? (
+                                    <p style={{ textAlign: "center", marginTop: 20, fontSize: 14 }}>Žádné další zprávy k zobrazení, tohle je začátek chatu.</p>
+                                ) : null
+                            }
+
                             {
                                 messages.map((message, index) => {
                                     const isOwn = message.author.id === loggedUser.id;
