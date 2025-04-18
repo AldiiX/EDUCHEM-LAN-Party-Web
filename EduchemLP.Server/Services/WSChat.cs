@@ -5,17 +5,18 @@ using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
 using MySql.Data.MySqlClient;
+using Client = EduchemLP.Server.Classes.Objects.WSClientUser;
 
+namespace EduchemLP.Server.Services;
 /*
  * V pripade ze se uzivatel pripoji do socketu, tak se mu zobrazi poslednich 10 sprav
  * Aby backend prijmal zpravy a v pripade ze se ta sprava posle, tak se zobrazi vsem ostatnim
  */
 
-namespace EduchemLP.Server.Services;
 
 public static class WSChat {
-    private static readonly List<WSClient> ConnectedUsers = [];
-    private static Timer? statusTimer;
+    private static readonly List<Client> ConnectedUsers = [];
+    //private static Timer? statusTimer;
 
     //handle 
     public static async Task HandleQueueAsync(WebSocket webSocket) {
@@ -25,11 +26,11 @@ public static class WSChat {
             return;
         }
         
-        var client = new WSClient(
+        var client = new Client(
+            webSocket,
             sessionAccount.ID,
             sessionAccount.DisplayName,
-            webSocket,
-            sessionAccount.AccountType.ToString().ToUpper(),
+            sessionAccount.AccountType,
             sessionAccount.Class
         );
 
@@ -72,7 +73,7 @@ public static class WSChat {
                     if (string.IsNullOrWhiteSpace(messageText))
                         break;
 
-                    var savedMessage = await SaveMessageToDb(client.ID, messageText);
+                    var savedMessage = await SaveMessageToDb(client, messageText);
                     if (savedMessage == null)
                         break;
 
@@ -81,6 +82,13 @@ public static class WSChat {
                     lock (ConnectedUsers) foreach (var connectedClient in ConnectedUsers) {
                         connectedClient.BroadcastMessageAsync(messageJsonString).Wait();
                     }
+                } break;
+
+                case "loadOlderMessages": {
+                    var beforeUuid = messageJson?["beforeUuid"]?.ToString();
+                    if (string.IsNullOrWhiteSpace(beforeUuid)) break;
+
+                    await SendOlderMessages(client, beforeUuid);
                 } break;
             }
         }
@@ -93,7 +101,7 @@ public static class WSChat {
     
 
     //metodiky 
-    private static async Task BroadcastMessageAsync(this WSClient client, string message) {
+    private static async Task BroadcastMessageAsync(this Client client, string message) {
         if (client.WebSocket is not { State: WebSocketState.Open }) return;
 
 
@@ -104,16 +112,22 @@ public static class WSChat {
     }
     
     //logisticky metody
-    private static async Task<bool> SendInicialChat(this WSClient client) {
+    private static async Task<bool> SendInicialChat(this Client client) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return false;
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText = """
-                          SELECT c.*, u.display_name as author_name, u.avatar as author_avatar
-                          FROM chat c
-                          LEFT JOIN users u ON c.user_id = u.id
-                          ORDER BY `date` DESC LIMIT 20
-                          """;
+        cmd.CommandText =
+        """
+            SELECT 
+              c.*, 
+              u.display_name as author_name, 
+              u.avatar as author_avatar,
+              u.class as author_class,
+              u.account_type as author_account_type
+            FROM chat c
+            LEFT JOIN users u ON c.user_id = u.id
+            ORDER BY `date` DESC LIMIT 20
+        """;
         
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if (reader == null) return false;
@@ -121,16 +135,17 @@ public static class WSChat {
         while (await reader.ReadAsync()) {
             if(reader.GetValueOrNull<int>("user_id") == null || reader.GetStringOrNull("author_name") == null) continue;
 
-            var message = new JsonObject {
-                ["uuid"] = reader.GetString("uuid"),
-                ["author"] = new JsonObject {
-                    ["id"] = reader.GetInt32("user_id"),
-                    ["name"] = reader.GetString("author_name"),
-                    ["avatar"] = reader.GetStringOrNull("author_avatar")
-                },
-                ["message"] = reader.GetString("message"),
-                ["date"] = reader.GetDateTime("date")
-            };
+            var message = CreateMessageObject(
+                reader.GetString("uuid"),
+                reader.GetInt32("user_id"),
+                reader.GetString("author_name"),
+                reader.GetStringOrNull("author_avatar"),
+                reader.GetString("author_account_type"),
+                reader.GetStringOrNull("author_class"),
+                reader.GetString("message"),
+                reader.GetDateTime("date"),
+                client
+            );
 
             messages.Add(message);
         }
@@ -142,7 +157,7 @@ public static class WSChat {
         return true;
     }
 
-    private static async Task<JsonObject?> SaveMessageToDb(int userId, string message) {
+    private static async Task<JsonObject?> SaveMessageToDb(Client client, string message) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
         await using var cmd = conn.CreateCommand();
@@ -153,13 +168,18 @@ public static class WSChat {
                 INSERT INTO chat (uuid, user_id, message, date)
                 VALUES (@uuid, @userId, @message, NOW());
 
-                SELECT c.*, u.display_name as author_name, u.avatar as author_avatar
+                SELECT 
+                    c.*, 
+                    u.display_name as author_name, 
+                    u.avatar as author_avatar,
+                    u.class as author_class,
+                    u.account_type as author_account_type
                 FROM chat c
                 LEFT JOIN users u ON c.user_id = u.id
                 WHERE c.uuid = @uuid
             """;
         cmd.Parameters.AddWithValue("@uuid", uuid);
-        cmd.Parameters.AddWithValue("@userId", userId);
+        cmd.Parameters.AddWithValue("@userId", client.ID);
         cmd.Parameters.AddWithValue("@message", message);
 
         var result = await cmd.ExecuteReaderAsync() as MySqlDataReader;
@@ -177,19 +197,100 @@ public static class WSChat {
         return new JsonObject {
             ["action"] = "sendMessages",
             ["messages"] = new JsonArray {
-                new JsonObject {
-                    ["uuid"] = uuid,
-                    ["author"] = new JsonObject {
-                        ["id"] = userId,
-                        ["name"] = user.DisplayName,
-                        ["avatar"] = user.Avatar
-                    },
-                    ["message"] = message,
-                    ["date"] = DateTime.Now
-                }
+                CreateMessageObject(
+                    uuid,
+                    user.ID,
+                    user.DisplayName,
+                    user.Avatar,
+                    result.GetString("author_account_type"),
+                    result.GetStringOrNull("author_class"),
+                    message,
+                    result.GetDateTime("date"),
+                    client
+                )
             }
         };
     }
+
+    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date, Client? client = null) {
+        var obj = new JsonObject {
+            ["uuid"] = uuid,
+            ["author"] = new JsonObject {
+                ["id"] = userId,
+                ["name"] = userName,
+                ["avatar"] = userAvatar,
+                ["accountType"] = userAccountType,
+                ["class"] = userClass,
+            },
+            ["message"] = message,
+            ["date"] = date,
+        };
+
+        // cenzura veci
+        if(client?.AccountType <= User.UserAccountType.STUDENT) {
+            if(obj["author"]?["class"] != null) obj["author"]!["class"] = null;
+        }
+
+        return obj;
+    }
+
+    private static async Task SendOlderMessages(Client client, string beforeUuid) {
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return;
+
+        await using var dateCmd = conn.CreateCommand();
+        dateCmd.CommandText = "SELECT `date` FROM chat WHERE uuid = @uuid";
+        dateCmd.Parameters.AddWithValue("@uuid", beforeUuid);
+
+        var beforeDateObj = await dateCmd.ExecuteScalarAsync();
+        if (beforeDateObj is not DateTime beforeDate) return;
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            """
+            SELECT 
+                c.*, 
+                u.display_name as author_name, 
+                u.avatar as author_avatar,
+                u.class as author_class,
+                u.account_type as author_account_type
+            FROM chat c
+            LEFT JOIN users u ON c.user_id = u.id
+            WHERE c.date < @beforeDate
+            ORDER BY c.date DESC
+            LIMIT 20
+            """;
+
+        cmd.Parameters.AddWithValue("@beforeDate", beforeDate);
+
+        await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
+        if (reader == null) return;
+
+        var messages = new JsonArray();
+        while (await reader.ReadAsync()) {
+            if(reader.GetValueOrNull<int>("user_id") == null || reader.GetStringOrNull("author_name") == null) continue;
+
+            var message = CreateMessageObject(
+                reader.GetString("uuid"),
+                reader.GetInt32("user_id"),
+                reader.GetString("author_name"),
+                reader.GetStringOrNull("author_avatar"),
+                reader.GetString("author_account_type"),
+                reader.GetStringOrNull("author_class"),
+                reader.GetString("message"),
+                reader.GetDateTime("date"),
+                client
+            );
+
+            messages.Add(message);
+        }
+
+        await client.BroadcastMessageAsync(new JsonObject {
+            ["action"] = "sendMessages",
+            ["messages"] = messages
+        }.ToString());
+    }
+
     /*static WSChat() {
         statusTimer = new Timer(Status!, null, 0, 1000);
     }*/

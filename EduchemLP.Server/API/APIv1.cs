@@ -44,9 +44,20 @@ public class APIv1 : Controller {
         if(email == null || password == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'email' nebo 'password'" });
 
         var acc = Auth.AuthUser(email, Utilities.EncryptPassword(password));
+        if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Neplatný email nebo heslo" });
+
+        var obj = new JsonObject {
+            ["id"] = acc.ID,
+            ["displayName"] = acc.DisplayName,
+            ["email"] = acc.Email,
+            ["class"] = acc.Class,
+            ["accountType"] = acc.AccountType.ToString().ToUpper(),
+            ["lastUpdated"] = acc.LastUpdated,
+            ["avatar"] = acc.Avatar,
+        };
 
 
-        return acc == null ? new UnauthorizedObjectResult(new { success = false, message = "Neplatný email nebo heslo" }) : new JsonResult(new { success = true, account = acc});
+        return new JsonResult(new { success = true, account = obj});
     }
 
     [HttpDelete("loggeduser")]

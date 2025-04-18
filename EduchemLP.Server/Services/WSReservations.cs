@@ -5,7 +5,7 @@ using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
 using MySql.Data.MySqlClient;
-using Client = EduchemLP.Server.Classes.Objects.WSClient;
+using Client = EduchemLP.Server.Classes.Objects.WSClientUser;
 
 namespace EduchemLP.Server.Services;
 
@@ -31,10 +31,10 @@ public static class WSReservations {
         User? sessionAccount = await Auth.ReAuthUserAsync();
 
         var client = new Client(
-            sessionAccount?.ID ?? new Random().Next(10000, int.MaxValue),
-            sessionAccount?.DisplayName ?? "Guest",
             webSocket,
-            sessionAccount?.AccountType.ToString().ToUpper() ?? "GUEST",
+            sessionAccount?.ID ?? new Random().Next(10_000, 999_999),
+            sessionAccount?.DisplayName ?? "Guest",
+            sessionAccount?.AccountType,
             sessionAccount?.Class
         );
 
@@ -156,7 +156,7 @@ public static class WSReservations {
                 // connectedUsers zasifrovani dat
                 var connectedUsers = new JsonArray();
                 foreach (var client in cu) {
-                    if (user.AccountType == "GUEST") {
+                    if (user.AccountType == null) {
                         connectedUsers.Add("unknown");
                         continue;
                     }
@@ -164,7 +164,7 @@ public static class WSReservations {
                     connectedUsers.Add(new JsonObject {
                         ["id"] = client.ID,
                         ["displayName"] = client.DisplayName,
-                        ["class"] = user.AccountType != "STUDENT" ?  client.Class : null,
+                        ["class"] = user.AccountType > User.UserAccountType.STUDENT ? client.Class : null,
                     });
                 }
 

@@ -6,6 +6,12 @@ import "./Chat.scss";
 import {Avatar} from "../../components/Avatar.tsx";
 import {useRef} from "react";
 import React from "react";
+import {enumIsGreater} from "../../utils.ts";
+import {AccountType} from "../../interfaces.ts";
+import {toast} from "react-toastify";
+
+
+
 export const Chat = () => {
     const navigate = useNavigate();
     const { loggedUser } = useStore();
@@ -14,7 +20,12 @@ export const Chat = () => {
     const wsRef = useRef<WebSocket | null>(null);
     const [inputText, setInputText] = useState("");
     let lastRenderedDate = "";
-    // datumy v cestine textem 
+    const messagesRef = useRef<HTMLDivElement | null>(null);
+    const firstMessageRender = useRef<boolean>(true);
+
+
+
+    // datumy v cestine textem
     const formatDateToCzech = (dateString: string) => {
         const date = new Date(dateString);
         const months = ["led", "úno", "bře", "dub", "kvě", "čvn", "čvc", "srp", "zář", "říj", "lis", "pro"];
@@ -26,42 +37,125 @@ export const Chat = () => {
 
         return `${day}. ${month} ${hours}:${minutes}`;
     };
+
+    const handleScroll = () => {
+        const messagesDiv = messagesRef.current;
+        if (!messagesDiv) return;
+
+        // loadovani starsich zprav pri scrollu
+        if (!firstMessageRender.current && messagesDiv.scrollTop === 0 && wsRef.current?.readyState === WebSocket.OPEN && messages.length > 0) {
+            const oldestMessage = messages[0];
+            wsRef.current.send(JSON.stringify({
+                action: "loadOlderMessages",
+                beforeUuid: oldestMessage.uuid
+            }));
+        }
+    };
+
+    function accountTypeTranslate(accountType: string): string {
+        switch (accountType) {
+            case "STUDENT":
+                return "Žák";
+            case "TEACHER":
+                return "Učitel";
+            case "ADMIN":
+                return "Admin";
+            case "SUPERADMIN":
+                return "Admin";
+            default:
+                return "";
+        }
+    }
+
     // websocket
     useEffect(() => {
         const ws = new WebSocket(
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/chat`
         );
+
         wsRef.current = ws;
 
         ws.onopen = () => {
             //console.log("connected");
         };
-        
+
         ws.onmessage = (e) => {
             const data = JSON.parse(e.data);
-            //console.log(data);
+            const action = data.action;
 
-            const messages = data.messages?.reverse();
-            //console.log(messages);
+            // kdyz prijdou novy zpravy ze socketu
+            if(action === "sendMessages" || action === "loadOlderMessages") {
+                const newMessages = data.messages?.reverse();
+                if (!newMessages || newMessages.length === 0) return;
 
-            setMessages((prevMessages) => [...prevMessages, ...messages ]);
-            
-            // scrollnuti na konec
-            const messagesDiv = document.querySelector(".messages");
-            const rightSection = document.querySelector(".right");
+                const messagesDiv = messagesRef.current;
 
-            setTimeout(() => {
-                messagesDiv?.scrollTo({
-                    top: messagesDiv.scrollHeight,
-                    behavior: "smooth"
+                // zjisteni, jestli je uzivatel dole (aby se mu to např. nescrolovalo dolu kdyz si cte starsi zpravy)
+                const wasNearBottom = messagesDiv
+                    ? messagesDiv.scrollHeight - messagesDiv.scrollTop - messagesDiv.clientHeight < 50
+                    : false;
+
+                // ulozeni scroll vzdalenosti od spodu (bude vyuzito pro scrollovani na stejnou pozici)
+                const prevScrollBottomOffset = messagesDiv
+                    ? messagesDiv.scrollHeight - messagesDiv.scrollTop
+                    : 0;
+
+                setMessages((prevMessages) => {
+                    // nejdriv se novy zpravy mergnou s tema staryma
+                    const mergedMessages = [...prevMessages, ...newMessages];
+
+                    // pak se sortnou podle datumu (aby to nebylo random rozhazeny)
+                    const sortedMessages = mergedMessages.sort((a, b) => {
+                        const dateA = new Date(a.date).getTime();
+                        const dateB = new Date(b.date).getTime();
+                        return dateA - dateB;
+                    });
+
+                    // pak se z toho odstrani duplicitni zpravy podle uuid (je mozne ze se to muze stat)
+                    const uniqueMessages = sortedMessages.filter((message, index, self) =>
+                        index === self.findIndex((m) => m.uuid === message.uuid)
+                    );
+
+                    setTimeout(() => {
+                        if (!messagesDiv) return;
+
+                        // pokud uzivatel byl dole, scrollne se mu to dolu
+                        if (wasNearBottom) {
+                            messagesDiv.scrollTo({
+                                top: messagesDiv.scrollHeight,
+                                behavior: firstMessageRender.current ? "instant" : "smooth"
+                            });
+                        }
+
+                        // pokud uzivatel neni dole tak to scrollne na stejnou pozici (aby to pri nacteni novych zprav nesjelo nahoru)
+                        else {
+                            // zachováme scroll pozici (uživatel není dole)
+                            const newScrollTop = messagesDiv.scrollHeight - prevScrollBottomOffset;
+                            messagesDiv.scrollTo({
+                                top: newScrollTop,
+                                behavior: "instant"
+                            });
+                        }
+                    }, 1);
+
+                    return uniqueMessages;
                 });
 
-                rightSection?.scrollTo({
-                    top: rightSection.scrollHeight,
-                    behavior: "smooth"
-                });
-            }, 1)
+                // pokud se jedna o prvni render, tak se firstMessageRender nastavi na false
+                if (firstMessageRender.current) {
+                    setTimeout(() => {
+                        firstMessageRender.current = false;
+                    }, 1000);
+                }
+            }
+
         };
+
+
+
+        ws.onerror = (e) => {
+            toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
+        }
 
         ws.onclose = () => {
             //console.log("disconnected");
@@ -80,7 +174,7 @@ export const Chat = () => {
             message: inputText
         }));
 
-        setInputText(""); // Vyčistit input po odeslání
+        setInputText("");
     };
     
 
@@ -103,8 +197,7 @@ export const Chat = () => {
         <AppLayout>
             <h1>Chat</h1>
             <div className="chat-parent">
-                <div className="messages">
-                    
+                <div className="messages" ref={messagesRef} onScroll={handleScroll}>
                     {
                         messages.map((message, index) => {
                             const isOwn = message.author.id === loggedUser.id;
@@ -134,7 +227,21 @@ export const Chat = () => {
                                                 <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
                                                 <div className="texts">
                                                     <div className="name-and-date">
-                                                        <h1>{message.author.name}</h1>
+                                                        <h1>
+                                                            {message.author.name}
+
+                                                            { message.author.class && (
+                                                                <span className="class">
+                                                                    &nbsp;• {message.author.class}
+                                                                </span>
+                                                            )}
+
+                                                            {
+                                                                enumIsGreater(message.author.accountType, AccountType, AccountType.STUDENT) && (
+                                                                    <span className="role">&lt;{ accountTypeTranslate(message.author.accountType) }&gt;</span>
+                                                                )
+                                                            }
+                                                        </h1>
                                                         <span className="msg-time">{time}</span>
                                                     </div>
                                                     <article>{ message.message }</article>

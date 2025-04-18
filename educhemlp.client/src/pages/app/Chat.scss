@@ -47,7 +47,7 @@
                     display: flex;
                     justify-content: space-between;
                     gap: 32px;
-                    align-items: center;
+                    align-items: start;
 
                     >.msg-time {
                         font-size: 14px;
@@ -55,10 +55,27 @@
                         display: block;
                     }
 
+
                     h1 {
                         font-size: 16px;
+                        align-items: center;
+                        display: flex;
+
+                        >.role {
+                            font-size: 14px;
+                            color: var(--accent-color);
+                            font-weight: 400;
+                            margin-left: 12px;
+                        }
+
+                        >.class {
+                            font-size: 14px;
+                            color: var(--text-color-3);
+                            font-weight: 400;
+                        }
                     }
                 }
+
 
             }
             
