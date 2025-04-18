@@ -285,9 +285,20 @@ public static class WSChat {
             messages.Add(message);
         }
 
+        // pokud neni co poslat (konec zprav), posle se info ze je konec zprav
+        if (messages.Count == 0) {
+            await client.BroadcastMessageAsync(new JsonObject {
+                ["action"] = "noMoreMessagesToFetch",
+            }.ToString());
+
+            return;
+        }
+
+        // jinak se poslou zpravy
         await client.BroadcastMessageAsync(new JsonObject {
             ["action"] = "sendMessages",
-            ["messages"] = messages
+            ["messages"] = messages,
+            ["isLoadMoreAction"] = true,
         }.ToString());
     }
 

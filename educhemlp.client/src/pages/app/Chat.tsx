@@ -11,17 +11,20 @@ import {AccountType} from "../../interfaces.ts";
 import {toast} from "react-toastify";
 
 
+const MESSAGE_COOLDOWN_IN_SECONDS = 1;
 
 export const Chat = () => {
     const navigate = useNavigate();
     const { loggedUser } = useStore();
     const { userAuthed, setUserAuthed } = useStore();
     const [messages, setMessages] = useState<any[]>([]);
+    const [socketLoading, setSocketLoading] = useState(true);
+    const messagesRef = useRef<any[]>([]);
     const wsRef = useRef<WebSocket | null>(null);
     const [inputText, setInputText] = useState("");
     let lastRenderedDate = "";
-    const messagesRef = useRef<HTMLDivElement | null>(null);
     const firstMessageRender = useRef<boolean>(true);
+    const lastSendTimeRef = useRef<number>(0);
 
 
 
@@ -39,12 +42,17 @@ export const Chat = () => {
     };
 
     const handleScroll = () => {
-        const messagesDiv = messagesRef.current;
-        if (!messagesDiv) return;
+        const scrollContainer = document.querySelector("body #app .right") as HTMLElement | null;
+        if (!scrollContainer) return;
+
+        //console.log(!firstMessageRender.current && scrollContainer.scrollTop === 0 && wsRef.current?.readyState === WebSocket.OPEN && messagesRef.current.length > 0)
+        //console.log(!firstMessageRender.current , scrollContainer.scrollTop === 0 , wsRef.current?.readyState === WebSocket.OPEN , messagesRef.current.length > 0)
+        //console.log(messagesRef.current);
 
         // loadovani starsich zprav pri scrollu
-        if (!firstMessageRender.current && messagesDiv.scrollTop === 0 && wsRef.current?.readyState === WebSocket.OPEN && messages.length > 0) {
-            const oldestMessage = messages[0];
+        if (!firstMessageRender.current && scrollContainer.scrollTop === 0 && wsRef.current?.readyState === WebSocket.OPEN && messagesRef.current.length > 0) {
+            const oldestMessage = messagesRef.current[0];
+
             wsRef.current.send(JSON.stringify({
                 action: "loadOlderMessages",
                 beforeUuid: oldestMessage.uuid
@@ -67,7 +75,9 @@ export const Chat = () => {
         }
     }
 
-    // websocket
+
+
+    // pri nacteni komponenty
     useEffect(() => {
         const ws = new WebSocket(
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/chat`
@@ -75,98 +85,97 @@ export const Chat = () => {
 
         wsRef.current = ws;
 
-        ws.onopen = () => {
-            //console.log("connected");
-        };
-
+        // kdyz prijdou novy zpravy ze socketu
         ws.onmessage = (e) => {
             const data = JSON.parse(e.data);
             const action = data.action;
 
-            // kdyz prijdou novy zpravy ze socketu
-            if(action === "sendMessages" || action === "loadOlderMessages") {
+            if (action === "sendMessages") {
                 const newMessages = data.messages?.reverse();
                 if (!newMessages || newMessages.length === 0) return;
 
-                const messagesDiv = messagesRef.current;
+                const scrollContainer = document.querySelector("body #app .right") as HTMLElement | null;
+                if (!scrollContainer) return;
 
                 // zjisteni, jestli je uzivatel dole (aby se mu to např. nescrolovalo dolu kdyz si cte starsi zpravy)
-                const wasNearBottom = messagesDiv
-                    ? messagesDiv.scrollHeight - messagesDiv.scrollTop - messagesDiv.clientHeight < 50
-                    : false;
+                const wasNearBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight < 50;
 
                 // ulozeni scroll vzdalenosti od spodu (bude vyuzito pro scrollovani na stejnou pozici)
-                const prevScrollBottomOffset = messagesDiv
-                    ? messagesDiv.scrollHeight - messagesDiv.scrollTop
-                    : 0;
+                const prevScrollBottomOffset = scrollContainer.scrollHeight - scrollContainer.scrollTop;
 
                 setMessages((prevMessages) => {
-                    // nejdriv se novy zpravy mergnou s tema staryma
-                    const mergedMessages = [...prevMessages, ...newMessages];
+                    const merged = [...prevMessages, ...newMessages]; // nejdriv se novy zpravy mergnou s tema staryma
+                    const sorted = merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // pak se sortnou podle datumu (aby to nebylo random rozhazeny)
+                    const unique = sorted.filter((msg, i, self) => i === self.findIndex(m => m.uuid === msg.uuid)); // pak se z toho odstrani duplicitni zpravy podle uuid (je mozne ze se to muze stat)
 
-                    // pak se sortnou podle datumu (aby to nebylo random rozhazeny)
-                    const sortedMessages = mergedMessages.sort((a, b) => {
-                        const dateA = new Date(a.date).getTime();
-                        const dateB = new Date(b.date).getTime();
-                        return dateA - dateB;
-                    });
+                    messagesRef.current = unique;
 
-                    // pak se z toho odstrani duplicitni zpravy podle uuid (je mozne ze se to muze stat)
-                    const uniqueMessages = sortedMessages.filter((message, index, self) =>
-                        index === self.findIndex((m) => m.uuid === message.uuid)
-                    );
+                    requestAnimationFrame(() => {
+                        if (!scrollContainer) return;
 
-                    setTimeout(() => {
-                        if (!messagesDiv) return;
-
-                        // pokud uzivatel byl dole, scrollne se mu to dolu
                         if (wasNearBottom) {
-                            messagesDiv.scrollTo({
-                                top: messagesDiv.scrollHeight,
+                            scrollContainer.scrollTo({
+                                top: scrollContainer.scrollHeight,
                                 behavior: firstMessageRender.current ? "instant" : "smooth"
                             });
-                        }
-
-                        // pokud uzivatel neni dole tak to scrollne na stejnou pozici (aby to pri nacteni novych zprav nesjelo nahoru)
-                        else {
-                            // zachováme scroll pozici (uživatel není dole)
-                            const newScrollTop = messagesDiv.scrollHeight - prevScrollBottomOffset;
-                            messagesDiv.scrollTo({
-                                top: newScrollTop,
+                        } else {
+                            if(data.isLoadMoreAction) scrollContainer.scrollTo({
+                                top: scrollContainer.scrollHeight - prevScrollBottomOffset,
                                 behavior: "instant"
                             });
                         }
-                    }, 1);
+                    });
 
-                    return uniqueMessages;
+
+                    return unique;
                 });
 
                 // pokud se jedna o prvni render, tak se firstMessageRender nastavi na false
                 if (firstMessageRender.current) {
+                    setSocketLoading(false);
+
                     setTimeout(() => {
                         firstMessageRender.current = false;
-                    }, 1000);
+                    }, 100);
                 }
             }
 
+            else if (action === "noMoreMessagesToFetch") {
+                toast.warn("Žádné další zprávy k načtení.", {
+                    autoClose: 1500,
+                });
+            }
         };
 
+        ws.onerror = () => toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
+        ws.onclose = () => {};
 
-
-        ws.onerror = (e) => {
-            toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
-        }
-
-        ws.onclose = () => {
-            //console.log("disconnected");
+        const checkAndAddScrollListener = () => {
+            const scrollContainer = document.querySelector("body #app .right");
+            if (!scrollContainer) {
+                setTimeout(checkAndAddScrollListener, 100); // retry za 100ms
+            } else {
+                scrollContainer.addEventListener("scroll", handleScroll);
+                console.log(scrollContainer as HTMLElement);
+            }
         };
+
+        checkAndAddScrollListener();
 
         return () => {
             ws.close();
+
+            const scrollContainer = document.querySelector("body #app .right");
+            if (scrollContainer) {
+                scrollContainer.removeEventListener("scroll", handleScroll);
+            }
         };
     }, []);
-    
+
     const sendMessage = () => {
+        const now = Date.now();
+        if (now - lastSendTimeRef.current < MESSAGE_COOLDOWN_IN_SECONDS * 1000) return;
+
         if (!inputText.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
 
         wsRef.current.send(JSON.stringify({
@@ -174,9 +183,11 @@ export const Chat = () => {
             message: inputText
         }));
 
+        lastSendTimeRef.current = now; // uložení času odeslání
         setInputText("");
     };
-    
+
+
 
 
     // zamezení přístupu k administraci spatnym uzivatelum
@@ -197,69 +208,81 @@ export const Chat = () => {
         <AppLayout>
             <h1>Chat</h1>
             <div className="chat-parent">
-                <div className="messages" ref={messagesRef} onScroll={handleScroll}>
-                    {
-                        messages.map((message, index) => {
-                            const isOwn = message.author.id === loggedUser.id;
+                {
+                    !socketLoading ? (
+                        <div className="messages">
+                            {
+                                messages.map((message, index) => {
+                                    const isOwn = message.author.id === loggedUser.id;
 
-                            const dateObj = new Date(message.date);
-                            const dateOnly = dateObj.toLocaleDateString("cs-CZ"); 
-                            const time = dateObj.toLocaleTimeString("cs-CZ", {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                            });
+                                    const dateObj = new Date(message.date);
+                                    const dateOnly = dateObj.toLocaleDateString("cs-CZ");
+                                    const time = dateObj.toLocaleTimeString("cs-CZ", {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false
+                                    });
 
-                            const showDateSeparator = dateOnly !== lastRenderedDate;
-                            if (showDateSeparator) lastRenderedDate = dateOnly;
+                                    const showDateSeparator = dateOnly !== lastRenderedDate;
+                                    if (showDateSeparator) lastRenderedDate = dateOnly;
 
-                            return (
-                                <React.Fragment key={index}>
-                                    {showDateSeparator && (
-                                        <div className="date-divider">
-                                            <span>{formatDateToCzech(message.date)}</span>
-                                        </div>
-                                    )}
+                                    return (
+                                        <React.Fragment key={index}>
+                                            {showDateSeparator && (
+                                                <div className="date-divider">
+                                                    <span>{formatDateToCzech(message.date)}</span>
+                                                </div>
+                                            )}
 
-                                    <div className={`chat-message ${isOwn ? "own-message" : "other-message"}`}>
-                                        {!isOwn ? (
-                                            <>
-                                                <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
-                                                <div className="texts">
-                                                    <div className="name-and-date">
-                                                        <h1>
-                                                            {message.author.name}
+                                            <div className={`chat-message ${isOwn ? "own-message" : "other-message"}`}>
+                                                {!isOwn ? (
+                                                    <>
+                                                        <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
+                                                        <div className="texts">
+                                                            <div className="name-and-date">
+                                                                <h1>
+                                                                    {message.author.name}
 
-                                                            { message.author.class && (
-                                                                <span className="class">
+                                                                    { message.author.class && (
+                                                                        <span className="class">
                                                                     &nbsp;• {message.author.class}
                                                                 </span>
-                                                            )}
+                                                                    )}
 
-                                                            {
-                                                                enumIsGreater(message.author.accountType, AccountType, AccountType.STUDENT) && (
-                                                                    <span className="role">&lt;{ accountTypeTranslate(message.author.accountType) }&gt;</span>
-                                                                )
-                                                            }
-                                                        </h1>
+                                                                    {
+                                                                        enumIsGreater(message.author.accountType, AccountType, AccountType.STUDENT) && (
+                                                                            <span className="role">&lt;{ accountTypeTranslate(message.author.accountType) }&gt;</span>
+                                                                        )
+                                                                    }
+                                                                </h1>
+                                                                <span className="msg-time">{time}</span>
+                                                            </div>
+                                                            <article>{ message.message }</article>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="texts">
+                                                        <p>{message.message}</p>
                                                         <span className="msg-time">{time}</span>
                                                     </div>
-                                                    <article>{ message.message }</article>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="texts">
-                                                <p>{message.message}</p>
-                                                <span className="msg-time">{time}</span>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                </React.Fragment>
-                            );
-                        })
-                    }
-                </div>
-                <div className={"inputdiv"}>
+                                        </React.Fragment>
+                                    );
+                                })
+                            }
+                        </div>
+                    ) : (
+                        <div className="loading">
+                            <div className="loader"></div>
+                            <span>Načítání zpráv...</span>
+                        </div>
+                    )
+                }
+            </div>
+
+            <div className="chat-input">
+                <div className="inputdiv">
                     <input
                         type="text"
                         value={inputText}

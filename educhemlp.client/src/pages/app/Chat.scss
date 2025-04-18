@@ -1,20 +1,51 @@
-﻿.chat-parent {
+﻿$input-div-height: 96px;
+
+.chat-parent {
     width: 100%;
-    height: 100%;
+    height: auto;
     display: flex;
     //border: 1px solid #ffffff;
     flex-direction: column;
     gap: 32px;
-    margin-top: 64px;
-    overflow: hidden;
+    overflow-y: unset;
+
+    >.loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: grid;
+        gap: 12px;
+
+        >.loader {
+            width: 64px;
+            height: 64px;
+            border: 8px solid var(--background-bg);
+            border-top: 8px solid var(--accent-color);
+            border-radius: 50%;
+            margin: 0 auto;
+            animation: spin 1s ease infinite;
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+        }
+    }
 
     >.messages {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        overflow-x: hidden;
-        overflow-y: auto;
+        overflow-y: unset;
+        margin-top: 64px;
+        padding-bottom: $input-div-height / 2;
         flex-grow: 1;
+        min-height: 80vh;
 
         >.date-divider {
             text-align: center;
@@ -46,8 +77,9 @@
                 >.name-and-date {
                     display: flex;
                     justify-content: space-between;
-                    gap: 32px;
+                    gap: 0 32px;
                     align-items: start;
+                    flex-wrap: wrap;
 
                     >.msg-time {
                         font-size: 14px;
@@ -60,12 +92,13 @@
                         font-size: 16px;
                         align-items: center;
                         display: flex;
+                        flex-wrap: wrap;
+                        gap: 0 12px;
 
                         >.role {
                             font-size: 14px;
                             color: var(--accent-color);
                             font-weight: 400;
-                            margin-left: 12px;
                         }
 
                         >.class {
@@ -119,10 +152,24 @@
             }
         }
     }
+}
+
+.chat-input {
+    position: fixed;
+    bottom: 0;
+    height: $input-div-height;
+    width: calc(100vw - 361px - 48px*2);
+    background-color: var(--background-bg);
+
 
     >.inputdiv {
         display: flex;
         align-items: center;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
 
         >input {
             width: 100%;
@@ -140,12 +187,16 @@
                 border-color: var(--accent-color);
             }
         }
+
         >.sent-message-button {
-            position: absolute; // potrebuju radu jestli jsem to udelal spravne 
-            right: 64px;
-            padding: 8px;
+            position: absolute; // potrebuju radu jestli jsem to udelal spravne
+            right: 0px;
+            width: 72px;
+            height: 72px;
+            padding: 0;
+            border: none;
             mask-repeat: no-repeat;
-            mask-size: contain;
+            mask-size: 30%;
             mask-position: center;
             mask-image: url("../../../public/images/icons/sent_icon.svg");
             cursor: pointer;
@@ -163,40 +214,25 @@
     }
 }
 
+
+
 @media (max-width: 768px) {
     .chat-parent {
-        overflow: unset ;
 
         >.messages {
-            overflow: unset;
-            padding-bottom: 72px;
+            margin-top: 0;
+            padding-bottom: 40px;
+            flex-grow: 1;
 
             >.chat-message {
                 max-width: 80%;
             }
         }
+    }
 
-        >.inputdiv {
-            position: fixed;
-            bottom: calc(64px + 12px);
-            width: calc(100% - 48px);
-            z-index: 1;
-
-            >.sent-message-button {
-                right: 12px;
-            }
-
-            &::before {
-                content: "";
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                width: 100vw;
-                height: 96px;
-                background-color: var(--background-bg);
-                border-radius: 8px;
-                z-index: -1;
-            }
-        }
+    .chat-input {
+        bottom: calc(64px);
+        width: calc(100% - 48px);
+        height: 64px;
     }
 }

@@ -18,7 +18,7 @@ import {create} from "zustand";
 // region shared veci
 enum Modals { USER, DELETE_CONFIRMATION, RESETPASSWORD_CONFIRMATION }
 
-enum Tab { USERS, RESERVATIONS, LOGS }
+enum Tab { USERS, RESERVATIONS, LOGS, FORUM_POSTS }
 
 interface User {
     id: string,
@@ -677,6 +677,19 @@ const ReservationsTab = () => {
 }
 
 
+
+
+// forum tabs
+const ForumPostsTab = () => {
+    // TODO: dodělat
+
+    return (
+        <p style={{opacity: 0.2}}>serhii dokonci</p>
+    )
+}
+
+
+
 // main komponent
 export const Administration = () => {
     const navigate = useNavigate();
@@ -709,6 +722,7 @@ export const Administration = () => {
             <div className="area-selector">
                 <p onClick={() => setSelectedTab(Tab.USERS)} className={selectedTab === Tab.USERS ? "active" : ""}>Uživatelé</p>
                 <p onClick={() => setSelectedTab(Tab.RESERVATIONS)} className={selectedTab === Tab.RESERVATIONS ? "active" : ""}>Rezervace</p>
+                <p onClick={() => setSelectedTab(Tab.FORUM_POSTS)} className={selectedTab === Tab.FORUM_POSTS ? "active" : ""}>Forum příspěvky</p>
                 <p onClick={() => setSelectedTab(Tab.LOGS)} className={selectedTab === Tab.LOGS ? "active" : ""}>Bezpečnostní logy</p>
             </div>
 
@@ -719,6 +733,8 @@ export const Administration = () => {
                     <LogsTab/>
                 ) : selectedTab === Tab.RESERVATIONS ? (
                     <ReservationsTab/>
+                ) : selectedTab === Tab.FORUM_POSTS ? (
+                    <ForumPostsTab/>
                 ) : null
             }
         </AppLayout>
