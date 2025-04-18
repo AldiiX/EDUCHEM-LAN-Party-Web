@@ -43,7 +43,7 @@
         gap: 8px;
         overflow-y: unset;
         margin-top: 64px;
-        padding-bottom: $input-div-height / 2;
+        padding-bottom: calc($input-div-height / 2);
         flex-grow: 1;
         min-height: 80vh;
 
