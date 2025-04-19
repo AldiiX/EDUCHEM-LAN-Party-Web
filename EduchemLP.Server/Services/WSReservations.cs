@@ -41,6 +41,17 @@ public static class WSReservations {
 
 
 
+        // zjisteni duplikatu
+        lock (ConnectedUsers) {
+            var list = ConnectedUsers.ToList();
+
+            foreach (var connectedClient in list.Where(connectedClient => connectedClient.ID == client.ID)) {
+                connectedClient.Disconnect();
+                ConnectedUsers.Remove(connectedClient);
+            }
+        }
+
+
 
         lock(ConnectedUsers) ConnectedUsers.Add(client);
         client.SendFullReservationInfoAsync().Wait();

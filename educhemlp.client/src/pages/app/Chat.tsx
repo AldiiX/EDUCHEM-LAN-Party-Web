@@ -11,6 +11,9 @@ import {create} from "zustand/index";
 import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 
 
+enum ChatSocketState {
+    LOADING, CONNECTED, DISCONNECTED
+}
 
 
 // component store
@@ -81,8 +84,7 @@ export const Chat = () => {
     const { loggedUser } = useStore();
     const { userAuthed, setUserAuthed } = useStore();
     const [messages, setMessages] = useState<any[]>([]);
-    const [socketLoading, setSocketLoading] = useState(true);
-    const [socketDisconnected, setSocketDisconnected] = useState(false);
+    const [socketState, setSocketState] = useState<ChatSocketState>(ChatSocketState.LOADING);
     const [moreMessagesLoading, setMoreMessagesLoading] = useState<boolean>(false);
     const [noMoreMessagesToFetch, setNoMoreMessagesToFetch] = useState<boolean>(false);
     const messagesRef = useRef<any[]>([]);
@@ -151,8 +153,7 @@ export const Chat = () => {
         wsRef.current = ws;
 
         ws.onopen = () => {
-            setSocketDisconnected(false);
-            setSocketLoading(false);
+            setSocketState(ChatSocketState.CONNECTED);
         }
 
         ws.onmessage = (e) => { // kdyz prijdou novy zpravy ze socketu
@@ -201,7 +202,7 @@ export const Chat = () => {
 
                 // pokud se jedna o prvni render, tak se firstMessageRender nastavi na false
                 if (firstMessageRender.current) {
-                    setSocketLoading(false);
+                    setSocketState(ChatSocketState.CONNECTED);
 
                     setTimeout(() => {
                         firstMessageRender.current = false;
@@ -226,7 +227,7 @@ export const Chat = () => {
         ws.onerror = () => toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
 
         ws.onclose = () => {
-            setSocketDisconnected(true);
+            setSocketState(ChatSocketState.DISCONNECTED);
             setConnectedUsers([]);
         };
     }
@@ -235,8 +236,6 @@ export const Chat = () => {
 
     // pri nacteni komponenty
     useEffect(() => {
-        connectToWebSocket();
-
         const checkAndAddScrollListener = () => {
             const scrollContainer = document.querySelector("body #app .right");
             if (!scrollContainer) {
@@ -282,6 +281,8 @@ export const Chat = () => {
             navigate("/app");
             return;
         }
+
+        if(userAuthed && loggedUser) connectToWebSocket(); // pripojeni na socket az kdyz je uzivatel prihlasen
     }, [userAuthed, loggedUser, navigate]);
 
     if (!userAuthed || !loggedUser) {
@@ -294,18 +295,21 @@ export const Chat = () => {
         <AppLayout className="page-chat" customTitleBar={<ChatTitleBar />} titleBarType={AppLayoutTitleBarType.CUSTOM}>
             <div className="chat-parent">
                 {
-                    socketDisconnected ? (
+                    socketState === ChatSocketState.DISCONNECTED ? (
                         <div className="loading">
-                            {/*<div className="loader"></div>*/}
                             <span style={{ textAlign: "center" }}>Chat odpojen, obnov stránku (F5).</span>
                             <ButtonPrimary onClick={() => {
                                 // znovupripojeni na socket
-                                setSocketLoading(true);
-                                setSocketDisconnected(false);
+                                setSocketState(ChatSocketState.LOADING);
                                 connectToWebSocket();
                             }} text="Obnovit" />
                         </div>
-                    ): !socketLoading ? (
+                    ) : socketState === ChatSocketState.LOADING ? (
+                        <div className="loading">
+                            <div className="loader"></div>
+                            <span>Načítání zpráv...</span>
+                        </div>
+                    ) : socketState === ChatSocketState.CONNECTED ? (
                         <div className="messages">
                             {
                                 moreMessagesLoading ? (
@@ -380,12 +384,7 @@ export const Chat = () => {
                                 })
                             }
                         </div>
-                    ) : (
-                        <div className="loading">
-                            <div className="loader"></div>
-                            <span>Načítání zpráv...</span>
-                        </div>
-                    )
+                    ) : null
                 }
             </div>
 

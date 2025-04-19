@@ -14,6 +14,17 @@ import MoveableMap from "../../components/MoveableMap.tsx";
 import {toast} from "react-toastify";
 
 
+enum ReservationSocketStatus {
+    DEFAULT, // pred prvnim pripojeni (pri prvnim renderu)
+    CONNECTED,
+    DISCONNECTED,
+}
+
+
+// TODO: refaktorovat líp do subkomponentů, udelat global store, a napr. selectedResevation udelat jako komponentu
+
+
+
 export const Reservations = () => {
     const areas = [
         // { id: "havran-kulturni-dum", name: "Kulturní dům Havraň" },
@@ -30,8 +41,9 @@ export const Reservations = () => {
     const [occupiedPercent, setOccupiedPercent] = useState(0);
     const [clientsCount, setClientsCount] = useState<string>("?");
     const [socket, setSocket] = useState<WebSocket | null>(null);
-    const [socketStatus, setSocketStatus] = useState<string | null>(null);
+    const [socketStatus, setSocketStatus] = useState<ReservationSocketStatus>(ReservationSocketStatus.DEFAULT);
     const [statsCollapsed, setStatsCollapsed] = useState<boolean>(false);
+    const [enableReservationsStats, setEnableReservationsStats] = useState<boolean>(true);
     const { loggedUser, setLoggedUser } = useStore();
     const [ selectedReservation, setSelectedReservation ] = useState<any | null>(null);
     const mapRef = useRef<HTMLDivElement>(null);
@@ -54,11 +66,11 @@ export const Reservations = () => {
                 }
 
                 setRoomsCapacity(roomsCapac);
-                setSocketStatus("connected");
+                setSocketStatus(ReservationSocketStatus.CONNECTED);
             } break;
 
             case "status": {
-                setSocketStatus("connected");
+                setSocketStatus(ReservationSocketStatus.CONNECTED);
                 setClientsCount(object.connectedUsers.length.toString());
             } break;
         }
@@ -163,9 +175,20 @@ export const Reservations = () => {
         }
     }
 
+    const unloadAllReservations = () => {
+        setReservations([]);
+        setStatsCollapsed(true);
+
+        setTimeout(() => {
+            setEnableReservationsStats(false);
+        }, 300)
+    };
+
     const selectReservation = (element: HTMLElement) => {
         const id = element.id;
         let type: string | null = null;
+
+        if(!computers || !rooms || !reservations) return;
 
         const r = computers.find((r: any) => {
             type = "computer";
@@ -174,6 +197,8 @@ export const Reservations = () => {
             type = "room";
             return r.id === id.replace("ROOM_", "");
         });
+
+        if(!r) return;
 
         r.reservations = reservations.filter((res: any) => {
             return res.computer?.id === r.id || res.room?.id === r.id;
@@ -195,6 +220,7 @@ export const Reservations = () => {
         );
         ws.onopen = () => {
             //console.log("connected");
+            setEnableReservationsStats(true);
         };
 
         ws.onmessage = (e) => {
@@ -203,17 +229,19 @@ export const Reservations = () => {
 
         ws.onclose = () => {
             //console.log("disconnected");
-            setSocketStatus("disconnected");
+            setSocketStatus(ReservationSocketStatus.DISCONNECTED);
+            unloadAllReservations();
         };
 
         setSocket(ws);
 
         return () => {
             ws.close();
-            setSocketStatus(null);
+            setSocketStatus(ReservationSocketStatus.DEFAULT);
         };
     }, []);
 
+    // efekt pro nastaveni veci po tom co se změní selectReservation
     useEffect(() => {
         if (computers.length > 0 && rooms.length > 0) {
             setCirclesStyle();
@@ -231,6 +259,37 @@ export const Reservations = () => {
             }
         }
     }, [computers, rooms, reservations, selectedArea]);
+
+    // efekt co se zmeni kdyz se odloaduji rezervace
+    useEffect(() => {
+        if(reservations.length === 0 && socketStatus === ReservationSocketStatus.DISCONNECTED) {
+            // compy
+            for(let computer of computers) {
+                computer = computer as any;
+                const id = String(computer.id).toUpperCase();
+                const element = document.getElementById(id);
+                if (!element) continue;
+
+                element.classList.remove("available", "unavailable", "taken-by-you");
+            }
+
+            // roomky
+            for(let room of rooms) {
+                room = room as any;
+                const id = String(room.id).toUpperCase();
+                const element = document.getElementById("ROOM_" + id);
+                if (!element) continue;
+
+                element.classList.remove("available", "unavailable", "taken-by-you");
+            }
+
+            setRoomsCapacity(0);
+            setOccupiedPercent(0);
+            setClientsCount("?");
+            setSocketStatus(ReservationSocketStatus.DISCONNECTED);
+            setSelectedReservation(null);
+        }
+    }, [reservations])
 
 
 
@@ -282,9 +341,9 @@ export const Reservations = () => {
 
                     <div className="rightbottom">
                         <div className={
-                            socketStatus === "connected"
+                            socketStatus === ReservationSocketStatus.CONNECTED
                                 ? "serverstatus connected"
-                                : socketStatus === "disconnected"
+                                : socketStatus === ReservationSocketStatus.DISCONNECTED
                                     ? "serverstatus disconnected"
                                     : "serverstatus"
                         }>
@@ -292,9 +351,9 @@ export const Reservations = () => {
                             <p className="text">
                                 { socketStatus === null
                                     ? "Připojování k serveru..."
-                                    : socketStatus === "connected"
+                                    : socketStatus === ReservationSocketStatus.CONNECTED
                                         ? "Připojeno k serveru"
-                                        : socketStatus === "disconnected"
+                                        : socketStatus === ReservationSocketStatus.DISCONNECTED
                                             ? "Chyba připojení k serveru, restartuj stránku"
                                             : null
                                 }
@@ -448,71 +507,73 @@ export const Reservations = () => {
                     </MoveableMap>
                 </div>
 
-                <div className={"stats" + (statsCollapsed ? " collapsed" : "")}>
-                    <div className={"collapser" + (statsCollapsed ? " collapsed" : "" )} onClick={() => statsCollapsed ? setStatsCollapsed(false) : setStatsCollapsed(true) }></div>
+                { enableReservationsStats && (
+                    <div className={"stats" + (statsCollapsed ? " collapsed" : "")}>
+                        <div className={"collapser" + (statsCollapsed ? " collapsed" : "" )} onClick={() => statsCollapsed ? setStatsCollapsed(false) : setStatsCollapsed(true) }></div>
 
-                    <div className={"block mainstats"}>
-                        <h1>Statistiky</h1>
-                        <p>Počet rezervovaných PC: <span>{reservations.filter(r => r.computer !== null).length}/{computers.length}</span></p>
-                        <p>Počet rezervovaných míst: <span>{reservations.filter(r => r.room !== null).length}/{roomsCapacity}</span></p>
-                        <p>Celkem rezervací: <span>{reservations.length}/{computers.length + roomsCapacity}</span></p>
+                        <div className={"block mainstats"}>
+                            <h1>Statistiky</h1>
+                            <p>Počet rezervovaných PC: <span>{reservations.filter(r => r.computer !== null).length}/{computers.length}</span></p>
+                            <p>Počet rezervovaných míst: <span>{reservations.filter(r => r.room !== null).length}/{roomsCapacity}</span></p>
+                            <p>Celkem rezervací: <span>{reservations.length}/{computers.length + roomsCapacity}</span></p>
 
-                        <div className="chart">
-                            <PieChart value={occupiedPercent} width={100} height={100} />
-                            <div className="texts">
-                                <h1>{ occupiedPercent }%</h1>
-                                <p>Naplněné kapacity</p>
+                            <div className="chart">
+                                <PieChart value={occupiedPercent} width={100} height={100} />
+                                <div className="texts">
+                                    <h1>{ occupiedPercent }%</h1>
+                                    <p>Naplněné kapacity</p>
+                                </div>
                             </div>
                         </div>
+
+                        { loggedUser !== null ?
+                            <div className={"block reservations"}>
+                                <h1>Seznam rezervací</h1>
+
+                                <div className={"reservations-parent"}>
+                                    {
+                                        reservations.length === 0 ?
+                                            [0,1,2,3,4].map((index) => {
+                                                return (
+                                                    <div key={index} className={"reservation"}>
+                                                        <Skeleton width={40} height={40} variant={"circular"} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
+
+                                                        <div className={"texts"}>
+                                                            <Skeleton width={"30%"} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
+                                                            <Skeleton width={100} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
+                                                            <Skeleton width={"80%"} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                            :
+                                            reservations.sort((a,b) => {
+                                                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                                            }).map((reservation, index) => {
+                                                reservation = reservation as any;
+                                                return (
+                                                    <div key={index} className={"reservation"}>
+                                                        <Avatar size={"40px"} src={reservation.user?.avatar} name={reservation.user?.displayName} />
+
+                                                        <div className="texts">
+                                                            <p className={"name"}>{reservation.user?.displayName} <span>{reservation.user?.class}</span></p>
+                                                            <p className={"id"}>{reservation.computer?.id ?? reservation.room?.label}</p>
+                                                            <p className={"date"}>{new Date(reservation.createdAt).toLocaleString("cs-CZ" )}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })
+                                    }
+                                </div>
+                            </div>
+                            : <div className={"block"}>
+                                <p>Pro zobrazení více informací <Link to="/login">se přihlaš</Link>.</p>
+                            </div>
+                        }
+
+
                     </div>
-
-                    { loggedUser !== null ?
-                        <div className={"block reservations"}>
-                            <h1>Seznam rezervací</h1>
-
-                            <div className={"reservations-parent"}>
-                                {
-                                    reservations.length === 0 ?
-                                        [0,1,2,3,4].map((index) => {
-                                            return (
-                                                <div key={index} className={"reservation"}>
-                                                    <Skeleton width={40} height={40} variant={"circular"} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
-
-                                                    <div className={"texts"}>
-                                                        <Skeleton width={"30%"} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
-                                                        <Skeleton width={100} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
-                                                        <Skeleton width={"80%"} sx={{ bgcolor: 'var(--text-color-3)' }} animation={"wave"} />
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                        :
-                                        reservations.sort((a,b) => {
-                                            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                                        }).map((reservation, index) => {
-                                            reservation = reservation as any;
-                                            return (
-                                                <div key={index} className={"reservation"}>
-                                                    <Avatar size={"40px"} src={reservation.user?.avatar} name={reservation.user?.displayName} />
-
-                                                    <div className="texts">
-                                                        <p className={"name"}>{reservation.user?.displayName} <span>{reservation.user?.class}</span></p>
-                                                        <p className={"id"}>{reservation.computer?.id ?? reservation.room?.label}</p>
-                                                        <p className={"date"}>{new Date(reservation.createdAt).toLocaleString("cs-CZ" )}</p>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })
-                                }
-                            </div>
-                        </div>
-                        : <div className={"block"}>
-                            <p>Pro zobrazení více informací <Link to="/login">se přihlaš</Link>.</p>
-                        </div>
-                    }
-
-
-                </div>
+                )}
             </div>
         </AppLayout>
     );

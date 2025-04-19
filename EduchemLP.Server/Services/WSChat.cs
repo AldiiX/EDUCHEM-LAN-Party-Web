@@ -20,6 +20,8 @@ public static class WSChat {
     private static readonly List<Client> ConnectedUsers = [];
     //private static Timer? statusTimer;
 
+
+
     //handle 
     public static async Task HandleQueueAsync(WebSocket webSocket) {
         User? sessionAccount = await Auth.ReAuthUserAsync();
