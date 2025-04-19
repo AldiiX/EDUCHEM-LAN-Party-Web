@@ -21,7 +21,7 @@
 
 .reservations {
     .right {
-        >.area-selector {
+        .area-selector {
             display: flex;
             gap: 16px;
             margin: 24px 0;
@@ -219,7 +219,7 @@
 
     .map-wrapper {
         width: 100%;
-        height: 100%;
+        height: 80vh;
         max-height: calc(100vh - 48px - 48px - 80px - 24px - 24px);
         display: flex;
         position: relative;

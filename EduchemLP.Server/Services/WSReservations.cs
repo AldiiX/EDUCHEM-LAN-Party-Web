@@ -35,7 +35,8 @@ public static class WSReservations {
             sessionAccount?.ID ?? new Random().Next(10_000, 999_999),
             sessionAccount?.DisplayName ?? "Guest",
             sessionAccount?.AccountType,
-            sessionAccount?.Class
+            sessionAccount?.Class,
+            sessionAccount?.Avatar
         );
 
 

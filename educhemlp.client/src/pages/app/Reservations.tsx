@@ -1,9 +1,9 @@
-import { AppLayout } from "./AppLayout.tsx";
-import React, { useEffect, useRef, useState } from "react";
+import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
+import React, {useEffect, useRef, useState} from "react";
 import "./Reservations.scss";
-import { SpiralUpper } from "../../components/reservation_areas/SpiralUpper.tsx";
-import { SpiralLower } from "../../components/reservation_areas/SpiralLower.tsx";
-import { useStore } from "../../store.tsx";
+import {SpiralUpper} from "../../components/reservation_areas/SpiralUpper.tsx";
+import {SpiralLower} from "../../components/reservation_areas/SpiralLower.tsx";
+import {useStore} from "../../store.tsx";
 import {PieChart} from "../../components/PieChart.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
 import {Skeleton} from "@mui/material";
@@ -235,10 +235,8 @@ export const Reservations = () => {
 
 
     return (
-        <AppLayout className="reservations">
+        <AppLayout className="reservations" titleBarText="Rezervace" titleBarType={AppLayoutTitleBarType.STATIC}>
             <h1>Rezervace</h1>
-
-
 
             <div className="area-selector">
                 {areas.map((area) => (

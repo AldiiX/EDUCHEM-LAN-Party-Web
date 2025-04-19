@@ -6,12 +6,14 @@ public class WSClientUser : WSClient {
     public string? Class { get; set; }
     public User.UserAccountType? AccountType { get; set; }
     public string DisplayName { get; set; }
+    public string? Avatar { get; set; }
     public int ID { get; set; }
 
-    public WSClientUser(WebSocket webSocket, int id, string displayName, User.UserAccountType? accountType, string? @class) : base(webSocket) {
+    public WSClientUser(WebSocket webSocket, int id, string displayName, User.UserAccountType? accountType, string? @class, string? avatar) : base(webSocket) {
         ID = id;
         DisplayName = displayName;
         AccountType = accountType;
         Class = @class;
+        Avatar = avatar;
     }
 }

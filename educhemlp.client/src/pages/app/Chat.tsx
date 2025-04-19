@@ -1,17 +1,80 @@
-import { AppLayout } from "./AppLayout.tsx";
-import { useNavigate } from "react-router-dom";
-import { useStore } from "../../store.tsx";
-import {useEffect, useState} from "react";
+import {AppLayout, AppLayoutLoggedUserSection, AppLayoutTitleBarType} from "./AppLayout.tsx";
+import {useNavigate} from "react-router-dom";
+import {useStore} from "../../store.tsx";
+import React, {useEffect, useRef, useState} from "react";
 import "./Chat.scss";
 import {Avatar} from "../../components/Avatar.tsx";
-import {useRef} from "react";
-import React from "react";
 import {enumIsGreater} from "../../utils.ts";
 import {AccountType} from "../../interfaces.ts";
 import {toast} from "react-toastify";
+import {create} from "zustand/index";
+import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
+
+
+
+
+// component store
+interface ConnectedUser {
+    id: number,
+    name: string,
+    avatar?: string | null,
+}
+
+interface ChatStore {
+    connectedUsers: ConnectedUser[];
+    setConnectedUsers: (users: ConnectedUser[]) => void;
+}
+
+const useChatStore = create<ChatStore>((set) => ({
+    connectedUsers: [],
+    setConnectedUsers: (users) => set(() => ({ connectedUsers: users })),
+}));
+
+
+
+
+
+
+
+
+
 
 
 const MESSAGE_COOLDOWN_IN_SECONDS = 1;
+
+const ChatTitleBar = () => {
+    const connectedUsers = useChatStore((state) => state.connectedUsers);
+
+    return (
+        <div className="titlebar">
+            <div className="wrapper">
+                <h1>Chat</h1>
+
+                {
+                    connectedUsers.length > 0 ? (
+                        <div className="online-users">
+                            <p>Online uživatelé</p>
+                            <div className="users">
+                                {
+                                    connectedUsers.map((user, index) => {
+                                        return (
+                                            <div className="user" key={index} title={user.name}>
+                                                <Avatar size={"24px"} src={user.avatar} name={user.name} />
+                                                {/*<span>{user.name}</span>*/}
+                                            </div>
+                                        )
+                                    })
+                                }
+                            </div>
+                        </div>
+                    ) : null
+                }
+
+                <AppLayoutLoggedUserSection />
+            </div>
+        </div>
+    );
+}
 
 export const Chat = () => {
     const navigate = useNavigate();
@@ -19,6 +82,7 @@ export const Chat = () => {
     const { userAuthed, setUserAuthed } = useStore();
     const [messages, setMessages] = useState<any[]>([]);
     const [socketLoading, setSocketLoading] = useState(true);
+    const [socketDisconnected, setSocketDisconnected] = useState(false);
     const [moreMessagesLoading, setMoreMessagesLoading] = useState<boolean>(false);
     const [noMoreMessagesToFetch, setNoMoreMessagesToFetch] = useState<boolean>(false);
     const messagesRef = useRef<any[]>([]);
@@ -27,6 +91,7 @@ export const Chat = () => {
     let lastRenderedDate = "";
     const firstMessageRender = useRef<boolean>(true);
     const lastSendTimeRef = useRef<number>(0);
+    const setConnectedUsers = useChatStore((state) => state.setConnectedUsers);
 
 
 
@@ -78,18 +143,19 @@ export const Chat = () => {
         }
     }
 
-
-
-    // pri nacteni komponenty
-    useEffect(() => {
+    function connectToWebSocket() {
         const ws = new WebSocket(
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/chat`
         );
 
         wsRef.current = ws;
 
-        // kdyz prijdou novy zpravy ze socketu
-        ws.onmessage = (e) => {
+        ws.onopen = () => {
+            setSocketDisconnected(false);
+            setSocketLoading(false);
+        }
+
+        ws.onmessage = (e) => { // kdyz prijdou novy zpravy ze socketu
             const data = JSON.parse(e.data);
             const action = data.action;
 
@@ -151,10 +217,25 @@ export const Chat = () => {
                 setNoMoreMessagesToFetch(true);
                 setMoreMessagesLoading(false);
             }
+
+            else if (action === "updateConnectedUsers") {
+                setConnectedUsers(data.users as ConnectedUser[]);
+            }
         };
 
         ws.onerror = () => toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
-        ws.onclose = () => {};
+
+        ws.onclose = () => {
+            setSocketDisconnected(true);
+            setConnectedUsers([]);
+        };
+    }
+
+
+
+    // pri nacteni komponenty
+    useEffect(() => {
+        connectToWebSocket();
 
         const checkAndAddScrollListener = () => {
             const scrollContainer = document.querySelector("body #app .right");
@@ -162,14 +243,13 @@ export const Chat = () => {
                 setTimeout(checkAndAddScrollListener, 100); // retry za 100ms
             } else {
                 scrollContainer.addEventListener("scroll", handleScroll);
-                console.log(scrollContainer as HTMLElement);
             }
         };
 
         checkAndAddScrollListener();
 
         return () => {
-            ws.close();
+            wsRef.current?.close();
 
             const scrollContainer = document.querySelector("body #app .right");
             if (scrollContainer) {
@@ -211,11 +291,21 @@ export const Chat = () => {
 
 
     return (
-        <AppLayout>
-            <h1>Chat</h1>
+        <AppLayout className="page-chat" customTitleBar={<ChatTitleBar />} titleBarType={AppLayoutTitleBarType.CUSTOM}>
             <div className="chat-parent">
                 {
-                    !socketLoading ? (
+                    socketDisconnected ? (
+                        <div className="loading">
+                            {/*<div className="loader"></div>*/}
+                            <span>Chat odpojen, obnov stránku (F5).</span>
+                            <ButtonPrimary onClick={() => {
+                                // znovupripojeni na socket
+                                setSocketLoading(true);
+                                setSocketDisconnected(false);
+                                connectToWebSocket();
+                            }} text="Obnovit" />
+                        </div>
+                    ): !socketLoading ? (
                         <div className="messages">
                             {
                                 moreMessagesLoading ? (

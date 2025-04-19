@@ -6,7 +6,7 @@ const AVATAR_ENABLED: boolean = true;
 type AvatarProps = {
     size?: string,
     name: string,
-    src?: string,
+    src?: string | null,
     className?: string,
     backgroundColor?: string,
     onClick?: () => void,

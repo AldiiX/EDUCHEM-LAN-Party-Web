@@ -14,7 +14,21 @@ a {
     background-color: var(--background-bg);
     overflow: hidden;
 
+    &:is(.applayout-titlebar-type-sticky) {
+        >.right {
+            >.content-wrapper {
+                padding: 0 48px 48px 48px;
+            }
+        }
+    }
 
+    &:is(.applayout-titlebar-type-static) {
+        >.right {
+            >.content-wrapper {
+                padding: 48px;
+            }
+        }
+    }
 
     >.left {
         display: flex;
@@ -219,19 +233,31 @@ a {
 
     >.right {
         position: relative;
-        flex: 1;
-        padding: 48px;
-        display: flex;
-        flex-direction: column;
         overflow-y: auto;
         overflow-x: hidden;
+        flex: 1;
 
-        >.loggeduser {
-            position: absolute;
-            top: 32px;
-            right: 48px;
-            z-index: 3;
+        >.titlebar {
+            width: 100%;
+            position: sticky;
+            display: flex;
+            align-items: center;
+            top: 0;
+            z-index: 1;
+            background-color: var(--background-bg);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+            padding: 24px 48px;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--applayout-right-titlebar-border-color);
 
+            >.wrapper {
+                align-items: center;
+            }
+        }
+
+        .loggeduser {
+            position: relative;
+            width: fit-content;
 
             >a {
                 display: flex;
@@ -302,6 +328,10 @@ a {
                 }
             }
         }
+
+        >.content-wrapper {
+            padding: 0 48px 48px 48px;
+        }
     }
 }
 
@@ -310,6 +340,22 @@ a {
     #app {
         height: 100dvh;
         flex-direction: column-reverse;
+
+        &:is(.applayout-titlebar-type-sticky) {
+            >.right {
+                >.content-wrapper {
+                    padding: 0 24px 24px 24px;
+                }
+            }
+        }
+
+        &:is(.applayout-titlebar-type-static) {
+            >.right {
+                >.content-wrapper {
+                    padding: 24px;
+                }
+            }
+        }
 
         >.left-mobile {
             display: flex;
@@ -320,10 +366,18 @@ a {
         }
 
         >.right {
-            padding: 24px;
+            padding: 0;
             overflow: auto;
 
-            >.loggeduser {
+            .content-wrapper {
+                padding: 24px;
+            }
+
+            >.titlebar {
+                padding: 24px;
+            }
+
+            .loggeduser {
                 right: 24px;
 
                 *:not(.button-primary) {

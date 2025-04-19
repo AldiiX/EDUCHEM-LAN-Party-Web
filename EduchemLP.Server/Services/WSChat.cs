@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
 using MySql.Data.MySqlClient;
@@ -15,6 +16,7 @@ namespace EduchemLP.Server.Services;
 
 
 public static class WSChat {
+    private static readonly JsonSerializerOptions JSON_OPTIONS = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, TypeInfoResolver = new DefaultJsonTypeInfoResolver() };
     private static readonly List<Client> ConnectedUsers = [];
     //private static Timer? statusTimer;
 
@@ -31,14 +33,28 @@ public static class WSChat {
             sessionAccount.ID,
             sessionAccount.DisplayName,
             sessionAccount.AccountType,
-            sessionAccount.Class
+            sessionAccount.Class,
+            sessionAccount.Avatar
         );
+
+
+
+        // zjisteni duplikatu
+        lock (ConnectedUsers) {
+            var list = ConnectedUsers.ToList();
+
+            foreach (var connectedClient in list.Where(connectedClient => connectedClient.ID == client.ID)) {
+                connectedClient.Disconnect();
+                ConnectedUsers.Remove(connectedClient);
+            }
+        }
 
 
 
 
         lock(ConnectedUsers) ConnectedUsers.Add(client);
         client.SendInicialChat().Wait();
+        SendConnectedUsersStatus().Wait();
 
 
 
@@ -80,7 +96,7 @@ public static class WSChat {
                     var messageJsonString = savedMessage.ToString();
 
                     lock (ConnectedUsers) foreach (var connectedClient in ConnectedUsers) {
-                        connectedClient.BroadcastMessageAsync(messageJsonString).Wait();
+                        connectedClient.BroadcastAsync(messageJsonString).Wait();
                     }
                 } break;
 
@@ -97,19 +113,10 @@ public static class WSChat {
 
         // pri ukonceni socketu
         lock (ConnectedUsers) ConnectedUsers.Remove(client);
+        _ = SendConnectedUsersStatus();
     }
     
 
-    //metodiky 
-    private static async Task BroadcastMessageAsync(this Client client, string message) {
-        if (client.WebSocket is not { State: WebSocketState.Open }) return;
-
-
-        var buffer = Encoding.UTF8.GetBytes(message);
-        var tasks = new List<Task>();
-
-        client.WebSocket?.SendAsync(new ArraySegment<byte>(buffer, 0, buffer.Length), WebSocketMessageType.Text, true, CancellationToken.None);
-    }
     
     //logisticky metody
     private static async Task<bool> SendInicialChat(this Client client) {
@@ -150,7 +157,7 @@ public static class WSChat {
             messages.Add(message);
         }
 
-        await client.BroadcastMessageAsync(new JsonObject {
+        await client.BroadcastAsync(new JsonObject {
             ["action"] = "sendMessages",
             ["messages"] = messages
         }.ToString());
@@ -287,7 +294,7 @@ public static class WSChat {
 
         // pokud neni co poslat (konec zprav), posle se info ze je konec zprav
         if (messages.Count == 0) {
-            await client.BroadcastMessageAsync(new JsonObject {
+            await client.BroadcastAsync(new JsonObject {
                 ["action"] = "noMoreMessagesToFetch",
             }.ToString());
 
@@ -295,11 +302,31 @@ public static class WSChat {
         }
 
         // jinak se poslou zpravy
-        await client.BroadcastMessageAsync(new JsonObject {
+        await client.BroadcastAsync(new JsonObject {
             ["action"] = "sendMessages",
             ["messages"] = messages,
             ["isLoadMoreAction"] = true,
         }.ToString());
+    }
+
+    private static async Task SendConnectedUsersStatus() {
+        lock (ConnectedUsers) {
+            var users = ConnectedUsers.Select(client => new {
+                id = client.ID,
+                name = client.DisplayName,
+                avatar = client.Avatar
+            }).ToList();
+
+            var payload = new {
+                action = "updateConnectedUsers",
+                users
+            };
+
+            var json = JsonSerializer.Serialize(payload, JSON_OPTIONS);
+
+            foreach (var client in ConnectedUsers)
+                client.BroadcastAsync(json).Wait();
+        }
     }
 
     /*static WSChat() {

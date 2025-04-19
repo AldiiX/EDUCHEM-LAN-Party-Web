@@ -1,15 +1,71 @@
 import {Link, useLocation} from "react-router-dom";
 import "./AppLayout.scss";
-import {CSSProperties, useEffect, useState} from "react";
+import React, {CSSProperties, useEffect, useState} from "react";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
-import {logout, toggleWebTheme} from "../../utils.ts";
 import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
-import {LoggedUser} from "../../interfaces.ts";
-import {AppMobileMenuDiv} from "../../components/AppMobileMenuDiv.tsx";
 import {AppMenu} from "../../components/AppMenu.tsx";
+import {logout, toggleWebTheme} from "../../utils.ts";
 
-export const AppLayout = ({ children, className }: { children: React.ReactNode, className?: string }) => {
+
+export enum AppLayoutTitleBarType {
+    STATIC = "applayout-titlebar-type-static",
+    STICKY = "applayout-titlebar-type-sticky",
+    CUSTOM = "applayout-titlebar-type-custom"
+}
+
+
+export const AppLayoutLoggedUserSection = ({ style }: { style?: CSSProperties}) => {
+    const loggedUser = useStore((state) => state.loggedUser);
+    const userAuthed = useStore((state) => state.userAuthed);
+    const setLoggedUser = useStore((state) => state.setLoggedUser);
+
+    if (!userAuthed) return <></>;
+
+    const normalizeText = (text: string) => {
+        return text[0].toUpperCase() + text.slice(1).toLowerCase();
+    }
+
+    if(loggedUser) return (
+        <div className="loggeduser" style={style}>
+            <Link to="/app/account">
+                <div className="texts">
+                    <p>{ loggedUser?.accountType === "STUDENT" ? "Přihlášen jako" : normalizeText(loggedUser?.accountType) }</p>
+                    <h2>{ loggedUser?.displayName }</h2>
+                </div>
+
+                <Avatar size="48px" src={loggedUser?.avatar} name={loggedUser?.displayName}  />
+            </Link>
+
+            <div className={"popover"}>
+                <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
+                <p onClick={ () => logout(setLoggedUser)}>Odhlásit se</p>
+            </div>
+        </div>
+    )
+
+    if(!loggedUser) return (
+        <div className="loggeduser" style={style}>
+            <Link to="/login">
+                <ButtonPrimary text="Přihlásit se" />
+            </Link>
+        </div>
+    )
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+export const AppLayout = ({ children, className, customTitleBar, titleBarType = AppLayoutTitleBarType.STATIC, titleBarText, mainContentPadding }: { children: React.ReactNode, className?: string, titleBarText?: string, titleBarType?: AppLayoutTitleBarType, customTitleBar?: React.ReactNode | null, mainContentPadding?: string }) => {
     const location = useLocation();
     const [currentPage, setCurrentPage] = useState<string>("");
     const { loggedUser, setLoggedUser } = useStore();
@@ -21,19 +77,21 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
     }, [location]);
 
     
-    const normalizeText = (text: string) => {
-        return text[0].toUpperCase() + text.slice(1).toLowerCase();
-    }
+
 
 
     if (!userAuthed) return <></>;
 
 
 
-
     return (
-        <div id="app" className={className} onContextMenu={(e) => e.preventDefault()}>
-            <div className="left">
+        <main
+            id="app"
+            className={className + " " + titleBarType}
+            onContextMenu={(e) => e.preventDefault()}
+            >
+
+            <section className="left">
 
 
                 {/*<h1>Educhem<br/>LAN Party</h1>*/}
@@ -48,9 +106,9 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                     <p>© { new Date().getFullYear() } EDUCHEM LAN Party</p>
                     <p>Vytvořili: <a href="https://stanislavskudrna.cz" target="_blank">Stanislav Škudrna</a>, <a href="https://github.com/WezeAnonymm" target="_blank">Serhii Yavorskyi</a></p>
                 </div>
-            </div>
+            </section>
 
-            <div className="left-mobile">
+            <section className="left-mobile">
                 <div className="menu">
                     <Link to={"/app/announcements"} className={currentPage === "/app/announcements" ? "active" : ""}>
                         <div style={{ maskImage: 'url(/images/icons/bell.svg)' }}></div>
@@ -80,36 +138,31 @@ export const AppLayout = ({ children, className }: { children: React.ReactNode, 
                         )
                     }
                 </div>
-            </div>
+            </section>
 
-            <div className="right">
+            <section className="right">
                 {
-                    loggedUser !== null ? (
-                        <div className="loggeduser">
-                            <Link to="/app/account">
-                                <div className="texts">
-                                    <p>{ loggedUser?.accountType === "STUDENT" ? "Přihlášen jako" : normalizeText(loggedUser?.accountType) }</p>
-                                    <h2>{ loggedUser?.displayName }</h2>
-                                </div>
+                    titleBarType === AppLayoutTitleBarType.STICKY ? (
+                        <div className="titlebar">
+                            {
+                                titleBarText ? (
+                                    <h1>{ titleBarText }</h1>
+                                ) : null
+                            }
 
-                                <Avatar size="48px" src={loggedUser?.avatar} name={loggedUser?.displayName}  />
-                            </Link>
-
-                            <div className={"popover"}>
-                                <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
-                                <p onClick={() => logout(setLoggedUser)}>Odhlásit se</p>
-                            </div>
+                            <AppLayoutLoggedUserSection />
                         </div>
-                    ) : (
-                        <div className="loggeduser">
-                            <div className="changetheme"></div>
-                            <Link to="/login" className={"button-primary"}>Přihlásit se</Link>
-                        </div>
-                    )
+                    ) : titleBarType === AppLayoutTitleBarType.STATIC ? (
+                            <AppLayoutLoggedUserSection style={{ position: "absolute", right: 48, top: 32 }} />
+                    ) : titleBarType === AppLayoutTitleBarType.CUSTOM ? (
+                            customTitleBar
+                    ) : null
                 }
 
-                {children}
-            </div>
-        </div>
+                <div className="content-wrapper" style={{ padding: mainContentPadding }}>
+                    {children}
+                </div>
+            </section>
+        </main>
     )
 }
