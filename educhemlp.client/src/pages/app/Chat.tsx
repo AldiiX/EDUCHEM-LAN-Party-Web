@@ -297,7 +297,7 @@ export const Chat = () => {
                     socketDisconnected ? (
                         <div className="loading">
                             {/*<div className="loader"></div>*/}
-                            <span>Chat odpojen, obnov stránku (F5).</span>
+                            <span style={{ textAlign: "center" }}>Chat odpojen, obnov stránku (F5).</span>
                             <ButtonPrimary onClick={() => {
                                 // znovupripojeni na socket
                                 setSocketLoading(true);

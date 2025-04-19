@@ -266,10 +266,16 @@
 @media (max-width: 768px) {
     .page-chat {
         .titlebar {
+            height: 68.9px;
+
             .wrapper {
                 display: flex;
                 justify-content: space-between;
                 width: 100%;
+
+                >h1 {
+                    font-size: 24px;
+                }
 
                 .online-users {
                     position: relative;
