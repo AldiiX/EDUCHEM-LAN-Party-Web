@@ -113,14 +113,246 @@
             background-color: var(--text-color);
         }
 
-        /*>button {
+        >button {
             padding: 8px;
             border: none;
             border-radius: 10px;
             background-color: var(--accent-color);
-            color: var(--accent-color-text);
-            cursor: pointer;
-        }*/
+        }
+
+        >.loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: grid;
+            gap: 12px;
+
+            >.loader {
+                width: 64px;
+                height: 64px;
+                border: 8px solid var(--background-bg);
+                border-top: 8px solid var(--accent-color);
+                border-radius: 50%;
+                margin: 0 auto;
+                animation: spin 1s ease infinite;
+
+                @keyframes spin {
+                    0% {
+                        transform: rotate(0deg);
+                    }
+                    100% {
+                        transform: rotate(360deg);
+                    }
+                }
+            }
+        }
+
+        >.messages {
+            display: flex;
+            position: relative;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: unset;
+            padding-bottom: calc($input-div-height / 2);
+            flex-grow: 1;
+            min-height: 80vh;
+
+            >.date-divider {
+                text-align: center;
+                margin: 20px 0;
+                font-size: 14px;
+                color: var(--text-color);
+                position: relative;
+                span {
+                    background-color: var(--background-bg);
+                    padding: 0 10px;
+                }
+            }
+
+            >.wrapped-message {
+                width: 100%;
+                display: flex;
+                &:is(.own-message){
+                    flex-direction: row-reverse;
+                    
+                }
+                &:hover {
+                    >.chat-message{
+                        background-color: var(--element-bg-colored) !important;
+                        &:is(.own-message) {
+                            background-color: var(--accent-color-darker) !important;
+                        }
+                    }
+                    >.buttons{
+                        visibility: visible;
+                    }
+                }
+                >.buttons{
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    visibility: hidden;
+                }
+                .css-3oglbe-JoyIconButton-root{
+                    border: none;
+                    &:hover {
+                        background-color: var(--background-bg);
+                    }
+                }
+                >.chat-message {
+                    width: fit-content;
+                    max-width: 60%;
+                    padding: 12px;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 8px;
+                    box-shadow: 0 0 6px rgba(0, 0, 0, 0.025);
+    
+                    >.avatar {
+    
+                    }
+    
+                    >.texts {
+                        >.name-and-date {
+                            display: flex;
+                            justify-content: space-between;
+                            gap: 0 32px;
+                            align-items: start;
+                            flex-wrap: wrap;
+    
+                            >.msg-time {
+                                font-size: 14px;
+                                text-align: right;
+                                display: block;
+                            }
+    
+    
+                            h1 {
+                                font-size: 16px;
+                                align-items: center;
+                                display: flex;
+                                flex-wrap: wrap;
+                                gap: 0 4px;
+    
+                                >.role {
+                                    font-size: 14px;
+                                    color: var(--accent-color);
+                                    font-weight: 400;
+                                }
+    
+                                >.class {
+                                    font-size: 14px;
+                                    color: var(--text-color-3);
+                                    font-weight: 400;
+                                }
+                            }
+                        }
+                    }
+    
+    
+    
+                    &:is(.own-message) {
+                        align-self: flex-end;
+                        background-color: var(--accent-color);
+                        color: var(--accent-color-text);
+                        margin-left: auto;
+                        .msg-time {
+                            position: relative;
+                            display: block;
+                            color: var(--accent-color-text);
+                            font-size: 14px;
+                            opacity: 0.25;
+                            margin-top: 4px;
+                            text-align: right;
+                        }
+    
+                        p, span {
+                            color: var(--accent-color-text);
+                        }
+                    }
+    
+                    &.other-message {
+                        align-self: flex-start;
+                        background-color: var(--element-bg);
+                        color: black;
+    
+                        .name-and-date {
+                            >.msg-time {
+                                color: var(--text-color-3);
+                            }
+                        }
+    
+                        article {
+                            color: var(--text-color-darker);
+                            padding: 4px 0 0 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .chat-input {
+        position: fixed;
+        bottom: 0;
+        height: $input-div-height;
+        width: calc(100vw - 361px - 48px*2);
+        background-color: var(--background-bg);
+
+
+        >.inputdiv {
+            display: flex;
+            align-items: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+
+            >input {
+                width: 100%;
+                padding: 12px;
+                padding-right: 40px;
+                border-radius: 8px;
+                box-shadow: 0 0 6px rgba(0, 0, 0, 0.025);
+                background-color: var(--element-bg);
+                color: var(--text-color);
+                height: 48px;
+                border: 2px solid transparent;
+
+                &:focus {
+                    outline: none;
+                    border-color: var(--accent-color);
+                }
+            }
+
+            >.sent-message-button {
+                position: absolute; // potrebuju radu jestli jsem to udelal spravne
+                right: 0px;
+                width: 72px;
+                height: 72px;
+                padding: 0;
+                border: none;
+                mask-repeat: no-repeat;
+                mask-size: 30%;
+                mask-position: center;
+                mask-image: url("../../../public/images/icons/sent_icon.svg");
+                cursor: pointer;
+                background-color: var(--text-color);
+            }
+
+            >button {
+                padding: 8px;
+                border: none;
+                border-radius: 10px;
+                background-color: var(--accent-color);
+                color: var(--accent-color-text);
+                cursor: pointer;
+            }
+        }
     }
 }
 

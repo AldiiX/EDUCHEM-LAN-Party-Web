@@ -4,8 +4,81 @@ import { useStore } from "../../store.tsx";
 import {useEffect, useState} from "react";
 import "./Chat.scss";
 import {Avatar} from "../../components/Avatar.tsx";
-import {useRef} from "react";
-import React from "react";
+import {enumIsGreater} from "../../utils.ts";
+import {AccountType} from "../../interfaces.ts";
+import {toast} from "react-toastify";
+import {create} from "zustand/index";
+import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
+import MenuPopover from "../../components/MenuPopover.tsx";
+
+enum ChatSocketState {
+    LOADING, CONNECTED, DISCONNECTED
+}
+
+
+// component store
+interface ConnectedUser {
+    id: number,
+    name: string,
+    avatar?: string | null,
+}
+
+interface ChatStore {
+    connectedUsers: ConnectedUser[];
+    setConnectedUsers: (users: ConnectedUser[]) => void;
+}
+
+const useChatStore = create<ChatStore>((set) => ({
+    connectedUsers: [],
+    setConnectedUsers: (users) => set(() => ({ connectedUsers: users })),
+}));
+
+
+
+
+
+
+
+
+
+
+
+const MESSAGE_COOLDOWN_IN_SECONDS = 1;
+
+const ChatTitleBar = () => {
+    const connectedUsers = useChatStore((state) => state.connectedUsers);
+
+    return (
+        <div className="titlebar">
+            <div className="wrapper">
+                <h1>Chat</h1>
+
+                {
+                    connectedUsers.length > 0 ? (
+                        <div className="online-users">
+                            <p>Online uživatelé</p>
+                            <div className="users">
+                                {
+                                    connectedUsers.map((user, index) => {
+                                        return (
+                                            <div className="user" key={index} title={user.name}>
+                                                <Avatar size={"24px"} src={user.avatar} name={user.name} />
+                                                {/*<span>{user.name}</span>*/}
+                                            </div>
+                                        )
+                                    })
+                                }
+                            </div>
+                        </div>
+                    ) : null
+                }
+
+                <AppLayoutLoggedUserSection />
+            </div>
+        </div>
+    );
+}
+
 export const Chat = () => {
     const navigate = useNavigate();
     const { loggedUser } = useStore();
@@ -137,11 +210,59 @@ export const Chat = () => {
                                                     <article>{ message.message }</article>
                                                     <span className="message-meta">{time}</span>
                                                 </div>
-                                            </>
-                                        ) : (
-                                            <div className="texts">
-                                                <p>{message.message}</p>
-                                                <span className="message-meta">{time}</span>
+                                            )}
+                                            <div className={`wrapped-message ${isOwn ? "own-message" : "other-message"}`}>
+                                                <div className={`chat-message ${isOwn ? "own-message" : "other-message"}`}>
+                                                    {!isOwn ? (
+                                                        <>
+                                                            <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
+                                                            <div className="texts">
+                                                                <div className="name-and-date">
+                                                                    <h1>
+                                                                        {message.author.name}
+    
+                                                                        { message.author.class && (
+                                                                            <span className="class">
+                                                                        &nbsp;• {message.author.class}
+                                                                    </span>
+                                                                        )}
+    
+                                                                        {
+                                                                            enumIsGreater(message.author.accountType, AccountType, AccountType.STUDENT) && (
+                                                                                <span className="role">&lt;{ accountTypeTranslate(message.author.accountType) }&gt;</span>
+                                                                            )
+                                                                        }
+                                                                    </h1>
+                                                                    <span className="msg-time">{time}</span>
+                                                                </div>
+                                                                <article>{ message.message }</article>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="texts">
+                                                            <p>{message.message}</p>
+                                                            <span className="msg-time">{time}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className={"buttons"}>
+                                                    <MenuPopover>
+                                                        <div className={"reactions"}>
+                                                            
+                                                        </div>
+                                                        <div className={"reply"}>
+                                                            
+                                                        </div>
+                                                        <div className={"more"}>
+                                                            <div className={"copy"}>
+                                                                
+                                                            </div>
+                                                            <div className={"delete"}>
+                                                                
+                                                            </div>
+                                                        </div>
+                                                    </MenuPopover>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
