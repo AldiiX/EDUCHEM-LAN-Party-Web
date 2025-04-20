@@ -8,6 +8,8 @@ import {useStore} from "./store.tsx";
 import {Map} from "./pages/app/Map.tsx";
 import {AppMobileMenuDiv} from "./components/AppMobileMenuDiv.tsx";
 import { ToastContainer } from 'react-toastify';
+import {ErrorView as AppErrorView} from "./pages/app/ErrorView.tsx";
+import {ErrorView} from "./pages/ErrorView.tsx";
 
 const Home = lazy(() => import('./pages/Home.tsx'));
 const Login = lazy(() => import('./pages/Login.tsx'));
@@ -124,6 +126,8 @@ const App = () => {
                     <Route path="/app/forum" element={<Forum />} />
                     <Route path="/app/map" element={<Map />} />
                     <Route path="/app/account" element={<Account />} />
+                    <Route path="/app/*" element={<AppErrorView />} />
+                    <Route path="*" element={<ErrorView />} />
                 </Routes>
             </Router>
         </>

@@ -1,0 +1,96 @@
+.errordiv {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    >.error-nadpis {
+        display: flex;
+        gap: 64px;
+        user-select: none;
+        justify-content: center;
+
+        h1 {
+            color: var(--accent-color);
+            font-size: 256px;
+            font-family: leaguespartan, gabarito, sans-serif;
+        }
+
+        .logo {
+            width: 200px;
+            aspect-ratio: 1/1;
+            mask: url("../../public/images/logo/logo.svg");
+            mask-repeat: no-repeat;
+            mask-size: contain;
+            mask-position: center;
+            background-color: var(--accent-color);
+            animation: sdkfodisfofkjfdij 3s ease-in-out infinite;
+
+            // floating animation
+            @keyframes sdkfodisfofkjfdij {
+                0% {
+                    transform: translateY(0);
+                }
+                50% {
+                    transform: translateY(-20px);
+                }
+                100% {
+                    transform: translateY(0);
+                }
+            }
+        }
+    }
+
+    h2,p {
+        color: var(--text-color);
+        font-family: gabarito, sans-serif;
+        margin: 0;
+        text-align: center;
+    }
+
+    h2 {
+        font-size: 32px;
+    }
+
+    p {
+        font-size: 16px;
+        margin-top: 8px;
+        margin-bottom: 24px;
+    }
+
+    a {
+        display: block;
+        text-decoration: none;
+        width: fit-content;
+        margin: 0 auto;
+
+        button {
+            padding: 12px 48px;
+        }
+    }
+}
+
+
+@media (max-width: 768px) {
+    .errordiv {
+        >.error-nadpis {
+            gap: 32px;
+
+            h1 {
+                font-size: 96px;
+            }
+
+            .logo {
+                width: 72px;
+            }
+        }
+
+        h2 {
+            font-size: 24px;
+        }
+
+        p {
+            font-size: 14px;
+        }
+    }
+}
