@@ -264,7 +264,7 @@ public static class WSReservations {
                 ["room"] = reader.GetStringOrNull("room_id") != null ? new JsonObject() {
                     ["id"] = reader.GetString("room_id"),
                     ["label"] = reader.GetStringOrNull("room_label") ?? reader.GetString("room_id"),
-                    ["limit"] = reader.GetValueOrNull<int>("room_limit"),
+                    ["limitOfSeats"] = reader.GetValueOrNull<int>("room_limit"),
                     ["available"] = reader.GetValueOrNull<bool>("room_available"),
                     ["image"] = reader.GetStringOrNull("room_image"),
                 } : null,

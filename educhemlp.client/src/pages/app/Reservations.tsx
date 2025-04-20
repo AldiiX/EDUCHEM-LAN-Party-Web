@@ -12,19 +12,245 @@ import {ButtonSecondary} from "../../components/buttons/ButtonSecondary.tsx";
 import {Link} from "react-router-dom";
 import MoveableMap from "../../components/MoveableMap.tsx";
 import {toast} from "react-toastify";
+import { create } from "zustand";
 
 
+
+
+// global store
+const useReservationsStore = create((set: any) => ({
+    selectedReservation: null as SelectedReservation | null,
+    setSelectedReservation: (reservation: SelectedReservation | null) => set({ selectedReservation: reservation }),
+
+    socket: null as WebSocket | null,
+    setSocket: (socket: WebSocket | null) => set({ socket: socket }),
+}));
+
+
+
+
+// interni datovy typy / interface
 enum ReservationSocketStatus {
     DEFAULT, // pred prvnim pripojeni (pri prvnim renderu)
     CONNECTED,
     DISCONNECTED,
 }
 
+interface Computer {
+    id: string,
+    image: string,
+    isTeachersPC: boolean,
+    available?: boolean | null,
+}
 
-// TODO: refaktorovat líp do subkomponentů, udelat global store, a napr. selectedResevation udelat jako komponentu
+interface Room {
+    id: string,
+    label: string,
+    image: string,
+    limitOfSeats: number,
+    reservedSpaces?: number | null,
+    available?: boolean | null,
+}
+
+interface Reservation {
+    id: string,
+    computer?: Computer | null,
+    room?: Room | null,
+    user: {
+        id: number,
+        displayName: string,
+        class: string,
+        avatar: string,
+    } | "unknown", // kdyz uzivatel neni prihlasen, dropne to "unknown"
+    createdAt: Date,
+    updatedAt: Date,
+}
+
+interface SelectedReservation extends Room, Reservation {
+    reservations: Reservation[],
+    type?: string | null,
+    element: HTMLElement,
+}
 
 
 
+
+
+
+
+
+// popup s aktualne zobrazenou rezervaci
+const SelectedReservation = () => {
+    const loggedUser = useStore((state) => state.loggedUser);
+    const selectedReservation = useReservationsStore((state) => state.selectedReservation);
+    const setSelectedReservation = useReservationsStore((state) => state.setSelectedReservation);
+    const socket: WebSocket | null = useReservationsStore((state) => state.socket);
+
+    const reserve = async (room: string | null, computer: string | null) => {
+        if(!socket) {
+            toast.error("Rezervace není dostupná, zkuste to prosím později.");
+            return;
+        }
+
+        socket.send(JSON.stringify({
+            action: "reserve",
+            room: room,
+            computer: computer,
+        }));
+    }
+
+    const deleteReservation = async () => {
+        if(!socket) return;
+
+        socket.send(JSON.stringify({ action: "deleteReservation" }));
+    }
+
+    if(!selectedReservation) return null;
+
+    return (
+        <div className="reservation-popover">
+            <div className="closebutton" onClick={() => setSelectedReservation(null) }></div>
+
+            {selectedReservation?.image ? (
+                <div
+                    className="top"
+                    style={{
+                        backgroundImage: `url(/images/room_images/${selectedReservation?.image})`,
+                    }}
+                ></div>
+            ) : null}
+
+            <div className="bottom">
+                <div className="first">
+                    <h1>{selectedReservation?.label ?? selectedReservation?.id}</h1>
+                    <p className="status"></p>
+                </div>
+
+                {/* prostřední info */}
+                {selectedReservation?.type === "computer" ? (
+                    selectedReservation?.reservations.length !== 0 ? (
+                        loggedUser !== null && selectedReservation?.reservations?.[0]?.user !== "unknown" ? (
+                            <div className="reservedby">
+                                <div className="nameandavatar">
+                                    <Avatar size="24px" src={selectedReservation?.reservations?.[0]?.user?.avatar} name={selectedReservation?.reservations?.[0]?.user?.displayName}/>
+                                    <p>{selectedReservation.reservations[0]?.user?.displayName}</p>
+                                </div>
+                                <p className="class">{selectedReservation.reservations[0]?.user?.class}</p>
+                            </div>
+                        ) : (
+                            <div className="reservedby">
+                                <p>Obsazeno</p>
+                            </div>
+                        )
+                    ) : null
+                ) : (
+                    <>
+                        <div className="status">
+                            <h2>Rezervace</h2>
+                            <p>
+                                {selectedReservation.reservations.length} /{" "}
+                                {selectedReservation.limitOfSeats}
+                            </p>
+                        </div>
+
+                        {loggedUser !== null ? (
+                            <div className="reservations-parent">
+                                {selectedReservation.reservations.map((reservation: any, index: number) => {
+                                    return (
+                                        <div
+                                            key={index}
+                                            className={
+                                                "reservation" +
+                                                (reservation.user.id === loggedUser?.id ? " you" : "")
+                                            }
+                                        >
+                                            <Avatar
+                                                size="24px"
+                                                src={reservation.user?.avatar}
+                                                name={reservation?.user?.displayName}
+                                            />
+                                            <div className="texts">
+                                                <p className="name">
+                                                    {reservation.user.displayName}{" "}
+                                                    <span>{reservation.user.class}</span>
+                                                </p>
+                                                {/* <p className="date">
+                                                                      {new Date(reservation.createdAt).toLocaleString("cs-CZ")}
+                                                                    </p> */}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            selectedReservation.reservations.length < selectedReservation.limitOfSeats ? (
+                                <>
+                                    <div className="divider"></div>
+                                    <p>Pro rezervování <Link to="/login" style={{ color: "var(--accent-color)"}}>se přihlaš</Link>.</p>
+                                </>
+                            ) : null
+                        )}
+                    </>
+                )}
+
+                {/* Tlačítka */}
+                {loggedUser !== null ? (
+                    selectedReservation?.type === "computer" ? (
+                        selectedReservation?.reservations?.[0]?.user !== "unknown" && selectedReservation?.reservations?.[0]?.user?.id === loggedUser?.id ? (
+                            <>
+                                <div className="divider"></div>
+                                <div className="buttons">
+                                    <ButtonSecondary text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation()} />
+                                </div>
+                            </>
+                        ) : selectedReservation?.reservations.length === 0 ? (
+                            <>
+                                <div className="divider"></div>
+                                <div className="buttons">
+                                    <ButtonPrimary text="Rezervovat" icon="/images/icons/computer.svg" onClick={() => reserve(null, selectedReservation?.id) } />
+                                </div>
+                            </>
+                        ) : null
+                    ) : selectedReservation?.reservations.find((r: any) => r.user?.id === loggedUser?.id) ? (
+                        <>
+                            <div className="divider"></div>
+                            <div className="buttons">
+                                <ButtonSecondary text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation() } />
+                            </div>
+                        </>
+                    ) : selectedReservation?.reservations.length < selectedReservation?.limitOfSeats ? (
+                        <>
+                            <div className="divider"></div>
+                            <div className="buttons">
+                                <ButtonPrimary text="Rezervovat" icon="/images/icons/door.svg" onClick={() => reserve(selectedReservation?.id, null) } />
+                            </div>
+                        </>
+                    ) : null
+                ) : selectedReservation?.reservations.length === 0 ? (
+                    <>
+                        <div className="divider"></div>
+                        <p>Pro rezervování <Link to="/login" style={{ color: "var(--accent-color)"}}>se přihlaš</Link>.</p>
+                    </>
+                ) : null}
+            </div>
+        </div>
+    )
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// main
 export const Reservations = () => {
     const areas = [
         // { id: "havran-kulturni-dum", name: "Kulturní dům Havraň" },
@@ -32,20 +258,20 @@ export const Reservations = () => {
         { id: "spiral-lower", name: "Spirála - Dolní patro" },
     ];
 
-    // počáteční scale a translation se budou počítat dle rozměrů .map kontejneru
     const [selectedArea, setSelectedArea] = useState<string>(areas[0].id);
-    const [computers, setComputers] = useState<any[]>([]);
-    const [reservations, setReservations] = useState<any[]>([]);
-    const [rooms, setRooms] = useState<any[]>([]);
+    const [computers, setComputers] = useState<Computer[]>([]);
+    const [reservations, setReservations] = useState<Reservation[]>([]);
+    const [rooms, setRooms] = useState<Room[]>([]);
     const [roomsCapacity, setRoomsCapacity] = useState<number>(0);
     const [occupiedPercent, setOccupiedPercent] = useState(0);
     const [clientsCount, setClientsCount] = useState<string>("?");
-    const [socket, setSocket] = useState<WebSocket | null>(null);
+    const setSocket = useReservationsStore((state) => state.setSocket);
     const [socketStatus, setSocketStatus] = useState<ReservationSocketStatus>(ReservationSocketStatus.DEFAULT);
     const [statsCollapsed, setStatsCollapsed] = useState<boolean>(false);
     const [enableReservationsStats, setEnableReservationsStats] = useState<boolean>(true);
-    const { loggedUser, setLoggedUser } = useStore();
-    const [ selectedReservation, setSelectedReservation ] = useState<any | null>(null);
+    const loggedUser = useStore((state) => state.loggedUser);
+    const selectedReservation = useReservationsStore((state) => state.selectedReservation);
+    const setSelectedReservation = useReservationsStore((state) => state.setSelectedReservation);
     const mapRef = useRef<HTMLDivElement>(null);
 
 
@@ -74,27 +300,6 @@ export const Reservations = () => {
                 setClientsCount(object.connectedUsers.length.toString());
             } break;
         }
-    }
-
-    const reserve = async (room: string | null, computer: string | null) => {
-        if(!socket) {
-            toast.error("Rezervace není dostupná, zkuste to prosím později.");
-            return;
-        }
-
-        socket.send(JSON.stringify({
-            action: "reserve",
-            room: room,
-            computer: computer,
-        }));
-    }
-
-    const deleteReservation = async () => {
-        if(!socket) {
-            return;
-        }
-
-        socket.send(JSON.stringify({ action: "deleteReservation" }));
     }
 
     const setCirclesStyle = () => {
@@ -126,7 +331,7 @@ export const Reservations = () => {
 
         // rezervace
         for(let reservation of reservations) {
-            reservation = reservation as any[];
+            //reservation = reservation as unknown as Reservation[];
 
             // v pripade ze si uzivatel rezerovoval pc
             if (reservation.computer !== null) {
@@ -135,7 +340,7 @@ export const Reservations = () => {
                 if (!element) continue;
 
                 element.classList.remove("available");
-                if (loggedUser?.id && reservation.user?.id === loggedUser?.id) {
+                if (loggedUser?.id && reservation.user !== "unknown" && reservation.user.id === loggedUser?.id) {
                     element.classList.add("taken-by-you");
                 } else {
                     element.classList.add("unavailable");
@@ -157,7 +362,7 @@ export const Reservations = () => {
 
                 // prirazeni classy
                 element.classList.remove("available", "taken-by-you", "unavailable");
-                if (loggedUser?.id && reservations.filter(r => r.room?.id === room.id && r.user?.id === loggedUser?.id).length > 0) {
+                if (loggedUser?.id && reservations.filter(r => r.room?.id === room.id && r.user !== "unknown" && r.user.id === loggedUser?.id).length > 0) {
                     element.classList.add("taken-by-you");
                 }
 
@@ -196,18 +401,19 @@ export const Reservations = () => {
         }) ?? rooms.find((r: any) => {
             type = "room";
             return r.id === id.replace("ROOM_", "");
-        });
+        }) as Room | Computer | undefined;
 
         if(!r) return;
 
-        r.reservations = reservations.filter((res: any) => {
+        const selectedReservation = r as SelectedReservation;
+        selectedReservation.reservations = reservations.filter((res: any) => {
             return res.computer?.id === r.id || res.room?.id === r.id;
         });
 
-        r.type = type;
-        r.element = element;
+        selectedReservation.type = type;
+        selectedReservation.element = element;
         //console.log(r);
-        setSelectedReservation(r);
+        setSelectedReservation(selectedReservation);
     }
     // endregion
 
@@ -366,136 +572,8 @@ export const Reservations = () => {
                         </div>
                     </div>
 
-                    {
-                        selectedReservation ? (
-                            <div className="reservation-popover">
-                                <div className="closebutton" onClick={() => setSelectedReservation(null) }></div>
-
-                                {selectedReservation?.image ? (
-                                    <div
-                                        className="top"
-                                        style={{
-                                            backgroundImage: `url(/images/room_images/${selectedReservation?.image})`,
-                                        }}
-                                    ></div>
-                                ) : null}
-
-                                <div className="bottom">
-                                    <div className="first">
-                                        <h1>{selectedReservation?.label ?? selectedReservation?.id}</h1>
-                                        <p className="status"></p>
-                                    </div>
-
-                                    {/* prostřední info */}
-                                    {selectedReservation?.type === "computer" ? (
-                                        selectedReservation?.reservations.length !== 0 ? (
-                                            loggedUser !== null ? (
-                                                <div className="reservedby">
-                                                    <div className="nameandavatar">
-                                                        <Avatar size="24px" src={selectedReservation?.reservations?.[0]?.user?.avatar} name={selectedReservation?.reservations?.[0]?.user?.displayName}/>
-                                                        <p>{selectedReservation.reservations[0]?.user?.displayName}</p>
-                                                    </div>
-                                                    <p className="class">{selectedReservation.reservations[0]?.user?.class}</p>
-                                                </div>
-                                            ) : (
-                                                <div className="reservedby">
-                                                    <p>Obsazeno</p>
-                                                </div>
-                                            )
-                                        ) : null
-                                    ) : (
-                                        <>
-                                            <div className="status">
-                                                <h2>Rezervace</h2>
-                                                <p>
-                                                    {selectedReservation.reservations.length} /{" "}
-                                                    {selectedReservation.limitOfSeats}
-                                                </p>
-                                            </div>
-
-                                            {loggedUser !== null ? (
-                                                <div className="reservations-parent">
-                                                    {selectedReservation.reservations.map((reservation: any, index: number) => {
-                                                        return (
-                                                            <div
-                                                                key={index}
-                                                                className={
-                                                                    "reservation" +
-                                                                    (reservation.user.id === loggedUser?.id ? " you" : "")
-                                                                }
-                                                            >
-                                                                <Avatar
-                                                                    size="24px"
-                                                                    src={reservation.user?.avatar}
-                                                                    name={reservation?.user?.displayName}
-                                                                />
-                                                                <div className="texts">
-                                                                    <p className="name">
-                                                                        {reservation.user.displayName}{" "}
-                                                                        <span>{reservation.user.class}</span>
-                                                                    </p>
-                                                                    {/* <p className="date">
-                                                                      {new Date(reservation.createdAt).toLocaleString("cs-CZ")}
-                                                                    </p> */}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            ) : (
-                                                selectedReservation.reservations.length < selectedReservation.limitOfSeats ? (
-                                                    <>
-                                                        <div className="divider"></div>
-                                                        <p>Pro rezervování <Link to="/login" style={{ color: "var(--accent-color)"}}>se přihlaš</Link>.</p>
-                                                    </>
-                                                ) : null
-                                            )}
-                                        </>
-                                    )}
-
-                                    {/* Tlačítka */}
-                                    {loggedUser !== null ? (
-                                        selectedReservation?.type === "computer" ? (
-                                            selectedReservation?.reservations?.[0]?.user?.id === loggedUser?.id ? (
-                                                <>
-                                                    <div className="divider"></div>
-                                                    <div className="buttons">
-                                                        <ButtonSecondary text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation()} />
-                                                    </div>
-                                                </>
-                                            ) : selectedReservation?.reservations.length === 0 ? (
-                                                <>
-                                                    <div className="divider"></div>
-                                                    <div className="buttons">
-                                                        <ButtonPrimary text="Rezervovat" icon="/images/icons/computer.svg" onClick={() => reserve(null, selectedReservation?.id) } />
-                                                    </div>
-                                                </>
-                                            ) : null
-                                        ) : selectedReservation?.reservations.find((r: any) => r.user?.id === loggedUser?.id) ? (
-                                            <>
-                                                <div className="divider"></div>
-                                                <div className="buttons">
-                                                    <ButtonSecondary text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation() } />
-                                                </div>
-                                            </>
-                                        ) : selectedReservation?.reservations.length < selectedReservation?.limitOfSeats ? (
-                                            <>
-                                                <div className="divider"></div>
-                                                <div className="buttons">
-                                                    <ButtonPrimary text="Rezervovat" icon="/images/icons/door.svg" onClick={() => reserve(selectedReservation?.id, null) } />
-                                                </div>
-                                            </>
-                                        ) : null
-                                    ) : selectedReservation?.reservations.length === 0 ? (
-                                        <>
-                                            <div className="divider"></div>
-                                            <p>Pro rezervování <Link to="/login" style={{ color: "var(--accent-color)"}}>se přihlaš</Link>.</p>
-                                        </>
-                                    ) : null}
-                                </div>
-                            </div>
-                        ) : null
-                    }
+                    {/* Popup pri hoveru na nejakou rezervaci */}
+                    <SelectedReservation />
 
                     { /* mapka */ }
                     <MoveableMap displayControls={true}>
@@ -507,6 +585,7 @@ export const Reservations = () => {
                     </MoveableMap>
                 </div>
 
+                { /* prava strana map divu (staty, vsechny rezervace) */ }
                 { enableReservationsStats && (
                     <div className={"stats" + (statsCollapsed ? " collapsed" : "")}>
                         <div className={"collapser" + (statsCollapsed ? " collapsed" : "" )} onClick={() => statsCollapsed ? setStatsCollapsed(false) : setStatsCollapsed(true) }></div>
@@ -551,6 +630,8 @@ export const Reservations = () => {
                                                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                                             }).map((reservation, index) => {
                                                 reservation = reservation as any;
+                                                if(reservation.user === "unknown") return null;
+
                                                 return (
                                                     <div key={index} className={"reservation"}>
                                                         <Avatar size={"40px"} src={reservation.user?.avatar} name={reservation.user?.displayName} />
@@ -570,8 +651,6 @@ export const Reservations = () => {
                                 <p>Pro zobrazení více informací <Link to="/login">se přihlaš</Link>.</p>
                             </div>
                         }
-
-
                     </div>
                 )}
             </div>

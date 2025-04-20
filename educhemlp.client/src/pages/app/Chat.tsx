@@ -183,12 +183,24 @@ export const Chat = () => {
                     requestAnimationFrame(() => {
                         if (!scrollContainer) return;
 
-                        if (wasNearBottom) {
+                        // pokud je to prvni render, tak se scrollne na spodek
+                        if(firstMessageRender.current) {
                             scrollContainer.scrollTo({
                                 top: scrollContainer.scrollHeight,
-                                behavior: firstMessageRender.current ? "instant" : "smooth"
+                                behavior: "instant"
                             });
-                        } else {
+                        }
+
+                        // pokud byl uzivatel blizko spodu, tak se scrollne dolů
+                        else if (wasNearBottom) {
+                            scrollContainer.scrollTo({
+                                top: scrollContainer.scrollHeight,
+                                behavior: "smooth"
+                            });
+                        }
+
+                        // jinak se scrollne na stejnou pozici jako predtim
+                        else {
                             if(data.isLoadMoreAction) scrollContainer.scrollTo({
                                 top: scrollContainer.scrollHeight - prevScrollBottomOffset,
                                 behavior: "instant"
