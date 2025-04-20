@@ -248,6 +248,10 @@ export const Chat = () => {
 
     // pri nacteni komponenty
     useEffect(() => {
+        const body = document.querySelector("body");
+        if(body) body.style.overscrollBehavior = "none";
+
+
         const checkAndAddScrollListener = () => {
             const scrollContainer = document.querySelector("body #app .right");
             if (!scrollContainer) {
@@ -263,9 +267,10 @@ export const Chat = () => {
             wsRef.current?.close();
 
             const scrollContainer = document.querySelector("body #app .right");
-            if (scrollContainer) {
-                scrollContainer.removeEventListener("scroll", handleScroll);
-            }
+            if (scrollContainer) scrollContainer.removeEventListener("scroll", handleScroll);
+
+            const body = document.querySelector("body");
+            if(body) body.style.overscrollBehavior = "auto";
         };
     }, []);
 
