@@ -9,7 +9,7 @@ import {AccountType} from "../../interfaces.ts";
 import {toast} from "react-toastify";
 import {create} from "zustand/index";
 import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
-
+import MenuPopover from "../../components/MenuPopover.tsx";
 
 enum ChatSocketState {
     LOADING, CONNECTED, DISCONNECTED
@@ -362,39 +362,58 @@ export const Chat = () => {
                                                     <span>{formatDateToCzech(message.date)}</span>
                                                 </div>
                                             )}
-
-                                            <div className={`chat-message ${isOwn ? "own-message" : "other-message"}`}>
-                                                {!isOwn ? (
-                                                    <>
-                                                        <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
-                                                        <div className="texts">
-                                                            <div className="name-and-date">
-                                                                <h1>
-                                                                    {message.author.name}
-
-                                                                    { message.author.class && (
-                                                                        <span className="class">
-                                                                    &nbsp;• {message.author.class}
-                                                                </span>
-                                                                    )}
-
-                                                                    {
-                                                                        enumIsGreater(message.author.accountType, AccountType, AccountType.STUDENT) && (
-                                                                            <span className="role">&lt;{ accountTypeTranslate(message.author.accountType) }&gt;</span>
-                                                                        )
-                                                                    }
-                                                                </h1>
-                                                                <span className="msg-time">{time}</span>
+                                            <div className={`wrapped-message ${isOwn ? "own-message" : "other-message"}`}>
+                                                <div className={`chat-message ${isOwn ? "own-message" : "other-message"}`}>
+                                                    {!isOwn ? (
+                                                        <>
+                                                            <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
+                                                            <div className="texts">
+                                                                <div className="name-and-date">
+                                                                    <h1>
+                                                                        {message.author.name}
+    
+                                                                        { message.author.class && (
+                                                                            <span className="class">
+                                                                        &nbsp;• {message.author.class}
+                                                                    </span>
+                                                                        )}
+    
+                                                                        {
+                                                                            enumIsGreater(message.author.accountType, AccountType, AccountType.STUDENT) && (
+                                                                                <span className="role">&lt;{ accountTypeTranslate(message.author.accountType) }&gt;</span>
+                                                                            )
+                                                                        }
+                                                                    </h1>
+                                                                    <span className="msg-time">{time}</span>
+                                                                </div>
+                                                                <article>{ message.message }</article>
                                                             </div>
-                                                            <article>{ message.message }</article>
+                                                        </>
+                                                    ) : (
+                                                        <div className="texts">
+                                                            <p>{message.message}</p>
+                                                            <span className="msg-time">{time}</span>
                                                         </div>
-                                                    </>
-                                                ) : (
-                                                    <div className="texts">
-                                                        <p>{message.message}</p>
-                                                        <span className="msg-time">{time}</span>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
+                                                <div className={"buttons"}>
+                                                    <MenuPopover>
+                                                        <div className={"reactions"}>
+                                                            
+                                                        </div>
+                                                        <div className={"reply"}>
+                                                            
+                                                        </div>
+                                                        <div className={"more"}>
+                                                            <div className={"copy"}>
+                                                                
+                                                            </div>
+                                                            <div className={"delete"}>
+                                                                
+                                                            </div>
+                                                        </div>
+                                                    </MenuPopover>
+                                                </div>
                                             </div>
                                         </React.Fragment>
                                     );
