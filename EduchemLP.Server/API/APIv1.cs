@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Models;
@@ -263,7 +264,7 @@ public class APIv1 : Controller {
         string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
         var accountType = body.TryGetValue("accountType", out var _accountType) ? Enum.TryParse(_accountType?.ToString(), out Classes.Objects.User.UserAccountType _ac) ? _ac : Classes.Objects.User.UserAccountType.STUDENT : Classes.Objects.User.UserAccountType.STUDENT;
-        var gender = body.TryGetValue("accountType", out var _gender) ? Enum.TryParse(_gender?.ToString(), out User.UserGender _g) ? _g : Classes.Objects.User.UserGender.OTHER : Classes.Objects.User.UserGender.OTHER;
+        var gender = body.TryGetValue("gender", out var _gender) ? Enum.TryParse(_gender?.ToString(), out User.UserGender _g) ? _g : Classes.Objects.User.UserGender.OTHER : Classes.Objects.User.UserGender.OTHER;
         email = email == "" ? null : email?.Trim();
         displayName = displayName == "" ? null : displayName?.Trim();
         @class = @class == "" ? null : @class?.Trim();
