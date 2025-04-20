@@ -4,12 +4,13 @@ import {useStore} from "../../store.tsx";
 import React, {useEffect, useRef, useState} from "react";
 import "./Chat.scss";
 import {Avatar} from "../../components/Avatar.tsx";
-import {enumIsGreater} from "../../utils.ts";
+import {enumIsGreater, enumIsGreaterOrEquals} from "../../utils.ts";
 import {AccountType} from "../../interfaces.ts";
 import {toast} from "react-toastify";
 import {create} from "zustand/index";
 import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import MenuPopover from "../../components/MenuPopover.tsx";
+import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 
 enum ChatSocketState {
     LOADING, CONNECTED, DISCONNECTED
@@ -397,20 +398,19 @@ export const Chat = () => {
                                                     )}
                                                 </div>
                                                 <div className={"buttons"}>
-                                                    <MenuPopover>
-                                                        <div className={"reactions"}>
-                                                            
-                                                        </div>
+                                                    <MenuPopover className={isOwn ? "own-message" : ""}>
+                                                        <TextWithIcon text={"Kopírovat"} iconSrc={"/images/icons/copy.svg"}/>
                                                         <div className={"reply"}>
                                                             
                                                         </div>
                                                         <div className={"more"}>
-                                                            <div className={"copy"}>
-                                                                
-                                                            </div>
-                                                            <div className={"delete"}>
-                                                                
-                                                            </div>
+                                                            <TextWithIcon text={"Odpovědět"} iconSrc={"/images/icons/reply.svg"}/>
+
+                                                            {
+                                                               isOwn || enumIsGreaterOrEquals(loggedUser.accountType, AccountType, AccountType.TEACHER) ? (
+                                                                    <TextWithIcon color={"var(--error-color)"}  text={"Smazat"} iconSrc={"/images/icons/trash.svg"}/>
+                                                               ) : null
+                                                            }
                                                         </div>
                                                     </MenuPopover>
                                                 </div>

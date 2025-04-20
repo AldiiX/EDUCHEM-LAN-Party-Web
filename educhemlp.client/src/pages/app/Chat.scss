@@ -113,13 +113,16 @@
             >.wrapped-message {
                 width: 100%;
                 display: flex;
+                
                 &:is(.own-message){
                     flex-direction: row-reverse;
                     
                 }
+                
                 &:hover {
                     >.chat-message{
                         background-color: var(--element-bg-colored) !important;
+                        
                         &:is(.own-message) {
                             background-color: var(--accent-color-darker) !important;
                         }
@@ -128,7 +131,9 @@
                         visibility: visible;
                     }
                 }
+                
                 >.buttons{
+                    
                     display: flex;
                     justify-content: center;
                     align-items: center;
@@ -156,6 +161,7 @@
                     }
     
                     >.texts {
+                        
                         >.name-and-date {
                             display: flex;
                             justify-content: space-between;
@@ -198,7 +204,7 @@
                         align-self: flex-end;
                         background-color: var(--accent-color);
                         color: var(--accent-color-text);
-                        margin-left: auto;
+                        
                         .msg-time {
                             position: relative;
                             display: block;
