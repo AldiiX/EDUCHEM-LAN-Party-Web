@@ -14,7 +14,7 @@ public static class WSReservations {
 
     
     // promenne
-    private static readonly List<Client> ConnectedUsers = [];
+    private static readonly List<Client> ConnectedClients = [];
     private static Timer? statusTimer;
     private static readonly JsonSerializerOptions JSON_OPTIONS = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
@@ -41,19 +41,7 @@ public static class WSReservations {
 
 
 
-        // zjisteni duplikatu
-        lock (ConnectedUsers) {
-            var list = ConnectedUsers.ToList();
-
-            foreach (var connectedClient in list.Where(connectedClient => connectedClient.ID == client.ID)) {
-                connectedClient.Disconnect();
-                ConnectedUsers.Remove(connectedClient);
-            }
-        }
-
-
-
-        lock(ConnectedUsers) ConnectedUsers.Add(client);
+        lock(ConnectedClients) ConnectedClients.Add(client);
         client.SendFullReservationInfoAsync().Wait();
         Status(null!);
 
@@ -107,8 +95,8 @@ public static class WSReservations {
                     command.Parameters.AddWithValue("@computer_id", computer);
 
                     await command.ExecuteNonQueryAsync();
-                    lock (ConnectedUsers) {
-                        foreach (var c in ConnectedUsers) {
+                    lock (ConnectedClients) {
+                        foreach (var c in ConnectedClients) {
                             c.SendFullReservationInfoAsync().Wait();
                         }
                     }
@@ -130,8 +118,8 @@ public static class WSReservations {
                     command.Parameters.AddWithValue("@user_id", sessionAccount?.ID);
 
                     await command.ExecuteNonQueryAsync();
-                    lock (ConnectedUsers) {
-                        foreach (var c in ConnectedUsers) {
+                    lock (ConnectedClients) {
+                        foreach (var c in ConnectedClients) {
                             c.SendFullReservationInfoAsync().Wait();
                         }
                     }
@@ -139,13 +127,17 @@ public static class WSReservations {
                     // lognuti
                     _ = DbLogger.LogAsync(DbLogger.LogType.INFO, $"Uživatel {sessionAccount?.DisplayName} ({sessionAccount?.Email}) zrušil rezervaci.", "reservation");
                 } break;
+
+                case "disconnect": {
+                    await client.DisconnectAsync("Closed by user");
+                } break;
             }
         }
 
 
 
         // pri ukonceni socketu
-        lock (ConnectedUsers) ConnectedUsers.Remove(client);
+        lock (ConnectedClients) ConnectedClients.Remove(client);
         Status(null!);
     }
 
@@ -155,38 +147,38 @@ public static class WSReservations {
 
     // metody
     private static void Status(object state) {
-        lock (ConnectedUsers) {
-            var cu = ConnectedUsers.ToList();
+        lock (ConnectedClients) {
+            var clients = ConnectedClients.ToList();
 
-            foreach (var user in cu) {
+            foreach (var client in clients) {
                 // pokud uzivatel neni pripojen
-                if (user.WebSocket.State != WebSocketState.Open) {
-                    user.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).Wait();
-                    ConnectedUsers.Remove(user);
+                if (client.WebSocket.State != WebSocketState.Open) {
+                    client.WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).Wait();
+                    ConnectedClients.Remove(client);
                 }
 
                 // connectedUsers zasifrovani dat
                 var connectedUsers = new JsonArray();
-                foreach (var client in cu) {
-                    if (user.AccountType == null) {
+
+                foreach (var c in clients.DistinctBy(c => c.ID).ToList()) {
+                    if (c.AccountType == null) {
                         connectedUsers.Add("unknown");
                         continue;
                     }
 
                     connectedUsers.Add(new JsonObject {
-                        ["id"] = client.ID,
-                        ["displayName"] = client.DisplayName,
-                        ["class"] = user.AccountType > User.UserAccountType.STUDENT ? client.Class : null,
+                        ["id"] = c.ID,
+                        ["displayName"] = c.DisplayName,
+                        ["class"] = c.AccountType > User.UserAccountType.STUDENT ? c.Class : null,
                     });
                 }
-
 
                 var message = JsonSerializer.Serialize(new {
                     action = "status",
                     connectedUsers = connectedUsers,
                 }, JsonSerializerOptions.Web);
 
-                BroadcastMessageAsync(user, message).Wait();
+                BroadcastMessageAsync(client, message).Wait();
             }
         }
     }

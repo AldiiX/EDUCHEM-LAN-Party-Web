@@ -1,5 +1,5 @@
 import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
-import React, {useEffect, useRef, useState} from "react";
+import React, {MutableRefObject, Ref, useEffect, useRef, useState} from "react";
 import "./Reservations.scss";
 import {SpiralUpper} from "../../components/reservation_areas/SpiralUpper.tsx";
 import {SpiralLower} from "../../components/reservation_areas/SpiralLower.tsx";
@@ -22,8 +22,7 @@ const useReservationsStore = create((set: any) => ({
     selectedReservation: null as SelectedReservation | null,
     setSelectedReservation: (reservation: SelectedReservation | null) => set({ selectedReservation: reservation }),
 
-    socket: null as WebSocket | null,
-    setSocket: (socket: WebSocket | null) => set({ socket: socket }),
+    socket: { current: null } as MutableRefObject<WebSocket | null>,
 }));
 
 
@@ -84,15 +83,15 @@ const SelectedReservation = () => {
     const loggedUser = useStore((state) => state.loggedUser);
     const selectedReservation = useReservationsStore((state) => state.selectedReservation);
     const setSelectedReservation = useReservationsStore((state) => state.setSelectedReservation);
-    const socket: WebSocket | null = useReservationsStore((state) => state.socket);
+    const socket = useReservationsStore((state) => state.socket);
 
     const reserve = async (room: string | null, computer: string | null) => {
-        if(!socket) {
+        if(!socket.current) {
             toast.error("Rezervace není dostupná, zkuste to prosím později.");
             return;
         }
 
-        socket.send(JSON.stringify({
+        socket.current.send(JSON.stringify({
             action: "reserve",
             room: room,
             computer: computer,
@@ -100,9 +99,9 @@ const SelectedReservation = () => {
     }
 
     const deleteReservation = async () => {
-        if(!socket) return;
+        if(!socket.current) return;
 
-        socket.send(JSON.stringify({ action: "deleteReservation" }));
+        socket.current.send(JSON.stringify({ action: "deleteReservation" }));
     }
 
     if(!selectedReservation) return null;
@@ -265,14 +264,16 @@ export const Reservations = () => {
     const [roomsCapacity, setRoomsCapacity] = useState<number>(0);
     const [occupiedPercent, setOccupiedPercent] = useState(0);
     const [clientsCount, setClientsCount] = useState<string>("?");
-    const setSocket = useReservationsStore((state) => state.setSocket);
+    const socket = useReservationsStore((state) => state.socket);
     const [socketStatus, setSocketStatus] = useState<ReservationSocketStatus>(ReservationSocketStatus.DEFAULT);
     const [statsCollapsed, setStatsCollapsed] = useState<boolean>(false);
     const [enableReservationsStats, setEnableReservationsStats] = useState<boolean>(true);
     const loggedUser = useStore((state) => state.loggedUser);
     const selectedReservation = useReservationsStore((state) => state.selectedReservation);
     const setSelectedReservation = useReservationsStore((state) => state.setSelectedReservation);
+    const userAuthed = useStore((state) => state.userAuthed);
     const mapRef = useRef<HTMLDivElement>(null);
+    const isFirstRender = useRef(true);
 
 
     // region ostatní funkce
@@ -415,15 +416,18 @@ export const Reservations = () => {
         //console.log(r);
         setSelectedReservation(selectedReservation);
     }
-    // endregion
 
+    const connectToSocket = () => {
+        if(socket.current) {
+            socket.current.close();
+            socket.current = null;
+            setSocketStatus(ReservationSocketStatus.DEFAULT);
+        }
 
-
-    // připojení k websocketu
-    useEffect(() => {
         const ws = new WebSocket(
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/reservations`
         );
+
         ws.onopen = () => {
             //console.log("connected");
             setEnableReservationsStats(true);
@@ -439,10 +443,18 @@ export const Reservations = () => {
             unloadAllReservations();
         };
 
-        setSocket(ws);
+        socket.current = ws;
+    }
+    // endregion
+
+
+
+    // připojení k websocketu
+    useEffect(() => {
+        connectToSocket();
 
         return () => {
-            ws.close();
+            socket.current?.close();
             setSocketStatus(ReservationSocketStatus.DEFAULT);
         };
     }, []);
@@ -496,6 +508,24 @@ export const Reservations = () => {
             setSelectedReservation(null);
         }
     }, [reservations])
+
+    // effekt kdyz se zmeni loggeduser
+    useEffect(() => {
+        if(!userAuthed) return;
+
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        //console.log("logged user changed, reconnecting to socket");
+
+        socket.current?.close();
+
+        setTimeout(() => {
+            connectToSocket();
+        }, 750);
+    }, [loggedUser, userAuthed]);
 
 
 

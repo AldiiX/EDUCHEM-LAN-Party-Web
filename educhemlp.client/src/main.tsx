@@ -75,8 +75,9 @@ const Theme = () => {
 }
 
 const App = () => {
-    const { loggedUser, setLoggedUser } = useStore();
-    const { userAuthed, setUserAuthed } = useStore();
+    const setLoggedUser = useStore(state => state.setLoggedUser);
+    const loggedUser = useStore(state => state.loggedUser);
+    const setUserAuthed = useStore(state => state.setUserAuthed);
 
     let theme = getCookie("theme");
     theme ??= window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";
@@ -91,11 +92,13 @@ const App = () => {
                 return;
             }
 
+
             const data = await res.json();
             setLoggedUser(data);
             setUserAuthed(true);
         });
     }, []);
+
 
 
     // TODO: udelat aby theme ToastContaineru se dynamicky menil podle themu 

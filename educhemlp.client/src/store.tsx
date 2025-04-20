@@ -19,7 +19,10 @@ type Store = {
 
 export const useStore = create<Store | any>((set: any) => ({
     loggedUser: null,
-    setLoggedUser: (user: LoggedUser) => set({loggedUser: user}),
+    setLoggedUser: (user: LoggedUser) => set((state: Store) => {
+        if (JSON.stringify(state.loggedUser) === JSON.stringify(user)) return {};
+        return { loggedUser: user };
+    }),
 
     userAuthed: false,
     setUserAuthed: (authed: boolean) => set({userAuthed: authed}),
