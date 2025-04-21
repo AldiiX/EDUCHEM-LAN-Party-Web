@@ -33,7 +33,7 @@ interface User {
     avatar: string,
     class: string,
     accountType: AccountType,
-    gender: AccountGender,
+    gender: AccountGender | null,
     lastUpdated: string,
     lastLoggedIn: string,
 }
@@ -105,7 +105,7 @@ const useAdminStore = create<AdminStore>((set) => ({
     setUsers: (users) => set({users: users}),
 }));
 
-function translateGender(gender: string) {
+function translateGender(gender: string | null | undefined) {
     switch (gender) {
         case "MALE":
             return "Muž";
@@ -383,24 +383,23 @@ const UsersTab = () => {
 
 
                             {
-                                compareEnumValues(AccountType, selectedUser.accountType?.toString(), loggedUser.accountType?.toString()) === -1 ||
-                                enumEquals(loggedUser?.accountType?.toString().toUpperCase(), AccountType, AccountType.SUPERADMIN) ? (
+                                userModalCreationMode ? (
+                                    <div className="edit-delete-buttons-div">
+                                        <button className="button-tertiary" style={{flexGrow: 1}} type="button"
+                                                onClick={() => createUser()}>Vytvořit uživatele
+                                        </button>
+                                        <button className="button-tertiary" type="button" onClick={() => {
+                                            closeModal()
+                                        }}>Zrušit
+                                        </button>
+                                    </div>
+                                ) : compareEnumValues(AccountType, selectedUser.accountType?.toString(), loggedUser.accountType?.toString()) === -1 || enumEquals(loggedUser?.accountType?.toString().toUpperCase(), AccountType, AccountType.SUPERADMIN) ? (
                                     !userModalEditMode ? (
                                         <div className="edit-delete-buttons-div">
                                             <button className="button-tertiary" style={{flexGrow: 1}} type="button"
                                                     onClick={() => setUserModalEditMode(true)}>Upravit
                                             </button>
                                             {/*<button className="button-tertiary" type="button">Smazat</button>*/}
-                                        </div>
-                                    ) : userModalCreationMode ? (
-                                        <div className="edit-delete-buttons-div">
-                                            <button className="button-tertiary" style={{flexGrow: 1}} type="button"
-                                                    onClick={() => createUser()}>Vytvořit uživatele
-                                            </button>
-                                            <button className="button-tertiary" type="button" onClick={() => {
-                                                closeModal()
-                                            }}>Zrušit
-                                            </button>
                                         </div>
                                     ) : (
                                         <div className="edit-delete-buttons-div">
@@ -445,9 +444,9 @@ const UsersTab = () => {
                                     <div className="icon" style={{maskImage: `url(/images/icons/gender.svg)`}}></div>
                                     {
                                         !userModalEditMode ? (
-                                            <p>{translateGender(selectedUser?.gender.toString())}</p>
+                                            <p>{translateGender(selectedUser?.gender?.toString())}</p>
                                         ) : (
-                                            <select name="gender" defaultValue={selectedUser?.gender}>
+                                            <select name="gender" defaultValue={selectedUser?.gender ?? "OTHER"}>
                                                 <option value="MALE">Muž</option>
                                                 <option value="FEMALE">Žena</option>
                                                 <option value="OTHER">Ostatní</option>
@@ -516,12 +515,8 @@ const UsersTab = () => {
                                             />
                                         </div>
                                     </>
-                                ) : null
-                            }
-
-                            {
-                                compareEnumValues(AccountType, selectedUser.accountType?.toString(), loggedUser.accountType?.toString()) === -1 ||
-                                enumEquals(loggedUser?.accountType.toString(), AccountType, AccountType.SUPERADMIN) ? (
+                                ) : (compareEnumValues(AccountType, selectedUser.accountType?.toString(), loggedUser.accountType?.toString()) === -1 ||
+                                    enumEquals(loggedUser?.accountType.toString(), AccountType, AccountType.SUPERADMIN)) ? (
                                     !userModalEditMode ? (
                                         <>
                                             <div className="separator"></div>
@@ -543,13 +538,13 @@ const UsersTab = () => {
                                     <>
                                         <div className="separator"></div>
 
-                                        <p style={{ color: "var(--error-color)"}}>{ selectedUser.name } má vyšší nebo stejnou roli, nelze {enumEquals(selectedUser.gender.toString(), AccountGender, AccountGender.FEMALE) ? "ji" : "ho"} upravit.</p>
+                                        <p style={{ color: "var(--error-color)"}}>{ selectedUser.name } má vyšší nebo stejnou roli, nelze {enumEquals(selectedUser.gender?.toString(), AccountGender, AccountGender.FEMALE) ? "ji" : "ho"} upravit.</p>
                                     </>
                                 ) : (
                                     <>
                                         <div className="separator"></div>
 
-                                        <p style={{ color: "var(--error-color)"}}>Nelze upravit { enumEquals(selectedUser.gender.toString(), AccountGender, AccountGender.FEMALE) ? "sama" : "sám" } sebe. Pro úpravu je třeba kontaktovat administrátora.</p>
+                                        <p style={{ color: "var(--error-color)"}}>Nelze upravit { enumEquals(selectedUser.gender?.toString(), AccountGender, AccountGender.FEMALE) ? "sama" : "sám" } sebe. Pro úpravu je třeba kontaktovat administrátora.</p>
                                     </>
                                 )
                             }
@@ -622,7 +617,7 @@ const UsersTab = () => {
                                     </div>
                                 </td>
                                 <td>{user.email}</td>
-                                <td>{translateGender(user.gender.toString())}</td>
+                                <td>{translateGender(user.gender?.toString())}</td>
                                 <td>{user.class}</td>
                                 <td>{user.accountType}</td>
                                 <td>{new Date(user.lastUpdated).toLocaleString()}</td>
