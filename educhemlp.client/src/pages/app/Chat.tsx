@@ -8,7 +8,8 @@ import {enumIsGreater} from "../../utils.ts";
 import {AccountType} from "../../interfaces.ts";
 import {toast} from "react-toastify";
 import {create} from "zustand/index";
-import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
+import {Button} from "../../components/buttons/Button.tsx";
+import {ButtonType} from "../../components/buttons/ButtonProps.ts";
 
 
 enum ChatSocketState {
@@ -315,7 +316,7 @@ export const Chat = () => {
                     socketState === ChatSocketState.DISCONNECTED ? (
                         <div className="loading">
                             <span style={{ textAlign: "center" }}>Chat odpojen, obnov stránku (F5).</span>
-                            <ButtonPrimary onClick={() => {
+                            <Button type={ButtonType.PRIMARY} onClick={() => {
                                 // znovupripojeni na socket
                                 setSocketState(ChatSocketState.LOADING);
                                 connectToWebSocket();

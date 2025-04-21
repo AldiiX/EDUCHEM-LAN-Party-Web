@@ -3,10 +3,11 @@ import "./AppLayout.scss";
 import React, {CSSProperties, useEffect, useState} from "react";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
-import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import {AppMenu} from "../../components/AppMenu.tsx";
 import {enumEquals, logout, toggleWebTheme} from "../../utils.ts";
 import {AccountGender, AccountType, LoggedUser} from "../../interfaces.ts";
+import {Button} from "../../components/buttons/Button.tsx";
+import {ButtonType} from "../../components/buttons/ButtonProps.ts";
 
 
 export enum AppLayoutTitleBarType {
@@ -74,7 +75,7 @@ export const AppLayoutLoggedUserSection = ({ style }: { style?: CSSProperties}) 
     if(!loggedUser) return (
         <div className="loggeduser" style={style}>
             <Link to="/login">
-                <ButtonPrimary text="Přihlásit se" />
+                <Button type={ButtonType.PRIMARY} text="Přihlásit se" />
             </Link>
         </div>
     )

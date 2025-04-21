@@ -203,6 +203,40 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
     }
 }
 
+.button-tertiary-rich {
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--text-color-darker);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    user-select: none;
+    //font-weight: 600;
+    transition: background-color 0.2s;
+
+    >.icon {
+        background-color: var(--accent-color);
+    }
+
+    &:hover {
+        background-color: var(--background-bg);
+    }
+}
+
+.button-primary,
+.button-secondary,
+.button-tertiary,
+.button-tertiary-rich {
+    &:is(.style-rounder) {
+        padding: 12px 16px;
+        border-radius: 16px;
+        font-size: 16px;
+        border-width: 1px;
+        font-weight: normal;
+    }
+}
+
 
 input, select, textarea {
     background-color: var(--element-bg);

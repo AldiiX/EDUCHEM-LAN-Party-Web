@@ -1,5 +1,5 @@
 import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
-import React, {MutableRefObject, Ref, useEffect, useRef, useState} from "react";
+import React, {MutableRefObject, useEffect, useRef, useState} from "react";
 import "./Reservations.scss";
 import {SpiralUpper} from "../../components/reservation_areas/SpiralUpper.tsx";
 import {SpiralLower} from "../../components/reservation_areas/SpiralLower.tsx";
@@ -7,14 +7,12 @@ import {useStore} from "../../store.tsx";
 import {PieChart} from "../../components/PieChart.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
 import {Skeleton} from "@mui/material";
-import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
-import {ButtonSecondary} from "../../components/buttons/ButtonSecondary.tsx";
 import {Link} from "react-router-dom";
 import MoveableMap from "../../components/MoveableMap.tsx";
 import {toast} from "react-toastify";
-import { create } from "zustand";
-
-
+import {create} from "zustand";
+import {Button} from "../../components/buttons/Button.tsx";
+import {ButtonType} from "../../components/buttons/ButtonProps.ts";
 
 
 // global store
@@ -199,14 +197,14 @@ const SelectedReservation = () => {
                             <>
                                 <div className="divider"></div>
                                 <div className="buttons">
-                                    <ButtonSecondary text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation()} />
+                                    <Button type={ButtonType.SECONDARY} text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation()} />
                                 </div>
                             </>
                         ) : selectedReservation?.reservations.length === 0 ? (
                             <>
                                 <div className="divider"></div>
                                 <div className="buttons">
-                                    <ButtonPrimary text="Rezervovat" icon="/images/icons/computer.svg" onClick={() => reserve(null, selectedReservation?.id) } />
+                                    <Button type={ButtonType.PRIMARY} text="Rezervovat" icon="/images/icons/computer.svg" onClick={() => reserve(null, selectedReservation?.id) } />
                                 </div>
                             </>
                         ) : null
@@ -214,14 +212,14 @@ const SelectedReservation = () => {
                         <>
                             <div className="divider"></div>
                             <div className="buttons">
-                                <ButtonSecondary text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation() } />
+                                <Button type={ButtonType.SECONDARY} text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation() } />
                             </div>
                         </>
                     ) : selectedReservation?.reservations.length < selectedReservation?.limitOfSeats ? (
                         <>
                             <div className="divider"></div>
                             <div className="buttons">
-                                <ButtonPrimary text="Rezervovat" icon="/images/icons/door.svg" onClick={() => reserve(selectedReservation?.id, null) } />
+                                <Button type={ButtonType.PRIMARY} text="Rezervovat" icon="/images/icons/door.svg" onClick={() => reserve(selectedReservation?.id, null) } />
                             </div>
                         </>
                     ) : null

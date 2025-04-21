@@ -201,8 +201,8 @@ public class APIv1 : Controller {
     [HttpPost("adm/users/passwordreset")]
     public IActionResult ResetUserPassword([FromBody] Dictionary<string, object?> data) {
         // zjisteni prihlasenyho uzivatele + jeho perms
-        var acc = Utilities.GetLoggedAccountFromContextOrNull();
-        if(acc == null || acc.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+        var loggedAccount = Utilities.GetLoggedAccountFromContextOrNull();
+        if(loggedAccount == null || loggedAccount.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
         // zjisteni id uzivatele kteryho chceme mazat
         int? id = data.TryGetValue("id", out var _id) ? int.TryParse(_id?.ToString(), out var _id2) ? _id2 : null : null;
@@ -213,7 +213,7 @@ public class APIv1 : Controller {
         if(user == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen." });
 
         // overeni prav obou uzivatelu
-        if(acc.AccountType <= user.AccountType) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš obnovit heslo uživateli s vyššími nebo stejnými právy." });
+        if(loggedAccount.AccountType <= user.AccountType && loggedAccount.AccountType != Classes.Objects.User.UserAccountType.SUPERADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš obnovit heslo uživateli s vyššími nebo stejnými právy." });
 
         // vytvoreni noveho hesla
         var newPassword = Utilities.GenerateRandomPassword();
@@ -244,7 +244,7 @@ public class APIv1 : Controller {
         );
 
         // zapsani do logu
-        DbLogger.Log(DbLogger.LogType.INFO, $"Heslo uživatele {user.DisplayName} ({user.Email}) bylo resetováno uživatelem {acc.DisplayName} ({acc.Email}).", "password-reset");
+        DbLogger.Log(DbLogger.LogType.INFO, $"Heslo uživatele {user.DisplayName} ({user.Email}) bylo resetováno uživatelem {loggedAccount.DisplayName} ({loggedAccount.Email}).", "password-reset");
 
         return new JsonResult(new { success = true, message = "Heslo bylo obnoveno a odesláno na email." });
     }

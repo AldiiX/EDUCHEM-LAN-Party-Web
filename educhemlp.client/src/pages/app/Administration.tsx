@@ -1,24 +1,18 @@
-import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
-import {CSSProperties, useEffect, useState} from "react";
+import {AppLayout} from "./AppLayout.tsx";
+import React, {CSSProperties, useEffect, useState} from "react";
 import {useStore} from "../../store.tsx";
 import {useNavigate} from "react-router-dom";
 import "./Administration.scss";
 import {Avatar} from "../../components/Avatar.tsx";
 import {Modal} from "../../components/modals/Modal.tsx";
-import {ButtonSecondary} from "../../components/buttons/ButtonSecondary.tsx";
 import {TextWithIcon} from "../../components/TextWithIcon.tsx";
-import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import {toast} from "react-toastify";
 import Switch, {switchClasses} from '@mui/joy/Switch';
 import {AccountGender, AccountType, BasicAPIResponse, Log, LoggedUser} from "../../interfaces.ts";
-import {
-    compareEnumValues,
-    enumEquals, enumIsGreater,
-    enumIsGreaterOrEquals,
-    enumIsSmaller,
-    parseEnumValue
-} from "../../utils.ts";
+import {compareEnumValues, enumEquals, enumIsGreater, enumIsGreaterOrEquals, enumIsSmaller} from "../../utils.ts";
 import {create} from "zustand";
+import {ButtonStyle, ButtonType} from "../../components/buttons/ButtonProps.ts";
+import {Button} from "../../components/buttons/Button.tsx";
 
 
 // region shared veci
@@ -348,6 +342,8 @@ const UsersTab = () => {
     return (
         <>
             <Modal onClose={closeModal} enabled={openedModal === Modals.USER} className="user-modal">
+                <div className="closebutton" onClick={closeModal}></div>
+
                 {selectedUser !== null ? (
                     <>
                         <div className="top">
@@ -522,12 +518,19 @@ const UsersTab = () => {
                                             <div className="separator"></div>
 
                                             <div className="buttons">
+                                                {
+                                                    enumEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.SUPERADMIN) ? (
+                                                        <TextWithIcon text="Přihlásit se" iconSrc="/images/icons/login.svg" onClick={() => {}}/>
+                                                    ) : null
+                                                }
+
                                                 <TextWithIcon text="Resetovat heslo"
                                                               iconSrc="/images/icons/reset_password.svg"
                                                               color="var(--error-color)" onClick={() => {
                                                     setOpenedModal(Modals.RESETPASSWORD_CONFIRMATION)
                                                 }}/>
-                                                <TextWithIcon text="Smazat uživatele" iconSrc="/images/icons/trash.svg"
+
+                                                <TextWithIcon text="Smazat" iconSrc="/images/icons/trash.svg"
                                                               color="var(--error-color)" onClick={() => {
                                                     setOpenedModal(Modals.DELETE_CONFIRMATION)
                                                 }}/>
@@ -554,19 +557,27 @@ const UsersTab = () => {
             </Modal>
 
             <Modal enabled={openedModal === Modals.DELETE_CONFIRMATION || openedModal === Modals.RESETPASSWORD_CONFIRMATION} onClose={closeModal} className="confirmation-modal">
+                <div className="closebutton" onClick={() => setOpenedModal(Modals.USER) }></div>
+
+                <div className="icon"></div>
+
+                <h1>Potvrzení akce</h1>
+
                 {
                     openedModal === Modals.DELETE_CONFIRMATION ? (
-                        <p>Opravdu chcete smazat uživatele <span>{selectedUser?.name}</span>?</p>
+                        <p>Opravdu chcete smazat uživatele <span>{selectedUser?.name}</span>? Tato akce je nevratná.</p>
                     ) : openedModal === Modals.RESETPASSWORD_CONFIRMATION ? (
                         <>
-                            <p>Opravdu chcete resetovat heslo uživatele <span>{selectedUser?.name}</span>?</p>
+                            <p>Opravdu chcete resetovat heslo uživatele <span>{selectedUser?.name}</span>? Tato akce je nevratná.</p>
                             {/* <p>Heslo uživateli přijde na email <span>{selectedUser?.email}</span>.</p> */}
                         </>
                     ) : null
                 }
 
                 <div className="buttons">
-                    <ButtonPrimary text="Ano" onClick={() => {
+                    <Button type={ButtonType.TERTIARY_RICH} style={ButtonStyle.ROUNDER} text="Ne" onClick={() => setOpenedModal(Modals.USER)}/>
+
+                    <Button type={ButtonType.PRIMARY} style={ButtonStyle.ROUNDER} text="Ano" onClick={() => {
                         switch (openedModal) {
                             case Modals.DELETE_CONFIRMATION:
                                 deleteUser();
@@ -576,7 +587,6 @@ const UsersTab = () => {
                                 break;
                         }
                     }}/>
-                    <ButtonSecondary text="Ne" onClick={() => setOpenedModal(Modals.USER)}/>
                 </div>
             </Modal>
 

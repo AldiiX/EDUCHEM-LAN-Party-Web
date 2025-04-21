@@ -3,8 +3,6 @@ import {useEffect, useRef, useState} from "react";
 import "./Map.scss";
 import {PieChart} from "../../components/PieChart.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
-import {ButtonSecondary} from "../../components/buttons/ButtonSecondary.tsx";
-import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import {Link} from "react-router-dom";
 import {SpiralUpper} from "../../components/reservation_areas/SpiralUpper.tsx";
 import {SpiralLower} from "../../components/reservation_areas/SpiralLower.tsx";
