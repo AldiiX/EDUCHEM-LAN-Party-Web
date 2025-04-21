@@ -4,7 +4,6 @@ import {useEffect} from "react";
 import {useNavigate} from "react-router-dom";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
-import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import {logout, toggleWebTheme} from "../../utils.ts";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
