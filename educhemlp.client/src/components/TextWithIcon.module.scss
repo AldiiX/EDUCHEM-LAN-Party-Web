@@ -3,7 +3,6 @@
 .main {
     display: flex;
     align-items: center;
-    gap: 8px;
 
     &:is(.clickable) {
         user-select: none;

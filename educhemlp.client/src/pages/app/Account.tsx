@@ -5,8 +5,9 @@ import {useNavigate} from "react-router-dom";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
 import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
-import {ButtonSecondary} from "../../components/buttons/ButtonSecondary.tsx";
 import {logout, toggleWebTheme} from "../../utils.ts";
+import {Button} from "../../components/buttons/Button.tsx";
+import {ButtonType} from "../../components/buttons/ButtonProps.ts";
 
 export const Account = () => {
     const navigate = useNavigate();
@@ -42,8 +43,8 @@ export const Account = () => {
                     ) : null
                 }
                 <div className="buttons">
-                    <ButtonSecondary text="Změnit theme" icon="/images/icons/brush.svg" onClick={ () => toggleWebTheme() } />
-                    <ButtonPrimary text="Odhlásit" icon="/images/icons/door.svg" onClick={() => logout(setLoggedUser) } />
+                    <Button type={ButtonType.SECONDARY} text="Změnit theme" icon="/images/icons/brush.svg" onClick={ () => toggleWebTheme() } />
+                    <Button type={ButtonType.PRIMARY} text="Odhlásit" icon="/images/icons/door.svg" onClick={() => logout(setLoggedUser) } />
                 </div>
             </div>
         </AppLayout>

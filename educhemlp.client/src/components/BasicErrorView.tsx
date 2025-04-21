@@ -1,6 +1,7 @@
 import {Link, useLocation} from "react-router-dom";
-import {ButtonPrimary} from "./buttons/ButtonPrimary.tsx";
 import "./BasicErrorView.scss";
+import {Button} from "./buttons/Button.tsx";
+import {ButtonType} from "./buttons/ButtonProps.ts";
 
 export const BasicErrorView = () => {
     const location = useLocation();
@@ -17,7 +18,7 @@ export const BasicErrorView = () => {
             <h2>Stránka nenalezena</h2>
             <p>Omlouváme se, ale stránka, kterou hledáte, nebyla nalezena.</p>
             <Link to={backButtonLink}>
-                <ButtonPrimary text="Zpět" />
+                <Button type={ButtonType.PRIMARY} text="Zpět" />
             </Link>
         </div>
     )

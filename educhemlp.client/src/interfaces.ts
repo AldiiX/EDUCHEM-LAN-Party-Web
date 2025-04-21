@@ -7,6 +7,8 @@ export type LoggedUser = {
     class: string | null,
     email: string,
     accountType: AccountType,
+    gender: AccountGender | null,
+    avatar: string | null,
 }
 
 /*
@@ -17,6 +19,10 @@ export enum AccountType {
     TEACHER,
     ADMIN,
     SUPERADMIN,
+}
+
+export enum AccountGender {
+    MALE, FEMALE, OTHER
 }
 
 /*
