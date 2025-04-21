@@ -10,8 +10,14 @@ import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import {toast} from "react-toastify";
 import Switch, {switchClasses} from '@mui/joy/Switch';
-import {AccountType, BasicAPIResponse, Log} from "../../interfaces.ts";
-import {enumIsGreaterOrEquals, enumIsSmaller} from "../../utils.ts";
+import {AccountGender, AccountType, BasicAPIResponse, Log, LoggedUser} from "../../interfaces.ts";
+import {
+    compareEnumValues,
+    enumEquals, enumIsGreater,
+    enumIsGreaterOrEquals,
+    enumIsSmaller,
+    parseEnumValue
+} from "../../utils.ts";
 import {create} from "zustand";
 
 
@@ -21,13 +27,13 @@ enum Modals { USER, DELETE_CONFIRMATION, RESETPASSWORD_CONFIRMATION }
 enum Tab { USERS, RESERVATIONS, LOGS, FORUM_POSTS }
 
 interface User {
-    id: string,
+    id: number,
     name: string,
     email: string,
     avatar: string,
     class: string,
     accountType: AccountType,
-    gender: string,
+    gender: AccountGender,
     lastUpdated: string,
     lastLoggedIn: string,
 }
@@ -125,7 +131,7 @@ const UsersTab = () => {
     const [sortDirection, setSortDirection] = useState("asc");
 
     const closeModal = useAdminStore((state) => state.closeModal);
-    const loggedUser = useStore((state => state.loggedUser));
+    const loggedUser: LoggedUser = useStore((state => state.loggedUser));
 
     const selectedUser = useAdminStore((state) => state.selectedUser);
     const setSelectedUser = useAdminStore((state) => state.setSelectedUser);
@@ -374,34 +380,39 @@ const UsersTab = () => {
                                 )
                             }
 
+
+
                             {
-                                !userModalEditMode ? (
-                                    <div className="edit-delete-buttons-div">
-                                        <button className="button-tertiary" style={{flexGrow: 1}} type="button"
-                                                onClick={() => setUserModalEditMode(true)}>Upravit
-                                        </button>
-                                        {/*<button className="button-tertiary" type="button">Smazat</button>*/}
-                                    </div>
-                                ) : userModalCreationMode ? (
-                                    <div className="edit-delete-buttons-div">
-                                        <button className="button-tertiary" style={{flexGrow: 1}} type="button"
-                                                onClick={() => createUser()}>Vytvořit uživatele
-                                        </button>
-                                        <button className="button-tertiary" type="button" onClick={() => {
-                                            closeModal()
-                                        }}>Zrušit
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="edit-delete-buttons-div">
-                                        <button className="button-tertiary" style={{flexGrow: 1}} type="button"
-                                                onClick={() => editUser()}>Uložit změny
-                                        </button>
-                                        <button className="button-tertiary" type="button"
-                                                onClick={() => setUserModalEditMode(false)}>Zrušit změny
-                                        </button>
-                                    </div>
-                                )
+                                compareEnumValues(AccountType, selectedUser.accountType?.toString(), loggedUser.accountType?.toString()) === -1 ||
+                                enumEquals(loggedUser?.accountType?.toString().toUpperCase(), AccountType, AccountType.SUPERADMIN) ? (
+                                    !userModalEditMode ? (
+                                        <div className="edit-delete-buttons-div">
+                                            <button className="button-tertiary" style={{flexGrow: 1}} type="button"
+                                                    onClick={() => setUserModalEditMode(true)}>Upravit
+                                            </button>
+                                            {/*<button className="button-tertiary" type="button">Smazat</button>*/}
+                                        </div>
+                                    ) : userModalCreationMode ? (
+                                        <div className="edit-delete-buttons-div">
+                                            <button className="button-tertiary" style={{flexGrow: 1}} type="button"
+                                                    onClick={() => createUser()}>Vytvořit uživatele
+                                            </button>
+                                            <button className="button-tertiary" type="button" onClick={() => {
+                                                closeModal()
+                                            }}>Zrušit
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="edit-delete-buttons-div">
+                                            <button className="button-tertiary" style={{flexGrow: 1}} type="button"
+                                                    onClick={() => editUser()}>Uložit změny
+                                            </button>
+                                            <button className="button-tertiary" type="button"
+                                                    onClick={() => setUserModalEditMode(false)}>Zrušit změny
+                                            </button>
+                                        </div>
+                                    )
+                                ) : null
                             }
 
                             <div className="info">
@@ -434,7 +445,7 @@ const UsersTab = () => {
                                     <div className="icon" style={{maskImage: `url(/images/icons/gender.svg)`}}></div>
                                     {
                                         !userModalEditMode ? (
-                                            <p>{translateGender(selectedUser?.gender)}</p>
+                                            <p>{translateGender(selectedUser?.gender.toString())}</p>
                                         ) : (
                                             <select name="gender" defaultValue={selectedUser?.gender}>
                                                 <option value="MALE">Muž</option>
@@ -455,19 +466,19 @@ const UsersTab = () => {
                                                 <option value="STUDENT">Student</option>
 
                                                 {
-                                                    enumIsGreaterOrEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.TEACHER) ? (
+                                                    enumIsGreater(loggedUser?.accountType?.toString(), AccountType, AccountType.TEACHER) ? (
                                                         <option value="TEACHER">Učitel</option>
                                                     ) : null
                                                 }
 
                                                 {
-                                                    enumIsGreaterOrEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.ADMIN) ? (
+                                                    enumIsGreater(loggedUser?.accountType?.toString(), AccountType, AccountType.ADMIN) ? (
                                                         <option value="ADMIN">Admin</option>
                                                     ) : null
                                                 }
 
                                                 {
-                                                    enumIsGreaterOrEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.ADMIN) ? (
+                                                    enumIsGreaterOrEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.SUPERADMIN) ? (
                                                         <option value="SUPERADMIN">Superadmin</option>
                                                     ) : null
                                                 }
@@ -509,9 +520,9 @@ const UsersTab = () => {
                             }
 
                             {
-                                userModalEditMode
-                                    ? null
-                                    : (
+                                compareEnumValues(AccountType, selectedUser.accountType?.toString(), loggedUser.accountType?.toString()) === -1 ||
+                                enumEquals(loggedUser?.accountType.toString(), AccountType, AccountType.SUPERADMIN) ? (
+                                    !userModalEditMode ? (
                                         <>
                                             <div className="separator"></div>
 
@@ -527,9 +538,21 @@ const UsersTab = () => {
                                                 }}/>
                                             </div>
                                         </>
-                                    )
-                            }
+                                    ) : null
+                                ) : loggedUser.id !== selectedUser.id ? (
+                                    <>
+                                        <div className="separator"></div>
 
+                                        <p style={{ color: "var(--error-color)"}}>{ selectedUser.name } má vyšší nebo stejnou roli, nelze {enumEquals(selectedUser.gender.toString(), AccountGender, AccountGender.FEMALE) ? "ji" : "ho"} upravit.</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="separator"></div>
+
+                                        <p style={{ color: "var(--error-color)"}}>Nelze upravit { enumEquals(selectedUser.gender.toString(), AccountGender, AccountGender.FEMALE) ? "sama" : "sám" } sebe. Pro úpravu je třeba kontaktovat administrátora.</p>
+                                    </>
+                                )
+                            }
                         </div>
                     </>
                 ) : null}
@@ -591,7 +614,7 @@ const UsersTab = () => {
 
                     <tbody className="clickable">
                         {filteredAndSortedUsers?.map((user) => (
-                            <tr key={user.id} className={loggedUser?.id === user.id ? "loggeduser" : ""} onClick={() => { setSelectedUser(user); setOpenedModal(Modals.USER) }}>
+                            <tr key={user.id} className={loggedUser?.id as any === user.id ? "loggeduser" : ""} onClick={() => { setSelectedUser(user); setOpenedModal(Modals.USER) }}>
                                 <td>
                                     <div className="name">
                                         <Avatar size={"28px"} name={user.name} src={user.avatar}/>
@@ -599,7 +622,7 @@ const UsersTab = () => {
                                     </div>
                                 </td>
                                 <td>{user.email}</td>
-                                <td>{translateGender(user.gender)}</td>
+                                <td>{translateGender(user.gender.toString())}</td>
                                 <td>{user.class}</td>
                                 <td>{user.accountType}</td>
                                 <td>{new Date(user.lastUpdated).toLocaleString()}</td>
@@ -710,7 +733,7 @@ export const Administration = () => {
         }
     }, [userAuthed, loggedUser, navigate]);
 
-    if (!userAuthed || !loggedUser) {
+    if (!userAuthed || !loggedUser || !enumIsGreaterOrEquals(loggedUser?.accountType, AccountType, AccountType.TEACHER)) {
         return null;
     }
 

@@ -5,7 +5,8 @@ import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
 import {ButtonPrimary} from "../../components/buttons/ButtonPrimary.tsx";
 import {AppMenu} from "../../components/AppMenu.tsx";
-import {logout, toggleWebTheme} from "../../utils.ts";
+import {enumEquals, logout, toggleWebTheme} from "../../utils.ts";
+import {AccountGender, AccountType, LoggedUser} from "../../interfaces.ts";
 
 
 export enum AppLayoutTitleBarType {
@@ -16,21 +17,47 @@ export enum AppLayoutTitleBarType {
 
 
 export const AppLayoutLoggedUserSection = ({ style }: { style?: CSSProperties}) => {
-    const loggedUser = useStore((state) => state.loggedUser);
+    const loggedUser: LoggedUser = useStore((state) => state.loggedUser);
     const userAuthed = useStore((state) => state.userAuthed);
     const setLoggedUser = useStore((state) => state.setLoggedUser);
 
     if (!userAuthed) return <></>;
 
-    const normalizeText = (text: string) => {
-        return text[0].toUpperCase() + text.slice(1).toLowerCase();
+    function setRoleText(account: LoggedUser) {
+        if(enumEquals(loggedUser.accountType.toString(), AccountType, AccountType.STUDENT)) {
+            if(enumEquals(account.gender?.toString(), AccountGender, AccountGender.FEMALE))
+                return "Přihlášena jako"
+
+            return "Přihlášen jako"
+        }
+
+        else if(enumEquals(loggedUser.accountType.toString(), AccountType, AccountType.TEACHER)) {
+            if(enumEquals(account.gender?.toString(), AccountGender, AccountGender.FEMALE))
+                return "Učitelka"
+
+            return "Učitel"
+        }
+
+        else if(enumEquals(loggedUser.accountType.toString(), AccountType, AccountType.ADMIN)) {
+            if(enumEquals(account.gender?.toString(), AccountGender, AccountGender.FEMALE))
+                return "Administrátorka"
+
+            return "Administrátor"
+        }
+
+        else if(enumEquals(loggedUser.accountType.toString(), AccountType, AccountType.SUPERADMIN)) {
+            if(enumEquals(account.gender?.toString(), AccountGender, AccountGender.FEMALE))
+                return "Administrátorka (SU)"
+
+            return "Administrátor (SU)"
+        }
     }
 
     if(loggedUser) return (
         <div className="loggeduser" style={style}>
             <Link to="/app/account">
                 <div className="texts">
-                    <p>{ loggedUser?.accountType === "STUDENT" ? "Přihlášen jako" : normalizeText(loggedUser?.accountType) }</p>
+                    <p>{ setRoleText(loggedUser) }</p>
                     <h2>{ loggedUser?.displayName }</h2>
                 </div>
 

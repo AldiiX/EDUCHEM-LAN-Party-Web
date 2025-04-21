@@ -24,7 +24,7 @@ public class User {
 
 
     [JsonConstructor]
-    private User(int id, string displayName, string email, string password, string? @class, UserAccountType accountType, DateTime lastUpdated/*, UserGender? gender*/, string? avatar) {
+    private User(int id, string displayName, string email, string password, string? @class, UserAccountType accountType, DateTime lastUpdated, UserGender? gender, string? avatar) {
         ID = id;
         DisplayName = displayName;
         Class = @class;
@@ -33,8 +33,20 @@ public class User {
         AccountType = accountType;
         LastUpdated = lastUpdated;
         Avatar = avatar;
-        //Gender = gender;
+        Gender = gender;
     }
+
+    private User(MySqlDataReader reader) : this(
+        reader.GetInt32("id"),
+        reader.GetString("display_name"),
+        reader.GetString("email"),
+        reader.GetString("password"),
+        reader.GetObjectOrNull("class") as string,
+        Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
+        reader.GetDateTime("last_updated"),
+        Enum.TryParse<UserGender>(reader.GetStringOrNull("gender"), out var _g ) ? _g : null,
+        reader.GetStringOrNull("avatar")
+    ){}
 
 
 
@@ -61,17 +73,7 @@ public class User {
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if (reader == null || !reader.Read()) return null;
 
-        var user = new User(
-            reader.GetInt32("id"),
-            reader.GetString("display_name"),
-            reader.GetString("email"),
-            reader.GetString("password"),
-            reader.GetObjectOrNull("class") as string,
-            Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
-            reader.GetDateTime("last_updated"),
-            //Enum.TryParse<UserGender>(reader.GetObjectOrNull
-            reader.GetStringOrNull("avatar")
-        );
+        var user = new User(reader);
 
         return user;
     }
@@ -88,17 +90,7 @@ public class User {
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if (reader == null || !reader.Read()) return null;
 
-        var user = new User(
-            reader.GetInt32("id"),
-            reader.GetString("display_name"),
-            reader.GetString("email"),
-            reader.GetString("password"),
-            reader.GetObjectOrNull("class") as string,
-            Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
-            reader.GetDateTime("last_updated"),
-            //Enum.TryParse<UserGender>(reader.GetObjectOrNull
-            reader.GetStringOrNull("avatar")
-        );
+        var user = new User(reader);
 
         // aktualizace posledního přihlášení
         _ = UpdateLastLoggedInAsync(user.ID);
@@ -124,17 +116,7 @@ public class User {
 
         var list = new List<User?>();
         while (await reader.ReadAsync()) {
-            list.Add(new User(
-                reader.GetInt32("id"),
-                reader.GetString("display_name"),
-                reader.GetString("email"),
-                reader.GetString("password"),
-                reader.GetStringOrNull("class"),
-                Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
-                reader.GetDateTime("last_updated"),
-                //Enum.TryParse<UserGender>(reader.GetObject
-                reader.GetStringOrNull("avatar")
-            ));
+            list.Add(new User(reader));
         }
 
         return list;
@@ -177,17 +159,7 @@ public class User {
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if (reader == null || !reader.Read()) return null;
 
-        var user = new User(
-            reader.GetInt32("id"),
-            reader.GetString("display_name"),
-            reader.GetString("email"),
-            reader.GetString("password"),
-            reader.GetObjectOrNull("class") as string,
-            Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
-            reader.GetDateTime("last_updated"),
-            //Enum.TryParse<UserGender>(reader.GetObjectOrNull
-            reader.GetStringOrNull("avatar")
-        );
+        var user = new User(reader);
 
 
 

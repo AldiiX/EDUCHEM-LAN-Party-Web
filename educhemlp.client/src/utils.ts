@@ -1,6 +1,3 @@
-import {useStore} from "./store.tsx";
-import {AccountType} from "./interfaces.ts";
-
 export const getCookie = (name: string) => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -73,4 +70,28 @@ export function enumIsSmallerOrEquals(value: string | null | undefined, enumClas
 
     const enumValue = enumClass[value as keyof typeof enumClass];
     return enumValue <= targetEnum;
+}
+
+export function parseEnumValue<T extends Record<string, string | number>>(
+    enumType: T,
+    value: string | null | undefined
+): T[keyof T] | null {
+    if (!value || !(value in enumType)) return null;
+    return enumType[value as keyof T];
+}
+
+
+/*
+*
+* @returns -1 pokud a < b, 1 pokud a > b, 0 pokud a === b, null pokud a nebo b není v enumu
+* */
+export function compareEnumValues<T extends Record<string, string | number>>(
+    enumType: T,
+    a: string | null | undefined,
+    b: string | null | undefined
+): number | null {
+    const aVal = parseEnumValue(enumType, a);
+    const bVal = parseEnumValue(enumType, b);
+    if (aVal === null || bVal === null) return null;
+    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 }

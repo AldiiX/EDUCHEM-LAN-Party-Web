@@ -33,6 +33,7 @@ public class APIv1 : Controller {
             ["accountType"] = acc?.AccountType.ToString().ToUpper(),
             ["lastUpdated"] = acc?.LastUpdated,
             ["avatar"] = acc?.Avatar,
+            ["gender"] = acc?.Gender?.ToString().ToUpper(),
         };
 
         return acc == null ? new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" }) : new JsonResult(obj);
@@ -43,6 +44,11 @@ public class APIv1 : Controller {
         string? email = data.TryGetValue("email", out var _email) ? _email?.ToString() : null;
         string? password = data.TryGetValue("password", out var _password) ? _password?.ToString() : null;
         if(email == null || password == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'email' nebo 'password'" });
+
+        // pokud email neobsahuje @educhem.cz, doplni se
+        if(!email.Contains('@') && !email.Contains("@educhem.cz")) {
+            email = email.Trim() + "@educhem.cz";
+        }
 
         var acc = Auth.AuthUser(email, Utilities.EncryptPassword(password));
         if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Neplatný email nebo heslo" });
@@ -55,6 +61,7 @@ public class APIv1 : Controller {
             ["accountType"] = acc.AccountType.ToString().ToUpper(),
             ["lastUpdated"] = acc.LastUpdated,
             ["avatar"] = acc.Avatar,
+            ["gender"] = acc.Gender?.ToString().ToUpper(),
         };
 
 
@@ -245,8 +252,8 @@ public class APIv1 : Controller {
     [HttpPut("adm/users")]
     public IActionResult EditUser([FromBody] Dictionary<string, object?> body) {
         // zjisteni prihlasenyho uzivatele + jeho perms
-        var acc = Utilities.GetLoggedAccountFromContextOrNull();
-        if(acc == null || acc.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+        var loggedAccount = Utilities.GetLoggedAccountFromContextOrNull();
+        if(loggedAccount == null || loggedAccount.AccountType < Classes.Objects.User.UserAccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze upravit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
         // zjisteni id uzivatele kteryho chceme mazat
         int? id = body.TryGetValue("id", out var _id) ? int.TryParse(_id?.ToString(), out var _id2) ? _id2 : null : null;
@@ -257,17 +264,27 @@ public class APIv1 : Controller {
         if(user == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen." });
 
         // overeni prav obou uzivatelu
-        if(acc.AccountType <= user.AccountType) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš obnovit heslo uživateli s vyššími nebo stejnými právy." });
+        if(loggedAccount.AccountType <= user.AccountType && loggedAccount.AccountType != Classes.Objects.User.UserAccountType.SUPERADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš upravit uživatele s vyššími nebo stejnými právy." });
 
         // overeni parametru
         string? email = body.TryGetValue("email", out var _email) ? _email?.ToString() : null;
         string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
-        var accountType = body.TryGetValue("accountType", out var _accountType) ? Enum.TryParse(_accountType?.ToString(), out Classes.Objects.User.UserAccountType _ac) ? _ac : Classes.Objects.User.UserAccountType.STUDENT : Classes.Objects.User.UserAccountType.STUDENT;
-        var gender = body.TryGetValue("gender", out var _gender) ? Enum.TryParse(_gender?.ToString(), out User.UserGender _g) ? _g : Classes.Objects.User.UserGender.OTHER : Classes.Objects.User.UserGender.OTHER;
+        User.UserAccountType? accountType = body.TryGetValue("accountType", out var _accountType) ? Enum.TryParse(_accountType?.ToString(), out User.UserAccountType _ac) ? _ac : null : null;
+        User.UserGender? gender = body.TryGetValue("gender", out var _gender) ? Enum.TryParse(_gender?.ToString(), out User.UserGender _g) ? _g : null : null;
         email = email == "" ? null : email?.Trim();
         displayName = displayName == "" ? null : displayName?.Trim();
         @class = @class == "" ? null : @class?.Trim();
+
+
+        // pokud accounttype neni parsovany
+        if(accountType == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'accountType'" });
+
+        // pokud je gender neco mimo enum
+        if(gender == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'accountType'" });
+
+        // zjisteni zda loggeduser nedava uzivateli vyssi accountType
+        if(loggedAccount.AccountType <= accountType && loggedAccount.AccountType != Classes.Objects.User.UserAccountType.SUPERADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš dát uživateli vyšší roli než máš ty." });
 
 
 
@@ -298,7 +315,7 @@ public class APIv1 : Controller {
 
 
         // zapsani do logu
-        DbLogger.LogInfo($"Uživatel {user.DisplayName} ({user.Email}) byl upraven uživatelem {acc.DisplayName} ({acc.Email}).", "user-edit");
+        DbLogger.LogInfo($"Uživatel {user.DisplayName} ({user.Email}) byl upraven uživatelem {loggedAccount.DisplayName} ({loggedAccount.Email}).", "user-edit");
         
         var r = command.ExecuteNonQuery();
         return r > 0 ? new JsonResult(new { success = true, message = "Uživatel byl upraven." }) : new JsonResult(new { success = false, message = "Uživatel nebyl upraven." }) { StatusCode = 400 };
