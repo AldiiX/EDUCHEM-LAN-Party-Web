@@ -10,6 +10,8 @@ import {toast} from "react-toastify";
 import {create} from "zustand/index";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
+import MenuPopover from "../../components/MenuPopover.tsx";
+import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 
 
 enum ChatSocketState {
@@ -399,7 +401,7 @@ export const Chat = () => {
                                                 </div>
                                                 <div className={"buttons"}>
                                                     <MenuPopover className={isOwn ? "own-message" : ""}>
-                                                        <TextWithIcon text={"Kopírovat"} iconSrc={"/images/icons/copy.svg"}/>
+                                                        <TextWithIcon text={"Kopírovat"} onClick={() => navigator.clipboard.writeText(message.message)} iconSrc={"/images/icons/copy.svg"}/>
                                                         <div className={"reply"}>
                                                             
                                                         </div>
