@@ -161,7 +161,11 @@
                     }
     
                     >.texts {
-                        
+                        article{
+                            overflow: hidden;
+                            color: var(--text-color-darker);
+                            margin-top: 4px;
+                        }
                         >.name-and-date {
                             display: flex;
                             justify-content: space-between;
@@ -229,11 +233,6 @@
                             >.msg-time {
                                 color: var(--text-color-3);
                             }
-                        }
-    
-                        article {
-                            color: var(--text-color-darker);
-                            padding: 4px 0 0 0;
                         }
                     }
                 }

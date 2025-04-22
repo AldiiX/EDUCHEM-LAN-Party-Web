@@ -97,7 +97,7 @@ export const Chat = () => {
     const firstMessageRender = useRef<boolean>(true);
     const lastSendTimeRef = useRef<number>(0);
     const setConnectedUsers = useChatStore((state) => state.setConnectedUsers);
-
+    
 
 
     // datumy v cestine textem
@@ -162,7 +162,7 @@ export const Chat = () => {
         ws.onmessage = (e) => { // kdyz prijdou novy zpravy ze socketu
             const data = JSON.parse(e.data);
             const action = data.action;
-
+            
             if (action === "sendMessages") {
                 const newMessages = data.messages?.reverse();
                 if (!newMessages || newMessages.length === 0) return;
@@ -228,7 +228,16 @@ export const Chat = () => {
                 setMoreMessagesLoading(false);
                 setNoMoreMessagesToFetch(false);
             }
+            else if (action === "deleteMessage") {
+                const uuid = data.uuid;
+                if (!uuid) return;
 
+                setMessages((prevMessages) => {
+                    const updated = prevMessages.filter(msg => msg.uuid !== uuid);
+                    messagesRef.current = updated;
+                    return updated;
+                });
+            }
             else if (action === "noMoreMessagesToFetch") {
                 setNoMoreMessagesToFetch(true);
                 setMoreMessagesLoading(false);
@@ -238,7 +247,7 @@ export const Chat = () => {
                 setConnectedUsers(data.users as ConnectedUser[]);
             }
         };
-
+        
         ws.onerror = () => toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
 
         ws.onclose = () => {
@@ -276,6 +285,22 @@ export const Chat = () => {
             if(body) body.style.overscrollBehavior = "auto";
         };
     }, []);
+    const handleDeleteMessage = (messageUuid: string) => {
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
+        wsRef.current.send(
+            JSON.stringify({
+                action: "deleteMessage",
+                uuid: messageUuid,
+            })
+        );
+
+        setMessages((prevMessages) =>
+            prevMessages.map((message) =>
+                message.uuid === messageUuid ? { ...message, deleted: 1 } : message
+            )
+        );
+    };
 
     const sendMessage = () => {
         const now = Date.now();
@@ -410,7 +435,7 @@ export const Chat = () => {
 
                                                             {
                                                                isOwn || enumIsGreaterOrEquals(loggedUser.accountType, AccountType, AccountType.TEACHER) ? (
-                                                                    <TextWithIcon color={"var(--error-color)"}  text={"Smazat"} iconSrc={"/images/icons/trash.svg"}/>
+                                                                    <TextWithIcon onClick={() => handleDeleteMessage(message.uuid)} color={"var(--error-color)"}  text={"Smazat"} iconSrc={"/images/icons/trash.svg"}/>
                                                                ) : null
                                                             }
                                                         </div>

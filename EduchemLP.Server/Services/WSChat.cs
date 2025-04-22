@@ -101,7 +101,15 @@ public static class WSChat {
                         connectedClient.BroadcastAsync(messageJsonString).Wait();
                     }
                 } break;
+                
+                case "deleteMessage": {
+                    var messageUuid = messageJson?["uuid"]?.ToString();
+                    if (string.IsNullOrWhiteSpace(messageUuid))
+                        break;
 
+                    await DeleteMessage(client, messageUuid);
+                } break;
+                
                 case "loadOlderMessages": {
                     var beforeUuid = messageJson?["beforeUuid"]?.ToString();
                     if (string.IsNullOrWhiteSpace(beforeUuid)) break;
@@ -121,6 +129,33 @@ public static class WSChat {
 
     
     //logisticky metody
+    private static async Task DeleteMessage(Client client, string messageUuid) {
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return;
+
+        // kontrola jestli uzivatel ma pravo smazat zpravu jinych uzivatelu 
+        
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE chat SET deleted = 1 WHERE uuid = @uuid";
+        cmd.Parameters.AddWithValue("@uuid", messageUuid);
+        cmd.Parameters.AddWithValue("@userId", client.ID);
+
+        var affectedRows = await cmd.ExecuteNonQueryAsync();
+        if (affectedRows > 0) {
+            
+            var deleteMessageJson = new JsonObject {
+                ["action"] = "deleteMessage",
+                ["uuid"] = messageUuid
+            };
+
+            lock (ConnectedUsers) {
+                foreach (var connectedClient in ConnectedUsers) {
+                    connectedClient.BroadcastAsync(deleteMessageJson.ToString()).Wait();
+                }
+            }
+        }
+    }
+    
     private static async Task<bool> SendInicialChat(this Client client) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return false;
@@ -135,6 +170,7 @@ public static class WSChat {
               u.account_type as author_account_type
             FROM chat c
             LEFT JOIN users u ON c.user_id = u.id
+            WHERE c.deleted = 0
             ORDER BY `date` DESC LIMIT 20
         """;
         
@@ -174,8 +210,8 @@ public static class WSChat {
         var uuid = Guid.NewGuid().ToString();
         cmd.CommandText =
             """
-                INSERT INTO chat (uuid, user_id, message, date)
-                VALUES (@uuid, @userId, @message, NOW());
+                INSERT INTO chat (uuid, user_id, message, date, deleted)
+                VALUES (@uuid, @userId, @message, NOW(), 0);
 
                 SELECT 
                     c.*, 
@@ -221,7 +257,7 @@ public static class WSChat {
         };
     }
 
-    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date, Client? client = null) {
+    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date, Client? client = null, bool deleted = false) {
         var obj = new JsonObject {
             ["uuid"] = uuid,
             ["author"] = new JsonObject {
@@ -233,6 +269,7 @@ public static class WSChat {
             },
             ["message"] = message,
             ["date"] = date,
+            ["deleted"] = deleted
         };
 
         // cenzura veci
@@ -265,7 +302,7 @@ public static class WSChat {
                 u.account_type as author_account_type
             FROM chat c
             LEFT JOIN users u ON c.user_id = u.id
-            WHERE c.date < @beforeDate
+            WHERE c.date < @beforeDate AND c.deleted = 0
             ORDER BY c.date DESC
             LIMIT 20
             """;
