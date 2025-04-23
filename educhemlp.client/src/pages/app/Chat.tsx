@@ -97,6 +97,7 @@ export const Chat = () => {
     const firstMessageRender = useRef<boolean>(true);
     const lastSendTimeRef = useRef<number>(0);
     const setConnectedUsers = useChatStore((state) => state.setConnectedUsers);
+    const [forceCloseMenuPopover, setForceCloseMenuPopover] = useState<boolean>(false);
     
 
 
@@ -228,6 +229,7 @@ export const Chat = () => {
                 setMoreMessagesLoading(false);
                 setNoMoreMessagesToFetch(false);
             }
+
             else if (action === "deleteMessage") {
                 const uuid = data.uuid;
                 if (!uuid) return;
@@ -238,6 +240,7 @@ export const Chat = () => {
                     return updated;
                 });
             }
+
             else if (action === "noMoreMessagesToFetch") {
                 setNoMoreMessagesToFetch(true);
                 setMoreMessagesLoading(false);
@@ -245,6 +248,13 @@ export const Chat = () => {
 
             else if (action === "updateConnectedUsers") {
                 setConnectedUsers(data.users as ConnectedUser[]);
+            }
+
+            else if (action === "error") {
+                const errorMessage = data.message;
+                if (errorMessage) {
+                    toast.error(errorMessage);
+                }
             }
         };
         
@@ -294,6 +304,12 @@ export const Chat = () => {
                 uuid: messageUuid,
             })
         );
+
+        // zavreni vsech popoveru
+        setForceCloseMenuPopover((prev) => !prev);
+        requestAnimationFrame(() => {
+            setForceCloseMenuPopover((prev) => !prev);
+        });
 
         setMessages((prevMessages) =>
             prevMessages.map((message) =>
@@ -425,20 +441,44 @@ export const Chat = () => {
                                                     )}
                                                 </div>
                                                 <div className={"buttons"}>
-                                                    <MenuPopover className={isOwn ? "own-message" : ""}>
-                                                        <TextWithIcon text={"Kopírovat"} onClick={() => navigator.clipboard.writeText(message.message)} iconSrc={"/images/icons/copy.svg"}/>
-                                                        <div className={"reply"}>
-                                                            
-                                                        </div>
-                                                        <div className={"more"}>
-                                                            <TextWithIcon text={"Odpovědět"} iconSrc={"/images/icons/reply.svg"}/>
+                                                    <MenuPopover forceClose={forceCloseMenuPopover} className={isOwn ? "own-message" : ""} mainComponent={
+                                                        <div style={{
+                                                            width: 12,
+                                                            height: 12,
+                                                            mask: "url(/images/icons/more_vert.svg) no-repeat center",
+                                                            maskSize: "contain",
+                                                            backgroundColor: "var(--text-color-3)",
+                                                            margin: 12,
+                                                        }}></div>
+                                                    } placement={isOwn ? "right" : "left"} innerStyle={{ display: "flex", flexDirection: "column" }}>
+                                                            <TextWithIcon
+                                                                text={"Kopírovat"}
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(message.message).then();
+                                                                    toast.success("Zpráva zkopírována do schránky.", { autoClose: 1500 });
+                                                                }}
+                                                                iconSrc={"/images/icons/copy.svg"}
+                                                                style={{ padding: "4px 0" }}
+                                                            />
+
+                                                            <TextWithIcon
+                                                                text={"Odpovědět"}
+                                                                iconSrc={"/images/icons/reply.svg"}
+                                                                onClick={() => {}}
+                                                                style={{ padding: "4px 0" }}
+                                                            />
 
                                                             {
                                                                isOwn || enumIsGreaterOrEquals(loggedUser.accountType, AccountType, AccountType.TEACHER) ? (
-                                                                    <TextWithIcon onClick={() => handleDeleteMessage(message.uuid)} color={"var(--error-color)"}  text={"Smazat"} iconSrc={"/images/icons/trash.svg"}/>
+                                                                    <TextWithIcon
+                                                                        onClick={() => handleDeleteMessage(message.uuid)}
+                                                                        color={"var(--error-color)"}
+                                                                        text={"Smazat"}
+                                                                        iconSrc={"/images/icons/trash.svg"}
+                                                                        style={{ padding: "4px 0" }}
+                                                                    />
                                                                ) : null
                                                             }
-                                                        </div>
                                                     </MenuPopover>
                                                 </div>
                                             </div>

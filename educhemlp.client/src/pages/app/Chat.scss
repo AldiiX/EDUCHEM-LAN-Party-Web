@@ -120,25 +120,29 @@
                 }
                 
                 &:hover {
-                    >.chat-message{
+                    /*>.chat-message{
                         background-color: var(--element-bg-colored) !important;
                         
                         &:is(.own-message) {
                             background-color: var(--accent-color-darker) !important;
                         }
-                    }
-                    >.buttons{
+                    }*/
+
+                    >.buttons .menu-button {
                         visibility: visible;
                     }
                 }
                 
                 >.buttons{
-                    
                     display: flex;
                     justify-content: center;
                     align-items: center;
+                }
+
+                >.buttons .menu-button {
                     visibility: hidden;
                 }
+
                 .css-3oglbe-JoyIconButton-root{
                     border: none;
                     &:hover {
@@ -341,13 +345,15 @@
         }
 
         .chat-parent {
-            >.messages {
+            .messages {
                 margin-top: 0;
                 padding-bottom: 40px;
                 flex-grow: 1;
 
-                >.chat-message {
-                    max-width: 80%;
+                .wrapped-message {
+                    .chat-message {
+                        max-width: 80%;
+                    }
                 }
             }
         }

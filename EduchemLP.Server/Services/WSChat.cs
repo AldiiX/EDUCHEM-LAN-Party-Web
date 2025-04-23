@@ -92,8 +92,13 @@ public static class WSChat {
                         break;
 
                     var savedMessage = await SaveMessageToDb(client, messageText);
-                    if (savedMessage == null)
+                    if (savedMessage == null) {
+                        await client.BroadcastAsync(new JsonObject {
+                            ["action"] = "error",
+                            ["message"] = "Chyba při ukládání zprávy do databáze."
+                        }.ToString());
                         break;
+                    }
 
                     var messageJsonString = savedMessage.ToString();
 
@@ -227,7 +232,14 @@ public static class WSChat {
         cmd.Parameters.AddWithValue("@userId", client.ID);
         cmd.Parameters.AddWithValue("@message", message);
 
-        var result = await cmd.ExecuteReaderAsync() as MySqlDataReader;
+        MySqlDataReader? result = null;
+
+        try {
+            await cmd.ExecuteNonQueryAsync();
+        } catch (MySqlException) {
+            return null;
+        }
+
         if (result == null) return null;
 
         if (!await result.ReadAsync()) return null;

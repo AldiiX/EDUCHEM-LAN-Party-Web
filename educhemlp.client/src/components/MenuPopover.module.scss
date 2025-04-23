@@ -1,0 +1,16 @@
+/* MenuPopover.module.scss */
+.menuPopover {
+    position: relative;
+    display: inline-block;
+}
+
+.menu {
+    position: absolute;
+    //top: 100%;
+    height: max-content;
+    background-color: var(--element-bg);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    padding: 16px;
+    border: 1px solid var(--popover-border-color);
+    border-radius: 12px;
+}
