@@ -232,10 +232,10 @@ public static class WSChat {
         cmd.Parameters.AddWithValue("@userId", client.ID);
         cmd.Parameters.AddWithValue("@message", message);
 
-        MySqlDataReader? result = null;
+        MySqlDataReader? result;
 
         try {
-            await cmd.ExecuteNonQueryAsync();
+            result = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         } catch (MySqlException) {
             return null;
         }

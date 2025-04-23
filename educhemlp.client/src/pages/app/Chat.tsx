@@ -499,6 +499,7 @@ export const Chat = () => {
                         onChange={(e) => setInputText(e.target.value)}
                         placeholder="Napiš zprávu..."
                         onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                        maxLength={1024}
                     />
                     <button className={"sent-message-button"} onClick={sendMessage}></button>
                 </div>
