@@ -188,6 +188,12 @@ export const AppLayout = ({ children, className, customTitleBar, titleBarType = 
                 }
 
                 <div className="content-wrapper" style={{ padding: mainContentPadding }}>
+                    {
+                        titleBarText && titleBarType === AppLayoutTitleBarType.STATIC ? (
+                            <h1>{ titleBarText }</h1>
+                        ) : null
+                    }
+
                     {children}
                 </div>
             </section>
