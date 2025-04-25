@@ -1,0 +1,29 @@
+/* TabSelects.module.scss */
+
+.parent {
+    display: flex;
+    gap: 16px;
+    margin: 24px 0;
+
+    >p {
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 8px;
+        color: var(--text-color-secondary);
+        background-color: var(--element-bg);
+        user-select: none;
+        cursor: pointer;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.025);
+        transition-duration: 0.2s;
+
+        &:is(.active)  {
+            background-color: var(--element-bg-colored);
+            color: var(--accent-color);
+            pointer-events: none;
+            transition-duration: 0.2s;
+            box-shadow: none;
+        }
+    }
+}
+
+.active {}

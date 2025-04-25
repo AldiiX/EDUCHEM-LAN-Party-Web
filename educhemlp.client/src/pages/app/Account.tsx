@@ -1,17 +1,140 @@
-import {AppLayout} from "./AppLayout.tsx";
+import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
 import "./Account.scss";
-import {useEffect} from "react";
+import React, {useEffect} from "react";
 import {useNavigate} from "react-router-dom";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
 import {logout, toggleWebTheme} from "../../utils.ts";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
+import {create, StoreApi, UseBoundStore} from "zustand";
+import {TabSelects} from "../../components/TabSelects.tsx";
+
+
+// store
+const useAccountStore: UseBoundStore<StoreApi<any>> = create((set) => ({
+    selectedTab: Tab.OVERVIEW,
+    setSelectedTab: (tab: Tab) => set({ selectedTab: tab }),
+}));
+
+
+
+
+
+
+
+
+
+
+
+enum Tab {
+    OVERVIEW = "Přehled",
+    SETTINGS = "Nastavení"
+}
+
+
+
+const SettingsTab = () => {
+    const items = [
+        {
+            id: "ig",
+            name: "Instagram",
+            icon: "/images/icons/instagram.svg",
+        },
+
+        {
+            id: "discord",
+            name: "Discord",
+            icon: "/images/icons/discord.svg",
+            authLink: "https://discord.com/oauth2/authorize?client_id=1365461378432893008&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3154%2F_be%2Fdiscord%2Foauth&scope=identify"
+        },
+
+        {
+            id: "google",
+            name: "Google",
+            icon: "/images/icons/google.svg",
+        }
+    ]
+
+    // nastaveni linku itemu
+    const discord = items.find(l => l.id === "discord");
+    if (discord) {
+        if (window.location.hostname === "localhost") {
+            discord.authLink = "https://discord.com/oauth2/authorize?client_id=1365461378432893008&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3154%2F_be%2Fdiscord%2Foauth&scope=identify";
+        } else {
+            discord.authLink = "https://discord.com/oauth2/authorize?client_id=1365461378432893008&response_type=code&redirect_uri=https%3A%2F%2Feduchemlan.emsio.cz%2F_be%2Fdiscord%2Foauth&scope=identify";
+        }
+    }
+
+
+
+    return (
+        <div className="settingstab-flex">
+            <div className="left">
+                <p className="nadpis">Propojení</p>
+
+                <div className="items">
+                    {
+                        items.map((item, index) => (
+                            <div className="item" key={index}>
+                                <div className="content">
+                                    <div className="icon"></div>
+                                    <p>{item.name}</p>
+                                    <div className="button" onClick={() => { if(item.authLink) location.href = item.authLink }}></div>
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+
+            <div className="right">
+                <p>Editace profilu</p>
+            </div>
+        </div>
+    )
+}
+
+
+const OverviewTab = () => {
+    const loggedUser = useStore((state) => state.loggedUser);
+    const setLoggedUser = useStore((state) => state.setLoggedUser);
+
+    return (
+        <div className="info">
+            <Avatar size={"200px"} src={loggedUser.avatar} name={loggedUser.displayName} />
+            <h1>{loggedUser.displayName}</h1>
+            <p className="email">{loggedUser.email}</p>
+            {
+                loggedUser.accountType !== "STUDENT" ? (
+                    <p className="type">{loggedUser.accountType}</p>
+                ) : null
+            }
+            <div className="buttons">
+                <Button type={ButtonType.SECONDARY} text="Změnit theme" icon="/images/icons/brush.svg" onClick={ () => toggleWebTheme() } />
+                <Button type={ButtonType.PRIMARY} text="Odhlásit" icon="/images/icons/door.svg" onClick={() => logout(setLoggedUser) } />
+            </div>
+        </div>
+    )
+}
+
+
+
+
+
+
+
+
+
+
+
 
 export const Account = () => {
     const navigate = useNavigate();
     const { loggedUser, setLoggedUser } = useStore();
     const { userAuthed, setUserAuthed } = useStore();
+    const selectedTab: Tab = useAccountStore((state) => state.selectedTab);
+    const setSelectedTab = useAccountStore((state) => state.setSelectedTab);
 
 
     // kontrola přihlášení
@@ -29,23 +152,16 @@ export const Account = () => {
     }
 
     return (
-        <AppLayout className="page-account">
-            <h1>Můj účet</h1>
+        <AppLayout className="page-account" titleBarText="Můj účet">
+            <TabSelects values={[Tab.OVERVIEW.valueOf(), Tab.SETTINGS.valueOf()]} defaultValue={selectedTab.valueOf()} onChange={(newVal: string) => setSelectedTab(newVal) } />
 
-            <div className="info">
-                <Avatar size={"200px"} src={loggedUser.avatar} name={loggedUser.displayName} />
-                <h1>{loggedUser.displayName}</h1>
-                <p className="email">{loggedUser.email}</p>
-                {
-                    loggedUser.accountType !== "STUDENT" ? (
-                        <p className="type">{loggedUser.accountType}</p>
-                    ) : null
-                }
-                <div className="buttons">
-                    <Button type={ButtonType.SECONDARY} text="Změnit theme" icon="/images/icons/brush.svg" onClick={ () => toggleWebTheme() } />
-                    <Button type={ButtonType.PRIMARY} text="Odhlásit" icon="/images/icons/door.svg" onClick={() => logout(setLoggedUser) } />
-                </div>
-            </div>
+            {
+                selectedTab === Tab.OVERVIEW ? (
+                    <OverviewTab />
+                ) : selectedTab === Tab.SETTINGS ? (
+                    <SettingsTab />
+                ) : null
+            }
         </AppLayout>
     )
 }
