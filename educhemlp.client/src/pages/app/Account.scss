@@ -37,9 +37,10 @@
 
     .settingstab-flex {
         display: flex;
-        gap: 16px;
+        gap: 64px;
         margin-top: 48px;
         justify-content: space-between;
+        flex-wrap: wrap;
 
         .nadpis {
             font-size: 20px;
@@ -110,9 +111,9 @@
                         }
 
                         >.button {
-                            width: 16px;
-                            height: 16px;
-                            mask-image: url('../../../public/images/icons/arrowhead_single_left.svg');
+                            width: 12px;
+                            height: 12px;
+                            mask-image: url('../../../public/images/icons/plus.svg');
                             mask-size: cover;
                             mask-repeat: no-repeat;
                             background-color: var(--text-color-darker);
@@ -129,6 +130,113 @@
                         }
                     }
 
+                }
+            }
+        }
+
+        >.middle {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            .nadpis {
+                margin-bottom: 0;
+            }
+
+            .pair {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                align-items: start;
+
+                input,select {
+                    width: 100%;
+                }
+            }
+
+            .buttons {
+                display: flex;
+                gap: 16px;
+                margin-top: 16px;
+
+                button {
+                    width: 100%;
+                }
+            }
+        }
+
+        >.right {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 64px 96px;
+
+            .nadpis {
+                margin-bottom: 0;
+            }
+
+            >.texts {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+
+                .pair {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    align-items: start;
+
+                    input,select {
+                        width: 100%;
+                    }
+                }
+
+                .buttons {
+                    display: flex;
+                    gap: 16px;
+                    margin-top: 16px;
+                }
+            }
+
+            >.avatar-edit {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+
+                >.buttons {
+                    display: flex;
+                    gap: 8px;
+                    justify-content: center;
+                    width: 130px;
+                    margin: 0 auto;
+
+                    >div {
+                        box-sizing: content-box;
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 12px;
+                        background-color: var(--element-bg);
+                        border: 1px solid var(--element-bg-colored);
+                        padding: 12px;
+                        cursor: pointer;
+                        position: relative;
+                        transition-duration: 0.3s;
+
+                        &:hover {
+                            background-color: var(--element-bg-colored);
+                            transition-duration: 0.3s;
+                        }
+
+                        &::before {
+                            content: '';
+                            display: block;
+                            width: 100%;
+                            height: 100%;
+                            mask-image: var(--m);
+                            background-color: var(--text-color-secondary);
+                            mask-size: cover;
+                            mask-repeat: no-repeat;
+                        }
+                    }
                 }
             }
         }

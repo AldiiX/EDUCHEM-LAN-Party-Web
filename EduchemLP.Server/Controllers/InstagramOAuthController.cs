@@ -33,7 +33,7 @@ public class InstagramOAuthController : Controller {
         var response = await client.PostAsync("https://api.instagram.com/oauth/access_token", content);
         var body = JsonNode.Parse(await response.Content.ReadAsStringAsync());
 
-        Console.WriteLine("Instagram OAuth Response: " + body?.ToJsonString());
+        //Console.WriteLine("Instagram OAuth Response: " + body?.ToJsonString());
 
         var accessToken = body?["access_token"]?.ToString();
         var userId = body?["user_id"]?.ToString();

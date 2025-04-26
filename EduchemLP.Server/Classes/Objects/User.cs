@@ -197,6 +197,7 @@ public partial class User {
         // zjisteni veci podle Discordu
         UserAccessToken? discordToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.DISCORD);
         UserAccessToken? googleToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.GOOGLE);
+        UserAccessToken? githubToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.GITHUB);
 
         // google
         if (googleToken != null) {
@@ -211,6 +212,22 @@ public partial class User {
 
             //Console.WriteLine("Google User Info: " + userInfo?.ToJsonString());
             newAvatarLink = userInfo?["picture"]?.ToString();
+        }
+
+        // github
+        else if (githubToken != null) {
+            var client = new HttpClient();
+            var accessToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.GITHUB)?.AccessToken;
+            if (accessToken == null) return;
+
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+            client.DefaultRequestHeaders.Add("User-Agent", "EDUCHEM LAN Party");
+
+            var response = await client.GetAsync("https://api.github.com/user");
+            var content = JsonNode.Parse(await response.Content.ReadAsStringAsync());
+            //Console.WriteLine("UpdateAvatarByConnectedPlatform: " + content?.ToJsonString());
+
+            newAvatarLink = content?["avatar_url"]?.ToString();
         }
 
         // discord
@@ -483,7 +500,7 @@ public partial class User {
             return googleAccessToken.AccessToken;
 
         // Jiná chyba při ověřování access tokenu
-        Console.WriteLine("Unexpected status code when checking Google token: " + testResponse.StatusCode);
+        //Console.WriteLine("Unexpected status code when checking Google token: " + testResponse.StatusCode);
         return null;
     }
 }

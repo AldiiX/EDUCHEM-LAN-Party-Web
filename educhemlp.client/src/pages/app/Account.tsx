@@ -1,4 +1,4 @@
-import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
+import {AppLayout} from "./AppLayout.tsx";
 import "./Account.scss";
 import React, {CSSProperties, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
@@ -7,17 +7,18 @@ import {Avatar} from "../../components/Avatar.tsx";
 import {logout, toggleWebTheme} from "../../utils.ts";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
-import {create, StoreApi, UseBoundStore} from "zustand";
+import {create} from "zustand";
 import {TabSelects} from "../../components/TabSelects.tsx";
-import {BasicAPIResponse, LoggedUser} from "../../interfaces.ts";
+import {LoggedUser} from "../../interfaces.ts";
 import {ModalDestructive} from "../../components/modals/ModalDestructive.tsx";
 import {toast} from "react-toastify";
 
 
 // store
-const useAccountStore: UseBoundStore<StoreApi<any>> = create((set) => ({
-    selectedTab: Tab.OVERVIEW,
-    setSelectedTab: (tab: Tab) => set({ selectedTab: tab }),
+interface AccountStore {
+}
+
+const useAccountStore = create<AccountStore>((set) => ({
 }));
 
 
@@ -43,6 +44,15 @@ const SettingsTab = () => {
 
     const [modalEnabled, setModalEnabled] = useState(false);
     const [modalSelectedPlatform, setModalSelectedPlatform] = useState("");
+
+    const [userAvatar, setUserAvatar] = useState<string | null>(null);
+
+
+    useEffect(() => {
+        if (loggedUser) {
+            setUserAvatar(loggedUser.avatar);
+        }
+    }, [loggedUser]);
 
 
     interface Platform {
@@ -81,6 +91,7 @@ const SettingsTab = () => {
     // nastaveni linku itemu
     const discord = platforms.find(l => l.id === "discord");
     const google = platforms.find(l => l.id === "google");
+    const github = platforms.find(l => l.id === "github");
 
     if (discord) {
         if (window.location.hostname === "localhost") {
@@ -95,6 +106,14 @@ const SettingsTab = () => {
             google.authLink = "https://accounts.google.com/o/oauth2/v2/auth?client_id=772644450521-bf77npvasajiq98f16kf5gjjehi829go.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A3154%2F_be%2Fgoogle%2Foauth&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=consent";
         } else {
             google.authLink = "https://accounts.google.com/o/oauth2/v2/auth?client_id=772644450521-bf77npvasajiq98f16kf5gjjehi829go.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Feduchemlan.emsio.cz%2F_be%2Fgoogle%2Foauth&response_type=code&scope=openid%20email%20profile&access_type=offline&prompt=consent";
+        }
+    }
+
+    if(github) {
+        if (window.location.hostname === "localhost") {
+            github.authLink = "https://github.com/login/oauth/authorize?client_id=Ov23lizqvCi4jOHJ0gZN&redirect_uri=http://localhost:3154/_be/github/oauth&scope=read:user%20user:email";
+        } else {
+            github.authLink = "https://github.com/login/oauth/authorize?client_id=Ov23liJJaDd7e0gn3drQ&redirect_uri=https://educhemlan.emsio.cz/_be/github/oauth&scope=read:user%20user:email";
         }
     }
 
@@ -178,7 +197,16 @@ const SettingsTab = () => {
                                     <div className="content">
                                         <div className="icon" style={{ "--icon": `url(${item.icon})` } as CSSProperties }></div>
                                         <p>{item.name}</p>
-                                        <a className="button" href={handleClickPlatform(item) ?? ""}></a>
+                                        <div
+                                            className="button"
+                                            onClick={() => {
+                                                const link = handleClickPlatform(item);
+                                                if (link) {
+                                                    window.location.href = link;
+                                                }
+                                            }}
+                                        ></div>
+
                                     </div>
                                 </div>
                             ))
@@ -186,8 +214,78 @@ const SettingsTab = () => {
                     </div>
                 </div>
 
+                <div className="middle">
+                    <p className="nadpis">Změna hesla</p>
+
+                    <div className="pair">
+                        <p>Staré heslo</p>
+                        <input type="password" />
+                    </div>
+
+                    <div className="pair">
+                        <p>Nové heslo</p>
+                        <input type="password" />
+                    </div>
+
+                    <div className="pair">
+                        <p>Nové heslo potvrzení</p>
+                        <input type="password" />
+                    </div>
+
+                    <div className="buttons">
+                        <Button type={ButtonType.PRIMARY} text="Uložit změny" />
+                    </div>
+                </div>
+
                 <div className="right">
-                    <p className="nadpis">Editace profilu</p>
+                    <div className="texts">
+                        <p className="nadpis">Editace profilu</p>
+
+                        <div className="pair">
+                            <p>Jméno</p>
+                            <input type="text" disabled value={loggedUser.displayName}/>
+                        </div>
+
+                        <div className="pair">
+                            <p>Email</p>
+                            <input type="text" disabled value={loggedUser.email}/>
+                        </div>
+
+                        <div className="pair">
+                            <p>Třída</p>
+                            <input type="text" disabled value={loggedUser.class ?? "Žádná"}/>
+                        </div>
+
+                        <div className="pair">
+                            <p>Pohlaví</p>
+                            <select name="gender" defaultValue={loggedUser?.gender ?? "NULL"}>
+                                <option value="MALE">Muž</option>
+                                <option value="FEMALE">Žena</option>
+                                <option value="OTHER">Ostatní</option>
+                                <option value="OTHER">Tank</option>
+                                <option value="OTHER">Helikoptéra</option>
+                                <option value="OTHER">Tatarka</option>
+                                <option value="OTHER">Vesmírná loď</option>
+                                <option value="OTHER">Drak</option>
+                                <option value="OTHER">Čajová konvice</option>
+                                <option value="OTHER">Kobliha</option>
+                                <option value="NULL">Neurčeno</option>
+                            </select>
+                        </div>
+
+                        <div className="buttons">
+                            <Button type={ButtonType.SECONDARY} text="Zrušit změny" />
+                            <Button type={ButtonType.PRIMARY} text="Uložit změny" />
+                        </div>
+                    </div>
+
+                    <div className="avatar-edit">
+                        <Avatar size={"248px"} src={userAvatar} name={loggedUser.displayName} />
+                        <div className="buttons">
+                            <div className="edit" style={{ '--m': 'url(/images/icons/brush.svg)'} as CSSProperties} title="Upravit"></div>
+                            <div className="delete" style={{ '--m': 'url(/images/icons/trash.svg)'} as CSSProperties} title="Smazat" onClick={() => setUserAvatar(null) }></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </>
@@ -230,10 +328,10 @@ const OverviewTab = () => {
 
 export const Account = () => {
     const navigate = useNavigate();
-    const { loggedUser, setLoggedUser } = useStore();
-    const { userAuthed, setUserAuthed } = useStore();
-    const selectedTab: Tab = useAccountStore((state) => state.selectedTab);
-    const setSelectedTab = useAccountStore((state) => state.setSelectedTab);
+    const userAuthed = useStore((state) => state.userAuthed);
+    const loggedUser = useStore((state) => state.loggedUser);
+    const setLoggedUser = useStore((state) => state.setLoggedUser);
+    const [selectedTab, setSelectedTab] = useState(Tab.OVERVIEW);
 
 
     // kontrola přihlášení
@@ -242,7 +340,7 @@ export const Account = () => {
         if (userAuthed && !loggedUser) {
             navigate("/app");
         }
-    }, [userAuthed, navigate]);
+    }, [userAuthed, navigate, loggedUser]);
 
     /*useEffect(() => { // TODO: udělat
         // zjisteni query parametru, podle toho se nastavi tab
@@ -257,13 +355,12 @@ export const Account = () => {
 
 
     if (!userAuthed || (userAuthed && !loggedUser)) {
-        navigate("/app");
         return null;
     }
 
     return (
         <AppLayout className="page-account" titleBarText="Můj účet">
-            <TabSelects values={[Tab.OVERVIEW.valueOf(), Tab.SETTINGS.valueOf()]} defaultValue={selectedTab.valueOf()} onChange={(newVal: string) => setSelectedTab(newVal) } />
+            <TabSelects values={[Tab.OVERVIEW.valueOf(), Tab.SETTINGS.valueOf()]} value={selectedTab} defaultValue={Tab.OVERVIEW} onChange={(newVal: string) => setSelectedTab(newVal as any) } />
 
             {
                 selectedTab === Tab.OVERVIEW ? (

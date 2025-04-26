@@ -250,6 +250,13 @@ input, select, textarea {
     &:focus, &:focus-visible {
         outline: none;
     }
+
+    &:disabled {
+        color: var(--text-color-3);
+        //border: 1px solid var(--text-color-3);
+        cursor: not-allowed;
+        user-select: none;
+    }
 }
 
 

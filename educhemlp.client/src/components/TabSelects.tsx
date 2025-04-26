@@ -5,13 +5,12 @@ type TabSelectsProps = {
     defaultValue?: string | null;
     values: string[];
     onChange?: (value: string) => void;
+    value: string
 };
 
-export const TabSelects: React.FC<TabSelectsProps> = ({ defaultValue, values, onChange }) => {
-    const [selectedItem, setSelectedItem] = useState(defaultValue);
+export const TabSelects: React.FC<TabSelectsProps> = ({ value, defaultValue, values, onChange }) => {
 
     const handleClick = (item: string) => {
-        setSelectedItem(item);
         if (onChange) {
             onChange(item);
         }
@@ -23,7 +22,7 @@ export const TabSelects: React.FC<TabSelectsProps> = ({ defaultValue, values, on
                 <p
                     key={index}
                     onClick={() => handleClick(item)}
-                    className={selectedItem === item ? style.active : ""}
+                    className={value === item ? style.active : ""}
                 >
                     {item}
                 </p>
