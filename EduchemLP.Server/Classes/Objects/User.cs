@@ -1,6 +1,8 @@
 ﻿using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using EduchemLP.Server.Controllers;
 using EduchemLP.Server.Models;
 using EduchemLP.Server.Services;
 using MySql.Data.MySqlClient;
@@ -10,7 +12,7 @@ namespace EduchemLP.Server.Classes.Objects;
 
 
 
-public class User {
+public partial class User {
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum UserGender { MALE, FEMALE, OTHER}
 
@@ -24,7 +26,7 @@ public class User {
 
 
     [JsonConstructor]
-    private User(int id, string displayName, string email, string password, string? @class, UserAccountType accountType, DateTime lastUpdated, UserGender? gender, string? avatar) {
+    private User(int id, string displayName, string email, string password, string? @class, UserAccountType accountType, DateTime lastUpdated, UserGender? gender, string? avatar, List<UserAccessToken>? accessTokens) {
         ID = id;
         DisplayName = displayName;
         Class = @class;
@@ -34,6 +36,7 @@ public class User {
         LastUpdated = lastUpdated;
         Avatar = avatar;
         Gender = gender;
+        AccessTokens = accessTokens ?? [];
     }
 
     private User(MySqlDataReader reader) : this(
@@ -45,7 +48,8 @@ public class User {
         Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
         reader.GetDateTime("last_updated"),
         Enum.TryParse<UserGender>(reader.GetStringOrNull("gender"), out var _g ) ? _g : null,
-        reader.GetStringOrNull("avatar")
+        reader.GetStringOrNull("avatar"),
+        JsonSerializer.Deserialize<List<UserAccessToken>>(reader.GetString("access_tokens"), JsonSerializerOptions.Web) ?? []
     ){}
 
 
@@ -59,6 +63,7 @@ public class User {
     public UserAccountType AccountType { get; private set; }
     public DateTime LastUpdated { get; private set; }
     public UserGender? Gender { get; private set; }
+    public List<UserAccessToken> AccessTokens { get; private set; } = [];
 
 
 
@@ -67,9 +72,32 @@ public class User {
     public static async Task<User?> GetByIdAsync(int id) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
-        const string query = "SELECT * FROM `users` WHERE `id` = @id";
+
+        const string query = """
+            SELECT 
+                u.*,
+                COALESCE(
+                    (
+                        SELECT JSON_ARRAYAGG(
+                            JSON_OBJECT(
+                                'userId', at.user_id,
+                                'platform', at.platform,
+                                'accessToken', at.access_token,
+                                'refreshToken', at.refresh_token,
+                                'type', at.token_type
+                            )
+                        )
+                        FROM users_access_tokens at
+                        WHERE at.user_id = u.id
+                    ),
+                    JSON_ARRAY()
+                ) AS access_tokens
+            FROM users u
+            WHERE `id` = @id
+        """;
         await using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@id", id);
+
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if (reader == null || !reader.Read()) return null;
 
@@ -78,11 +106,33 @@ public class User {
         return user;
     }
 
-    public static async Task<User?> AuthAsync(string email, string hashedPassword) {
+    public static async Task<User?> AuthAsync(string email, string hashedPassword, bool updateUserByConnectedPlatforms = false) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
 
-        const string query = "SELECT * FROM `users` WHERE `email` = @email AND `password` = @password";
+        const string query =
+        """
+            SELECT 
+                u.*,
+                COALESCE(
+                    (
+                        SELECT JSON_ARRAYAGG(
+                            JSON_OBJECT(
+                                'userId', at.user_id,
+                                'platform', at.platform,
+                                'accessToken', at.access_token,
+                                'refreshToken', at.refresh_token,
+                                'type', at.token_type
+                            )
+                        )
+                        FROM users_access_tokens at
+                        WHERE at.user_id = u.id
+                    ),
+                    JSON_ARRAY()
+                ) AS access_tokens
+            FROM `users` u 
+            WHERE `email` = @email AND `password` = @password
+        """;
         await using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@email", email);
         cmd.Parameters.AddWithValue("@password", hashedPassword);
@@ -94,16 +144,18 @@ public class User {
 
         // aktualizace posledního přihlášení
         _ = UpdateLastLoggedInAsync(user.ID);
+        if(updateUserByConnectedPlatforms) _ = user.UpdateAvatarByConnectedPlatform();
 
         // dalsi nastaveni
         var httpContext = HttpContextService.Current;
         httpContext.Session.SetObject("loggeduser", user);
         httpContext.Items["loggeduser"] = user;
 
+        //Console.WriteLine(user.ToJsonString());
         return user;
     }
 
-    public static User? Auth(in string email, in string hashedPassword) => AuthAsync(email, hashedPassword).Result;
+    public static User? Auth(in string email, in string hashedPassword, in bool updateUserByConnectedPlatforms = false) => AuthAsync(email, hashedPassword, updateUserByConnectedPlatforms).Result;
 
     public static async Task<List<User?>> GetAllAsync() {
         await using var conn = await Database.GetConnectionAsync();
@@ -132,6 +184,50 @@ public class User {
         await using var cmd = new MySqlCommand(updateQuery, conn);
         cmd.Parameters.AddWithValue("@now", DateTime.Now);
         cmd.Parameters.AddWithValue("@id", id);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task UpdateAvatarByConnectedPlatform() {
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return;
+
+        // novy avatar
+        string? newAvatarLink = null;
+
+        // zjisteni veci podle Discordu
+        UserAccessToken? discordToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.DISCORD);
+
+        if (discordToken != null) {
+            var client = new HttpClient();
+            var accessToken = await GenerateDiscordAccessTokenAsync();
+            if (accessToken == null) return;
+
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await client.GetAsync("https://discord.com/api/users/@me");
+            var content = JsonNode.Parse(await response.Content.ReadAsStringAsync());
+            //Console.WriteLine("UpdateAvatarByConnectedPlatform: " + content?.ToJsonString());
+
+            // ziskani avataru
+            var avatarId = content?["avatar"]?.ToString();
+            var avatarHash = content?["discriminator"]?.ToString();
+            var accountId = content?["id"]?.ToString();
+
+            if (avatarId != null && avatarHash != null) {
+                newAvatarLink = "https://cdn.discordapp.com/avatars/" + accountId + "/" + avatarId + ".png?size=256";
+            }
+        }
+
+        const string updateQuery =
+            """
+            UPDATE users 
+            SET 
+                avatar = IF(@avatar IS NULL, avatar, @avatar)
+            WHERE id = @id
+            """;
+        await using var cmd = new MySqlCommand(updateQuery, conn);
+        cmd.Parameters.AddWithValue("@id", ID);
+        cmd.Parameters.AddWithValue("@avatar", newAvatarLink);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -178,5 +274,66 @@ public class User {
 
     public override string ToString() {
         return JsonSerializer.Serialize(this, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+    }
+
+
+
+
+
+    // platofmove veci
+    public async Task<string?> GenerateDiscordAccessTokenAsync() {
+        var discordAccessToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.DISCORD);
+        if (discordAccessToken is null) return null;
+
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", discordAccessToken.AccessToken);
+
+        // zjištění platnosti tokenu
+        var testRequest = await client.GetAsync("https://discord.com/api/users/@me");
+
+        // když je token neplatný - přegeneruje se
+        if (testRequest.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
+            var refreshClient = new HttpClient();
+            var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "https://discord.com/api/oauth2/token");
+
+            refreshRequest.Content = new FormUrlEncodedContent(new Dictionary<string, string> {
+                { "client_id", Program.ENV["DISCORD_CLIENT_ID"] },
+                { "client_secret", Program.ENV["DISCORD_CLIENT_SECRET"] },
+                { "grant_type", "refresh_token" },
+                { "refresh_token", discordAccessToken.RefreshToken },
+                { "redirect_uri", DiscordOAuthController.REDIRECT_URI }
+            });
+
+            var refreshResponse = await refreshClient.SendAsync(refreshRequest);
+            var refreshContent = JsonNode.Parse(await refreshResponse.Content.ReadAsStringAsync());
+            //Console.WriteLine("Token refresh response: " + refreshContent?.ToJsonString());
+
+            if (refreshContent == null || refreshContent["access_token"] == null || refreshContent["refresh_token"] == null)
+                return null;
+
+
+            // update v db
+            const string updateQuery = """
+                UPDATE users_access_tokens 
+                SET 
+                    access_token = @accessToken,
+                    refresh_token = @refreshToken
+                WHERE user_id = @userId AND platform = @platform
+            """;
+
+            await using var conn = await Database.GetConnectionAsync();
+            if (conn == null) return null;
+
+            await using var cmd = new MySqlCommand(updateQuery, conn);
+            cmd.Parameters.AddWithValue("@userId", ID);
+            cmd.Parameters.AddWithValue("@platform", UserAccessToken.UserAccessTokenPlatform.DISCORD.ToString().ToUpper());
+            cmd.Parameters.AddWithValue("@accessToken", refreshContent["access_token"]?.ToString());
+            cmd.Parameters.AddWithValue("@refreshToken", refreshContent["refresh_token"]?.ToString());
+            await cmd.ExecuteNonQueryAsync();
+
+            return refreshContent["access_token"]?.ToString();
+        }
+
+        return testRequest.IsSuccessStatusCode ? discordAccessToken.AccessToken : null;
     }
 }

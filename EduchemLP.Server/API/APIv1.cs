@@ -25,18 +25,73 @@ public class APIv1 : Controller {
     [HttpGet("loggeduser")]
     public IActionResult GetLoggedUser() {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
         var obj = new JsonObject {
-            ["id"] = acc?.ID,
-            ["displayName"] = acc?.DisplayName,
-            ["email"] = acc?.Email,
-            ["class"] = acc?.Class,
-            ["accountType"] = acc?.AccountType.ToString().ToUpper(),
-            ["lastUpdated"] = acc?.LastUpdated,
-            ["avatar"] = acc?.Avatar,
-            ["gender"] = acc?.Gender?.ToString().ToUpper(),
+            ["id"] = acc.ID,
+            ["displayName"] = acc.DisplayName,
+            ["email"] = acc.Email,
+            ["class"] = acc.Class,
+            ["accountType"] = acc.AccountType.ToString().ToUpper(),
+            ["lastUpdated"] = acc.LastUpdated,
+            ["avatar"] = acc.Avatar,
+            ["gender"] = acc.Gender?.ToString().ToUpper(),
         };
 
-        return acc == null ? new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" }) : new JsonResult(obj);
+        // přidání connections
+        var arr = new JsonArray();
+
+        foreach (var token in acc.AccessTokens) {
+            arr.Add(token.Platform.ToString().ToUpper());
+        }
+
+        obj["connections"] = arr;
+
+
+
+        // vraceni json objektu
+        return new JsonResult(obj);
+    }
+
+    [HttpGet("loggeduser/connections")]
+    public IActionResult GetLoggedUserConnections() {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if (acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
+
+        var arr = new JsonArray();
+
+        foreach (var token in acc.AccessTokens) {
+            arr.Add(token.Platform.ToString().ToUpper());
+        }
+
+        return new JsonResult(arr);
+    }
+
+    [HttpDelete("loggeduser/connections")]
+    public IActionResult DeleteLoggedUserConnection([FromBody] Dictionary<string, object?> data) {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if (acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
+        // overeni parametru
+        string? p = data.TryGetValue("platform", out var _p) ? _p?.ToString() : null;
+        if (Enum.TryParse(p?.ToUpper(), out User.UserAccessToken.UserAccessTokenPlatform platform)) return new BadRequestObjectResult(new { success = false, message = "Neplatná platforma" });
+
+
+
+        // zapsani do db
+        using var conn = Database.GetConnection();
+        if (conn == null) return new StatusCodeResult(500);
+        var command = new MySqlCommand(
+            """
+            DELETE FROM users_access_tokens WHERE platform=@platform AND user_id=@userId;
+            """, conn
+        );
+
+        command.Parameters.AddWithValue("@platform", platform.ToString());
+        command.Parameters.AddWithValue("@userId", acc.ID);
+
+        return command.ExecuteNonQuery() > 0 ? new NoContentResult() : new JsonResult(new { success = false, message = "Nepodařilo se odstranit připojení." }) { StatusCode = 500 };
     }
 
     [HttpPost("loggeduser")]
@@ -50,7 +105,7 @@ public class APIv1 : Controller {
             email = email.Trim() + "@educhem.cz";
         }
 
-        var acc = Auth.AuthUser(email, Utilities.EncryptPassword(password));
+        var acc = Auth.AuthUser(email, Utilities.EncryptPassword(password), true);
         if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Neplatný email nebo heslo" });
 
         var obj = new JsonObject {

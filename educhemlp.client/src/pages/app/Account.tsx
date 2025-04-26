@@ -1,6 +1,6 @@
 import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
 import "./Account.scss";
-import React, {useEffect} from "react";
+import React, {CSSProperties, useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
@@ -9,6 +9,9 @@ import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
 import {create, StoreApi, UseBoundStore} from "zustand";
 import {TabSelects} from "../../components/TabSelects.tsx";
+import {BasicAPIResponse, LoggedUser} from "../../interfaces.ts";
+import {ModalDestructive} from "../../components/modals/ModalDestructive.tsx";
+import {toast} from "react-toastify";
 
 
 // store
@@ -35,6 +38,13 @@ enum Tab {
 
 
 const SettingsTab = () => {
+    const loggedUser: LoggedUser = useStore((state) => state.loggedUser);
+    const setLoggedUser = useStore((state) => state.setLoggedUser);
+
+    const [modalEnabled, setModalEnabled] = useState(false);
+    const [modalSelectedPlatform, setModalSelectedPlatform] = useState("");
+
+
     const items = [
         {
             id: "ig",
@@ -66,32 +76,85 @@ const SettingsTab = () => {
         }
     }
 
+    function removePlatform(platform: string) {
+        fetch(`/api/v1/loggeduser/connections/`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                p: platform,
+            }),
+        }).then(async (res) => {
+            if(!res.ok) {
+                const data = await res.json();
+                console.error("Chyba při odpojování platformy: ", data.message);
+                toast.error(`Chyba při odpojování platformy ${platform}: ${data.message}`);
+                return;
+            }
+
+            toast.success(`Úspěšně odpojena platforma ${platform}`);
+            setModalEnabled(false);
+            setModalSelectedPlatform("");
+
+            // aktualizace uživatelského účtu
+            const updatedUser: LoggedUser = await fetch("/api/v1/loggeduser").then(res => res.json());
+            setLoggedUser(updatedUser);
+        })
+    }
+
 
 
     return (
-        <div className="settingstab-flex">
-            <div className="left">
-                <p className="nadpis">Propojení</p>
+        <>
+            <ModalDestructive
+                title={"Potvrzení odpojení"}
+                description={`Opravdu chceš odpojit platformu ${modalSelectedPlatform}? Tvůj ${modalSelectedPlatform} účet se přestane synchronizovat s tímto účtem.`}
+                onClose={() => setModalEnabled(false)}
+                enabled={modalEnabled}
+                yesAction={() => removePlatform(modalSelectedPlatform) }
+            />
 
-                <div className="items">
-                    {
-                        items.map((item, index) => (
-                            <div className="item" key={index}>
-                                <div className="content">
-                                    <div className="icon"></div>
-                                    <p>{item.name}</p>
-                                    <div className="button" onClick={() => { if(item.authLink) location.href = item.authLink }}></div>
+            <div className="settingstab-flex">
+                <div className="left">
+                    <p className="nadpis">Propojení</p>
+
+                    <div className="items">
+                        {
+                            items.sort((a,b) => {
+                                if (loggedUser.connections?.includes(a.id.toUpperCase()) && !loggedUser.connections?.includes(b.id.toUpperCase())) {
+                                    return -1;
+                                } else if (!loggedUser.connections?.includes(a.id.toUpperCase()) && loggedUser.connections?.includes(b.id.toUpperCase())) {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            }).map((item, index) => (
+                                <div className={"item" + " " + (loggedUser.connections?.includes(item.id.toUpperCase()) ? "active" : "")} key={index}>
+                                    <div className="content">
+                                        <div className="icon" style={{ "--icon": `url(${item.icon})` } as CSSProperties }></div>
+                                        <p>{item.name}</p>
+                                        <div className="button" onClick={() => {
+                                            if(loggedUser.connections?.includes(item.id.toUpperCase())) {
+                                                setModalSelectedPlatform(item.name);
+                                                setModalEnabled(true);
+                                                return;
+                                            }
+
+                                            if(item.authLink) location.href = item.authLink
+                                        }}></div>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
-                    }
+                            ))
+                        }
+                    </div>
+                </div>
+
+                <div className="right">
+                    <p>Editace profilu</p>
                 </div>
             </div>
-
-            <div className="right">
-                <p>Editace profilu</p>
-            </div>
-        </div>
+        </>
     )
 }
 

@@ -9,6 +9,7 @@ export type LoggedUser = {
     accountType: AccountType,
     gender: AccountGender | null,
     avatar: string | null,
+    connections: string[] | null,
 }
 
 /*

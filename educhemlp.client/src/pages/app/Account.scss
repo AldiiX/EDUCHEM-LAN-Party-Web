@@ -45,7 +45,6 @@
             >.nadpis {
                 font-size: 20px;
                 font-weight: 600;
-                color: var(--text-color-secondary);
                 margin-bottom: 16px;
             }
 
@@ -58,6 +57,31 @@
                         border-bottom: 1px solid var(--text-color-3);
                     }
 
+                    &:is(.active) {
+                        >.content {
+                            >p {
+                                color: var(--accent-color);
+                                pointer-events: none;
+                                transition-duration: 0.2s;
+                                box-shadow: none;
+                            }
+
+                            >.icon {
+                                background-color: var(--accent-color);
+                                border: 1px solid transparent;
+
+                                &::before {
+                                    background-color: var(--accent-color-text);
+                                }
+                            }
+
+                            >.button {
+                                mask-image: url('../../../public/images/icons/trash.svg');
+                                rotate: 0deg;
+                            }
+                        }
+                    }
+
                     >.content {
                         width: 300px;
                         display: flex;
@@ -65,27 +89,29 @@
                         gap: 24px;
                         align-items: center;
 
-                        &:is(.active) {
-                            >p {
-                                background-color: var(--element-bg-colored);
-                                color: var(--accent-color);
-                                pointer-events: none;
-                                transition-duration: 0.2s;
-                                box-shadow: none;
-                            }
-                        }
-
                         >.icon {
                             width: 48px;
                             height: 48px;
-                            border-radius: 4px;
+                            border-radius: 8px;
                             border: 1px solid var(--text-color-3);
+
+                            &::before {
+                                content: '';
+                                display: block;
+                                width: 100%;
+                                height: 100%;
+                                mask-image: var(--icon);
+                                mask-size: 60%;
+                                mask-position: center;
+                                mask-repeat: no-repeat;
+                                background-color: var(--text-color-secondary);
+                            }
                         }
 
                         >.button {
                             width: 16px;
                             height: 16px;
-                            mask-image: url('../../../public/images/icons/arrowhead_left.svg');
+                            mask-image: url('../../../public/images/icons/arrowhead_single_left.svg');
                             mask-size: cover;
                             mask-repeat: no-repeat;
                             background-color: var(--text-color-3);
@@ -98,7 +124,6 @@
                             font-weight: 600;
                             border-radius: 8px;
                             color: var(--text-color-secondary);
-                            box-shadow: 0 0 6px rgba(0, 0, 0, 0.025);
                             transition-duration: 0.2s;
                         }
                     }

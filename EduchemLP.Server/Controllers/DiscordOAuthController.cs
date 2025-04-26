@@ -1,5 +1,7 @@
+using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using Microsoft.AspNetCore.Mvc;
+using MySql.Data.MySqlClient;
 
 namespace EduchemLP.Server.Controllers;
 
@@ -8,15 +10,18 @@ namespace EduchemLP.Server.Controllers;
 public class DiscordOAuthController : Controller {
 
     #if DEBUG
-        private const string REDIRECT_URI = "http://localhost:3154/_be/discord/oauth";
+        public const string REDIRECT_URI = "http://localhost:3154/_be/discord/oauth";
     #else
-        private const string REDIRECT_URI = "https://educhemlan.emsio.cz/_be/discord/oauth";
+        public const string REDIRECT_URI = "https://educhemlan.emsio.cz/_be/discord/oauth";
     #endif
 
 
     [HttpGet]
     public IActionResult Index([FromQuery] string code) {
-        Console.WriteLine(code);
+        var account = Utilities.GetLoggedAccountFromContextOrNull();
+        if (account == null) return RedirectPermanent("/login");
+
+
 
         // ziskani tokenu z codu
         using var client = new HttpClient();
@@ -31,9 +36,29 @@ public class DiscordOAuthController : Controller {
         });
 
         using var response = client.SendAsync(request).Result;
-        var body = response.Content.ReadAsStringAsync().Result;
-        Console.WriteLine(body);
+        var body = JsonNode.Parse(response.Content.ReadAsStringAsync().Result);
 
+
+        // zapsani do db
+        using var conn = Database.GetConnection();
+        if (conn == null) return RedirectPermanent("/app/account");
+
+        using var cmd = new MySqlCommand(
+            """
+                    DELETE FROM users_access_tokens WHERE platform = 'DISCORD' AND user_id = @userId;
+
+                    INSERT INTO 
+                        users_access_tokens (user_id, platform, access_token, refresh_token, token_type) 
+                        VALUES (@userId, 'DISCORD', @accessToken, @refreshToken, 'BEARER');
+                    """,
+        conn);
+
+        cmd.Parameters.AddWithValue("@userId", account.ID );
+        cmd.Parameters.AddWithValue("@accessToken", body?["access_token"]?.ToString());
+        cmd.Parameters.AddWithValue("@refreshToken", body?["refresh_token"]?.ToString());
+        cmd.ExecuteNonQuery();
+
+        _ = account.UpdateAvatarByConnectedPlatform();
 
         return RedirectPermanent("/app/account");
     }
