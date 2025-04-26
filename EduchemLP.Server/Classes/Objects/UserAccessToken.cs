@@ -15,6 +15,7 @@ public partial class User {
             FACEBOOK,
             TWITTER,
             GITHUB,
+            INSTAGRAM
         }
 
         public enum UserAccessTokenType {

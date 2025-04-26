@@ -41,12 +41,13 @@
         margin-top: 48px;
         justify-content: space-between;
 
+        .nadpis {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
         >.left {
-            >.nadpis {
-                font-size: 20px;
-                font-weight: 600;
-                margin-bottom: 16px;
-            }
 
             >.items {
                 display: grid;
@@ -114,7 +115,7 @@
                             mask-image: url('../../../public/images/icons/arrowhead_single_left.svg');
                             mask-size: cover;
                             mask-repeat: no-repeat;
-                            background-color: var(--text-color-3);
+                            background-color: var(--text-color-darker);
                             rotate: 180deg;
                             cursor: pointer;
                             margin-left: auto;

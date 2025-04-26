@@ -74,22 +74,24 @@ public class APIv1 : Controller {
         if (acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
 
         // overeni parametru
-        string? p = data.TryGetValue("platform", out var _p) ? _p?.ToString() : null;
-        if (Enum.TryParse(p?.ToUpper(), out User.UserAccessToken.UserAccessTokenPlatform platform)) return new BadRequestObjectResult(new { success = false, message = "Neplatná platforma" });
+        string? p = data.TryGetValue("platform", out var _p) ? _p?.ToString()?.ToUpper() : null;
+        if (p == null || !Enum.TryParse(p.ToUpper(), out User.UserAccessToken.UserAccessTokenPlatform platform)) return new BadRequestObjectResult(new { success = false, message = "Neplatná platforma" });
 
 
 
         // zapsani do db
         using var conn = Database.GetConnection();
         if (conn == null) return new StatusCodeResult(500);
+
         var command = new MySqlCommand(
             """
             DELETE FROM users_access_tokens WHERE platform=@platform AND user_id=@userId;
             """, conn
         );
 
-        command.Parameters.AddWithValue("@platform", platform.ToString());
+        command.Parameters.AddWithValue("@platform", platform.ToString().ToUpper());
         command.Parameters.AddWithValue("@userId", acc.ID);
+
 
         return command.ExecuteNonQuery() > 0 ? new NoContentResult() : new JsonResult(new { success = false, message = "Nepodařilo se odstranit připojení." }) { StatusCode = 500 };
     }

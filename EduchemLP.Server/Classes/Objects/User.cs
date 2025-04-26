@@ -196,8 +196,25 @@ public partial class User {
 
         // zjisteni veci podle Discordu
         UserAccessToken? discordToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.DISCORD);
+        UserAccessToken? googleToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.GOOGLE);
 
-        if (discordToken != null) {
+        // google
+        if (googleToken != null) {
+            var client = new HttpClient();
+            var accessToken = await GenerateGoogleAccessTokenAsync();
+
+            var userInfoRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v2/userinfo");
+            userInfoRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+            var userInfoResponse = await client.SendAsync(userInfoRequest);
+            var userInfo = JsonNode.Parse(await userInfoResponse.Content.ReadAsStringAsync());
+
+            //Console.WriteLine("Google User Info: " + userInfo?.ToJsonString());
+            newAvatarLink = userInfo?["picture"]?.ToString();
+        }
+
+        // discord
+        else if (discordToken != null) {
             var client = new HttpClient();
             var accessToken = await GenerateDiscordAccessTokenAsync();
             if (accessToken == null) return;
@@ -218,6 +235,9 @@ public partial class User {
             }
         }
 
+
+
+        // updatnuti v db
         const string updateQuery =
             """
             UPDATE users 
@@ -280,12 +300,15 @@ public partial class User {
 
 
 
-    // platofmove veci
-    public async Task<string?> GenerateDiscordAccessTokenAsync() {
+    // platformove veci
+    private async Task<string?> GenerateDiscordAccessTokenAsync() {
         var discordAccessToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.DISCORD);
         if (discordAccessToken is null) return null;
 
         using var client = new HttpClient();
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return null;
+
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", discordAccessToken.AccessToken);
 
         // zjištění platnosti tokenu
@@ -308,8 +331,16 @@ public partial class User {
             var refreshContent = JsonNode.Parse(await refreshResponse.Content.ReadAsStringAsync());
             //Console.WriteLine("Token refresh response: " + refreshContent?.ToJsonString());
 
-            if (refreshContent == null || refreshContent["access_token"] == null || refreshContent["refresh_token"] == null)
+            // token nebyl úspěšně obnoven, pravdepodobne uzivatel zrusil pristup, odstrani se to i z db
+            if (refreshContent == null || refreshContent["access_token"] == null || refreshContent["refresh_token"] == null) {
+                const string deleteQuery = "DELETE FROM users_access_tokens WHERE user_id = @userId AND platform = @platform";
+                await using var deleteCmd = new MySqlCommand(deleteQuery, conn);
+                deleteCmd.Parameters.AddWithValue("@userId", ID);
+                deleteCmd.Parameters.AddWithValue("@platform", UserAccessToken.UserAccessTokenPlatform.DISCORD.ToString().ToUpper());
+                await deleteCmd.ExecuteNonQueryAsync();
+
                 return null;
+            }
 
 
             // update v db
@@ -320,9 +351,6 @@ public partial class User {
                     refresh_token = @refreshToken
                 WHERE user_id = @userId AND platform = @platform
             """;
-
-            await using var conn = await Database.GetConnectionAsync();
-            if (conn == null) return null;
 
             await using var cmd = new MySqlCommand(updateQuery, conn);
             cmd.Parameters.AddWithValue("@userId", ID);
@@ -335,5 +363,127 @@ public partial class User {
         }
 
         return testRequest.IsSuccessStatusCode ? discordAccessToken.AccessToken : null;
+    }
+
+    /*public async Task<string?> GenerateInstagramAccessTokenAsync() {
+        var instagramAccessToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.INSTAGRAM);
+        if (instagramAccessToken is null) return null;
+
+        using var client = new HttpClient();
+
+        // Zkusíme volat Instagram API, abychom zjistili, jestli access token ještě platí
+        var testResponse = await client.GetAsync($"https://graph.instagram.com/me?access_token={instagramAccessToken.AccessToken}");
+
+        if (testResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
+            // Token expirovaný nebo neplatný, pokusíme se o refresh
+            Console.WriteLine("Instagram access token expired, refreshing...");
+
+            var refreshClient = new HttpClient();
+            var refreshUrl = $"https://graph.instagram.com/refresh_access_token" +
+                             $"?grant_type=ig_refresh_token" +
+                             $"&access_token={instagramAccessToken.AccessToken}";
+
+            var refreshResponse = await refreshClient.GetAsync(refreshUrl);
+            var refreshContent = JsonNode.Parse(await refreshResponse.Content.ReadAsStringAsync());
+            Console.WriteLine("Instagram token refresh response: " + refreshContent?.ToJsonString());
+
+            if (refreshContent == null || refreshContent["access_token"] == null) {
+                return null;
+            }
+
+            string newAccessToken = refreshContent["access_token"]?.ToString()!;
+
+            // Update v DB
+            const string updateQuery = """
+                UPDATE users_access_tokens 
+                SET 
+                    access_token = @accessToken
+                WHERE user_id = @userId AND platform = @platform
+            """;
+
+            await using var conn = await Database.GetConnectionAsync();
+            if (conn == null) return null;
+
+            await using var cmd = new MySqlCommand(updateQuery, conn);
+            cmd.Parameters.AddWithValue("@userId", ID);
+            cmd.Parameters.AddWithValue("@platform", UserAccessToken.UserAccessTokenPlatform.INSTAGRAM.ToString().ToUpper());
+            cmd.Parameters.AddWithValue("@accessToken", newAccessToken);
+            await cmd.ExecuteNonQueryAsync();
+
+            return newAccessToken;
+        }
+
+        if (testResponse.IsSuccessStatusCode)
+            return instagramAccessToken.AccessToken;
+
+
+        // Jiná chyba při ověřování access tokenu
+        Console.WriteLine("Unexpected status code when checking Instagram token: " + testResponse.StatusCode);
+        return null;
+    }*/
+
+    private async Task<string?> GenerateGoogleAccessTokenAsync() {
+        var googleAccessToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.GOOGLE);
+        if (googleAccessToken is null) return null;
+
+        using var client = new HttpClient();
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return null;
+
+        // Zkusíme volat Google API, abychom zjistili, jestli access token ještě platí
+        var testRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v2/userinfo");
+        testRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", googleAccessToken.AccessToken);
+
+        var testResponse = await client.SendAsync(testRequest);
+
+        if (testResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
+            var refreshClient = new HttpClient();
+            var refreshContent = new FormUrlEncodedContent(new Dictionary<string, string> {
+                { "client_id", Program.ENV["GOOGLE_CLIENT_ID"] },
+                { "client_secret", Program.ENV["GOOGLE_CLIENT_SECRET"] },
+                { "grant_type", "refresh_token" },
+                { "refresh_token", googleAccessToken.RefreshToken! }
+            });
+
+            var refreshResponse = await refreshClient.PostAsync("https://oauth2.googleapis.com/token", refreshContent);
+            var refreshData = JsonNode.Parse(await refreshResponse.Content.ReadAsStringAsync());
+            //Console.WriteLine("Google token refresh response: " + refreshData?.ToJsonString());
+
+            // token nebyl úspěšně obnoven, pravdepodobne uzivatel zrusil pristup, odstrani se to i z db
+            if (refreshData == null || refreshData["access_token"] == null) {
+                const string deleteQuery = "DELETE FROM users_access_tokens WHERE user_id = @userId AND platform = @platform";
+                await using var deleteCmd = new MySqlCommand(deleteQuery, conn);
+                deleteCmd.Parameters.AddWithValue("@userId", ID);
+                deleteCmd.Parameters.AddWithValue("@platform", UserAccessToken.UserAccessTokenPlatform.GOOGLE.ToString().ToUpper());
+                await deleteCmd.ExecuteNonQueryAsync();
+
+                return null;
+            }
+
+            string newAccessToken = refreshData["access_token"]!.ToString();
+
+            // Update v DB
+            const string updateQuery = """
+                UPDATE users_access_tokens 
+                SET 
+                    access_token = @accessToken
+                WHERE user_id = @userId AND platform = @platform
+            """;
+
+            await using var cmd = new MySqlCommand(updateQuery, conn);
+            cmd.Parameters.AddWithValue("@userId", ID);
+            cmd.Parameters.AddWithValue("@platform", UserAccessToken.UserAccessTokenPlatform.GOOGLE.ToString().ToUpper());
+            cmd.Parameters.AddWithValue("@accessToken", newAccessToken);
+            await cmd.ExecuteNonQueryAsync();
+
+            return newAccessToken;
+        }
+
+        if (testResponse.IsSuccessStatusCode)
+            return googleAccessToken.AccessToken;
+
+        // Jiná chyba při ověřování access tokenu
+        Console.WriteLine("Unexpected status code when checking Google token: " + testResponse.StatusCode);
+        return null;
     }
 }

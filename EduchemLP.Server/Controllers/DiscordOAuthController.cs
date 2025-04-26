@@ -60,6 +60,6 @@ public class DiscordOAuthController : Controller {
 
         _ = account.UpdateAvatarByConnectedPlatform();
 
-        return RedirectPermanent("/app/account");
+        return RedirectPermanent("/app/account?tab=settings");
     }
 }
