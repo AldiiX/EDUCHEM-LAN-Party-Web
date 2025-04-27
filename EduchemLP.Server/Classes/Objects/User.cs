@@ -45,7 +45,8 @@ public class User {
         Enum.TryParse(reader.GetString("account_type"), out UserAccountType _ac) ? _ac : UserAccountType.STUDENT,
         reader.GetDateTime("last_updated"),
         Enum.TryParse<UserGender>(reader.GetStringOrNull("gender"), out var _g ) ? _g : null,
-        reader.GetStringOrNull("avatar")
+        reader.GetStringOrNull("avatar"),
+        JsonSerializer.Deserialize<List<UserAccessToken>>(reader.GetStringOrNull("access_tokens") ?? "[]", JsonSerializerOptions.Web) ?? []
     ){}
 
 
@@ -67,7 +68,32 @@ public class User {
     public static async Task<User?> GetByIdAsync(int id) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
-        const string query = "SELECT * FROM `users` WHERE `id` = @id";
+
+        const string query =
+            """
+                SELECT 
+                    u.*,
+                    COALESCE(
+                        (
+                            SELECT JSON_ARRAYAGG(
+                                JSON_OBJECT(
+                                    'userId', at.user_id,
+                                    'platform', at.platform,
+                                    'accessToken', at.access_token,
+                                    'refreshToken', at.refresh_token,
+                                    'type', at.token_type
+                                )
+                            )
+                            FROM users_access_tokens at
+                            WHERE at.user_id = u.id
+                        ),
+                        JSON_ARRAY()
+                    ) AS access_tokens
+                FROM `users` u
+                WHERE `id` = @id
+                LIMIT 1
+            """;
+
         await using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@id", id);
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
@@ -78,24 +104,52 @@ public class User {
         return user;
     }
 
-    public static async Task<User?> AuthAsync(string email, string hashedPassword) {
+    public static async Task<User?> AuthAsync(string email, string plainPassword, bool updateUserByConnectedPlatforms = false) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
 
-        const string query = "SELECT * FROM `users` WHERE `email` = @email AND `password` = @password";
+        const string query =
+            """
+                SELECT 
+                    u.*,
+                    COALESCE(
+                        (
+                            SELECT JSON_ARRAYAGG(
+                                JSON_OBJECT(
+                                    'userId', at.user_id,
+                                    'platform', at.platform,
+                                    'accessToken', at.access_token,
+                                    'refreshToken', at.refresh_token,
+                                    'type', at.token_type
+                                )
+                            )
+                            FROM users_access_tokens at
+                            WHERE at.user_id = u.id
+                        ),
+                        JSON_ARRAY()
+                    ) AS access_tokens
+                FROM `users` u
+                WHERE `email` = @email
+                LIMIT 1
+            """;
+
         await using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@email", email);
-        cmd.Parameters.AddWithValue("@password", hashedPassword);
 
         await using var reader = await cmd.ExecuteReaderAsync() as MySqlDataReader;
         if (reader == null || !reader.Read()) return null;
 
         var user = new User(reader);
 
-        // aktualizace posledního přihlášení
-        _ = UpdateLastLoggedInAsync(user.ID);
+        // overeni hesla - pokud je spatne tak null
+        if (!Utilities.VerifyPassword(plainPassword, user.Password)) return null;
 
-        // dalsi nastaveni
+
+        // aktualizace picovin
+        _ = UpdateLastLoggedInAsync(user.ID);
+        //if (updateUserByConnectedPlatforms) _ = user.UpdateAvatarByConnectedPlatform();
+
+        // nastavení do kontextu
         var httpContext = HttpContextService.Current;
         httpContext.Session.SetObject("loggeduser", user);
         httpContext.Items["loggeduser"] = user;
@@ -103,7 +157,8 @@ public class User {
         return user;
     }
 
-    public static User? Auth(in string email, in string hashedPassword) => AuthAsync(email, hashedPassword).Result;
+
+    public static User? Auth(in string email, in string plainPassword, in bool updateUserByConnectedPlatforms = false) => AuthAsync(email, plainPassword, updateUserByConnectedPlatforms).Result;
 
     public static async Task<List<User?>> GetAllAsync() {
         await using var conn = await Database.GetConnectionAsync();

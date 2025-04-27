@@ -12,25 +12,30 @@ public static class Auth {
         return HttpContextService.Current.Session.Get("loggeduser") != null;
     }
 
-    public static Account? AuthUser(in string email, in string hashedPassword) => Account.Auth(email, hashedPassword);
+    public static Account? AuthUser(in string email, in string plainPassword, in bool updateUserByConnectedPlatforms = false) => Account.Auth(email, plainPassword, updateUserByConnectedPlatforms);
 
     public static async Task<Account?> ReAuthUserAsync() {
         if (!UserIsLoggedIn()) return null;
 
         var loggedUser = HttpContextService.Current.Session.GetObject<Account>("loggeduser");
         if (loggedUser == null) {
-            //Console.WriteLine("Logged user is null");
             HttpContextService.Current.Session.Remove("loggeduser");
             return null;
         }
 
-        var acc = await Account.AuthAsync(loggedUser.Email, loggedUser.Password);
+        var acc = await Account.GetByIdAsync(loggedUser.ID);
         if (acc == null) {
-            //Console.WriteLine("Acc is null");
             HttpContextService.Current.Session.Remove("loggeduser");
             return null;
         }
 
+        // pokud se zmenilo heslo, zrusi se session
+        if (acc.Password != loggedUser.Password) {
+            HttpContextService.Current.Session.Remove("loggeduser");
+            return null;
+        }
+
+        // jinak se obnovi data
         HttpContextService.Current.Session.SetObject("loggeduser", acc);
         HttpContextService.Current.Items["loggeduser"] = acc;
         return acc;
