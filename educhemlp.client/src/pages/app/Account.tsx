@@ -394,13 +394,21 @@ const SettingsTab = () => {
                             </select>
                         </div>
 
+                        <div className="avatar-edit mobile-show">
+                            <Avatar size={"248px"} src={userAvatar} name={loggedUser.displayName} />
+                            <div className="buttons">
+                                <div className="edit" style={{ '--m': 'url(/images/icons/edit.svg)'} as CSSProperties} title="Upravit" onClick={() => setModalOpened(Modal.CHANGE_AVATAR) }></div>
+                                <div className="delete" style={{ '--m': 'url(/images/icons/trash.svg)'} as CSSProperties} title="Smazat" onClick={() => setModalOpened(Modal.REMOVE_AVATAR) }></div>
+                            </div>
+                        </div>
+
                         <div className="buttons">
                             <Button type={ButtonType.SECONDARY} text="Zrušit změny" />
                             <Button type={ButtonType.PRIMARY} text="Uložit změny" form="editprofileform" />
                         </div>
                     </div>
 
-                    <div className="avatar-edit">
+                    <div className="avatar-edit mobile-hide">
                         <Avatar size={"248px"} src={userAvatar} name={loggedUser.displayName} />
                         <div className="buttons">
                             <div className="edit" style={{ '--m': 'url(/images/icons/edit.svg)'} as CSSProperties} title="Upravit" onClick={() => setModalOpened(Modal.CHANGE_AVATAR) }></div>

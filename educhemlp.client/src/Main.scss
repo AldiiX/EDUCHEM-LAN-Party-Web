@@ -273,8 +273,40 @@ input, select, textarea {
     }
 }
 
+.mobile-hide-flex {
+    display: flex !important;
+}
+
+.mobile-hide,
+.mobile-hide-grid {
+    display: grid !important;
+}
+
+.mobile-show,
+.mobile-show-flex,
+.mobile-show-grid {
+    display: none !important;
+}
+
+
+
 
 @media (max-width: 768px) {
+    .mobile-hide,
+    .mobile-hide-flex,
+    .mobile-hide-grid {
+        display: none !important;
+    }
+
+    .mobile-show,
+    .mobile-show-grid {
+        display: grid !important;
+    }
+
+    .mobile-show-flex {
+        display: flex !important;
+    }
+
     ::-webkit-scrollbar {
         width: 4px;
     }
