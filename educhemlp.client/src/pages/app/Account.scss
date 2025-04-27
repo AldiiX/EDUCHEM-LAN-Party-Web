@@ -52,15 +52,13 @@
 
             >.items {
                 display: grid;
-                gap: 8px;
+                gap: 16px;
 
                 >.item {
-                    &:not(:nth-last-child(1)) {
-                        border-bottom: 1px solid var(--text-color-3);
-                    }
-
                     &:is(.active) {
                         >.content {
+                            background-color: var(--element-bg-colored);
+
                             >p {
                                 color: var(--accent-color);
                                 pointer-events: none;
@@ -87,9 +85,12 @@
                     >.content {
                         width: 300px;
                         display: flex;
-                        margin-bottom: 8px;
                         gap: 24px;
                         align-items: center;
+                        padding: 8px 16px;
+                        border-radius: 8px;
+                        background-color: var(--element-bg);
+                        box-shadow: 0 0 6px rgba(0, 0, 0, 0.025);
 
                         >.icon {
                             width: 48px;
