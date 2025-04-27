@@ -25,15 +25,17 @@ public class APIv1 : Controller {
     [HttpGet("loggeduser")]
     public IActionResult GetLoggedUser() {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
         var obj = new JsonObject {
-            ["id"] = acc?.ID,
-            ["displayName"] = acc?.DisplayName,
-            ["email"] = acc?.Email,
-            ["class"] = acc?.Class,
-            ["accountType"] = acc?.AccountType.ToString().ToUpper(),
-            ["lastUpdated"] = acc?.LastUpdated,
-            ["avatar"] = acc?.Avatar,
-            ["gender"] = acc?.Gender?.ToString().ToUpper(),
+            ["id"] = acc.ID,
+            ["displayName"] = acc.DisplayName,
+            ["email"] = acc.Email,
+            ["class"] = acc.Class,
+            ["accountType"] = acc.AccountType.ToString().ToUpper(),
+            ["lastUpdated"] = acc.LastUpdated,
+            ["avatar"] = acc.Avatar,
+            ["gender"] = acc.Gender?.ToString().ToUpper(),
         };
 
         // přidání connections

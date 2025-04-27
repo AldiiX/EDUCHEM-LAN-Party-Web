@@ -159,6 +159,16 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
     &:hover {
         background-color: var(--accent-color-darker);
     }
+
+    &:disabled {
+        color: var(--accent-color-text);
+        cursor: not-allowed;
+        opacity: 0.5;
+
+        &:hover {
+            background-color: var(--accent-color);
+        }
+    }
 }
 
 .button-secondary {
@@ -235,6 +245,10 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
         border-width: 1px;
         font-weight: normal;
     }
+
+    &:disabled {
+        cursor: not-allowed;
+    }
 }
 
 
@@ -249,6 +263,13 @@ input, select, textarea {
 
     &:focus, &:focus-visible {
         outline: none;
+    }
+
+    &:disabled {
+        color: var(--text-color-3);
+        //border: 1px solid var(--text-color-3);
+        cursor: not-allowed;
+        user-select: none;
     }
 }
 

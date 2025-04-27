@@ -529,8 +529,6 @@ export const Reservations = () => {
 
     return (
         <AppLayout className="reservations" titleBarText="Rezervace" titleBarType={AppLayoutTitleBarType.STATIC}>
-            <h1>Rezervace</h1>
-
             <div className="area-selector">
                 {areas.map((area) => (
                     <p

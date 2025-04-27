@@ -17,15 +17,30 @@ USE `educhem_lan_party_dev`;
 -- --------------------------------------------------------
 
 --
+-- Struktura tabulky `announcements`
+--
+
+DROP TABLE IF EXISTS `announcements`;
+CREATE TABLE `announcements` (
+                                 `id` int UNSIGNED NOT NULL,
+                                 `author_id` int NOT NULL,
+                                 `message` text NOT NULL,
+                                 `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Struktura tabulky `chat`
 --
 
 DROP TABLE IF EXISTS `chat`;
 CREATE TABLE `chat` (
                         `user_id` int NOT NULL,
-                        `message` text NOT NULL,
+                        `message` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
                         `uuid` varchar(256) NOT NULL,
-                        `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+                        `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        `deleted` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -53,7 +68,7 @@ CREATE TABLE `logs` (
                         `id` int UNSIGNED NOT NULL,
                         `type` set('INFO','ERROR','WARN') NOT NULL DEFAULT 'INFO',
                         `exact_type` varchar(32) NOT NULL DEFAULT 'basic',
-                        `message` text NOT NULL,
+                        `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
                         `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -205,22 +220,32 @@ CREATE TABLE `users` (
                          `avatar` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- --------------------------------------------------------
+
 --
--- Triggery `users`
+-- Struktura tabulky `users_access_tokens`
 --
-DROP TRIGGER IF EXISTS `trg_before_update_users`;
-DELIMITER $$
-CREATE TRIGGER `trg_before_update_users` BEFORE UPDATE ON `users` FOR EACH ROW BEGIN
-    IF (NEW.last_logged_in <=> OLD.last_logged_in) THEN
-        SET NEW.last_updated = NOW();
-    END IF;
-END
-$$
-DELIMITER ;
+
+DROP TABLE IF EXISTS `users_access_tokens`;
+CREATE TABLE `users_access_tokens` (
+                                       `user_id` int NOT NULL,
+                                       `platform` set('DISCORD','INSTAGRAM','GOOGLE','GITHUB') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+                                       `access_token` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+                                       `refresh_token` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+                                       `token_type` set('BEARER') NOT NULL,
+                                       `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Indexy pro exportované tabulky
 --
+
+--
+-- Indexy pro tabulku `announcements`
+--
+ALTER TABLE `announcements`
+    ADD PRIMARY KEY (`id`),
+    ADD KEY `announcements_fk1` (`author_id`);
 
 --
 -- Indexy pro tabulku `chat`
@@ -268,8 +293,21 @@ ALTER TABLE `users`
     ADD UNIQUE KEY `email` (`email`);
 
 --
+-- Indexy pro tabulku `users_access_tokens`
+--
+ALTER TABLE `users_access_tokens`
+    ADD PRIMARY KEY (`platform`,`user_id`),
+    ADD KEY `users_access_tokens_fk1` (`user_id`);
+
+--
 -- AUTO_INCREMENT pro tabulky
 --
+
+--
+-- AUTO_INCREMENT pro tabulku `announcements`
+--
+ALTER TABLE `announcements`
+    MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pro tabulku `logs`
@@ -288,12 +326,24 @@ ALTER TABLE `users`
 --
 
 --
+-- Omezení pro tabulku `announcements`
+--
+ALTER TABLE `announcements`
+    ADD CONSTRAINT `announcements_fk1` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Omezení pro tabulku `reservations`
 --
 ALTER TABLE `reservations`
     ADD CONSTRAINT `computers_fk` FOREIGN KEY (`computer_id`) REFERENCES `computers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
     ADD CONSTRAINT `rooms_fk` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
     ADD CONSTRAINT `users_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Omezení pro tabulku `users_access_tokens`
+--
+ALTER TABLE `users_access_tokens`
+    ADD CONSTRAINT `users_access_tokens_fk1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

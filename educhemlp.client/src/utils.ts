@@ -95,3 +95,40 @@ export function compareEnumValues<T extends Record<string, string | number>>(
     if (aVal === null || bVal === null) return null;
     return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 }
+
+
+export function stringToEnum<T extends Record<string, string>>(
+    enumObject: T,
+    value: string | null
+): T[keyof T] | undefined {
+    if (!value) return undefined;
+
+    const upperValue = value.toUpperCase();
+
+    const matchingKey = Object.keys(enumObject).find(
+        (key) => key.toUpperCase() === upperValue
+    );
+
+    if (matchingKey) {
+        return enumObject[matchingKey as keyof T];
+    }
+
+    return undefined;
+}
+
+export function enumToString<T extends Record<string, string>>(
+    enumObject: T,
+    value: T[keyof T] | null
+): string | undefined {
+    if (value === null) return undefined;
+
+    const matchingKey = Object.keys(enumObject).find(
+        (key) => enumObject[key as keyof T] === value
+    );
+
+    if (matchingKey) {
+        return matchingKey;
+    }
+
+    return undefined;
+}

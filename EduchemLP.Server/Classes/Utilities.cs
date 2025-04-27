@@ -141,4 +141,8 @@ public static class Utilities {
     }
 
     public static bool AreReservationsEnabled() => AreReservationsEnabledAsync().Result;
+
+    public static string ToJsonString(this object obj) {
+        return JsonSerializer.Serialize(obj);
+    }
 }
