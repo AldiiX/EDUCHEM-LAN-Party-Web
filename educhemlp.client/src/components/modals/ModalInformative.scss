@@ -1,0 +1,67 @@
+.modalinformative-fe1613b6-531d-40c1-a2ba-52d0ed659dfd {
+    .modal-content {
+        max-width: 330px;
+        border-radius: 24px;
+        padding: 24px;
+
+        .closebutton {
+            top: 12px;
+            right: 12px;
+        }
+
+        >.icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto;
+            mask-image: url(../../../public/images/icons/info.svg);
+            mask-size: contain;
+            mask-repeat: no-repeat;
+            mask-position: center;
+            position: relative;
+            margin-bottom: 24px;
+
+            &:before {
+                content: '';
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background-color: var(--accent-color);
+                z-index: 1;
+            }
+        }
+
+        >h1 {
+            font-size: 24px;
+            text-align: center;
+            font-weight: 600;
+            margin: 0;
+            margin-bottom: 12px;
+        }
+
+        >p {
+            text-align: justify;
+            //font-size: 20px;
+            color: var(--text-color-secondary);
+
+            >span {
+                font-weight: 600;
+                color: var(--accent-color);
+            }
+        }
+
+        >.buttons {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+            width: 100%;
+            position: relative;
+            box-sizing: border-box;
+
+            >button {
+                flex-grow: 1;
+                width: calc(100% / 2 - 8px);
+            }
+        }
+    }
+}
+

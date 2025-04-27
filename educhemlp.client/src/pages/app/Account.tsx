@@ -1,6 +1,6 @@
 import {AppLayout} from "./AppLayout.tsx";
 import "./Account.scss";
-import React, {CSSProperties, useEffect, useState} from "react";
+import React, {CSSProperties, useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
@@ -12,6 +12,7 @@ import {TabSelects} from "../../components/TabSelects.tsx";
 import {LoggedUser} from "../../interfaces.ts";
 import {ModalDestructive} from "../../components/modals/ModalDestructive.tsx";
 import {toast} from "react-toastify";
+import {ModalInformative} from "../../components/modals/ModalInformative.tsx";
 
 
 // store
@@ -42,7 +43,19 @@ const SettingsTab = () => {
     const loggedUser: LoggedUser = useStore((state) => state.loggedUser);
     const setLoggedUser = useStore((state) => state.setLoggedUser);
 
-    const [modalEnabled, setModalEnabled] = useState(false);
+    // podminky pro zmenu hesla
+    const pwdconddiv = useRef<HTMLParagraphElement>(null);
+    const pwdcond1 = useRef<HTMLParagraphElement>(null);
+    const pwdcond2 = useRef<HTMLParagraphElement>(null);
+    const pwdcond3 = useRef<HTMLParagraphElement>(null);
+    const pwdcond4 = useRef<HTMLParagraphElement>(null);
+    const pwdcond5 = useRef<HTMLParagraphElement>(null);
+
+    enum Modal {
+        REMOVE_PLATFORM, REMOVE_AVATAR, CHANGE_AVATAR
+    }
+
+    const [modalOpened, setModalOpened] = useState<Modal | null>(null);
     const [modalSelectedPlatform, setModalSelectedPlatform] = useState("");
 
     const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -138,7 +151,7 @@ const SettingsTab = () => {
             }
 
             toast.success(`Úspěšně odpojena platforma ${platform}`);
-            setModalEnabled(false);
+            setModalOpened(null);
             setModalSelectedPlatform("");
 
             // aktualizace uživatelského účtu
@@ -150,12 +163,92 @@ const SettingsTab = () => {
     function handleClickPlatform(platform: Platform): string | null {
         if(loggedUser.connections?.includes(platform.id.toUpperCase())) {
             setModalSelectedPlatform(platform.name);
-            setModalEnabled(true);
+            setModalOpened(Modal.REMOVE_PLATFORM);
             return null;
         }
 
         if(platform.authLink) return platform.authLink
         return null;
+    }
+
+    function submitChangePasswordForm(e: React.FormEvent<HTMLFormElement>) {
+        console.log("Submitting change password form");
+
+        e.preventDefault();
+        const form = e.currentTarget;
+        const oldPassword = form.oldPassword.value;
+        const newPassword = form.newPassword.value;
+        const newPasswordConfirmation = form.newPasswordConfirmation.value;
+
+        if (newPassword !== newPasswordConfirmation) {
+            toast.error("Nová hesla se neshodují");
+            return;
+        }
+
+        fetch("/api/v1/loggeduser/password", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                oldPassword,
+                newPassword,
+            }),
+        }).then(async (res) => {
+            if(!res.ok) {
+                const data = await res.json();
+                console.error("Chyba při změně hesla: ", data.message);
+                toast.error(`Chyba při změně hesla: ${data.message}`);
+                return;
+            }
+
+            toast.success("Úspěšně změněno heslo");
+            setModalOpened(null);
+            form.reset();
+        })
+    }
+
+    function checkPasswordConditions() {
+        const form = document.getElementById("changepasswordform") as HTMLFormElement;
+        const newPassword = form.newPassword.value;
+        if(!newPassword) pwdconddiv.current!.style.display = "none";
+        else pwdconddiv.current!.style.display = "block";
+
+        if (newPassword.length >= 8) {
+            pwdcond1.current!.classList.add("valid");
+        } else {
+            pwdcond1.current!.classList.remove("valid");
+        }
+
+        if (/[A-Z]/.test(newPassword)) {
+            pwdcond2.current!.classList.add("valid");
+        } else {
+            pwdcond2.current!.classList.remove("valid");
+        }
+
+        if (/[a-z]/.test(newPassword)) {
+            pwdcond5.current!.classList.add("valid");
+        } else {
+            pwdcond5.current!.classList.remove("valid");
+        }
+
+        if (/\d/.test(newPassword)) {
+            pwdcond3.current!.classList.add("valid");
+        } else {
+            pwdcond3.current!.classList.remove("valid");
+        }
+
+        if (/[^a-zA-Z0-9]/.test(newPassword)) {
+            pwdcond4.current!.classList.add("valid");
+        } else {
+            pwdcond4.current!.classList.remove("valid");
+        }
+
+        if(pwdcond1.current!.classList.contains("valid") && pwdcond2.current!.classList.contains("valid") && pwdcond3.current!.classList.contains("valid") && pwdcond4.current!.classList.contains("valid") && pwdcond5.current!.classList.contains("valid")) {
+            form.submitButton?.removeAttribute("disabled");
+        } else {
+            form.submitButton?.setAttribute("disabled", "disabled");
+        }
     }
 
 
@@ -165,10 +258,28 @@ const SettingsTab = () => {
             <ModalDestructive
                 title={"Potvrzení odpojení"}
                 description={`Opravdu chceš odpojit ${modalSelectedPlatform}? Tvůj ${modalSelectedPlatform} účet se přestane synchronizovat s tímto účtem.`}
-                onClose={() => setModalEnabled(false)}
-                enabled={modalEnabled}
+                onClose={() => setModalOpened(null)}
+                enabled={modalOpened === Modal.REMOVE_PLATFORM}
                 yesAction={() => removePlatformFromAccount(modalSelectedPlatform) }
             />
+
+            <ModalInformative
+                title="Změna avataru"
+                description={"Avatar si můžeš změnit pouze tak, že propojíš svůj účet s nějakou platformou (např. Google, Discord, Instagram...). Po propojení se avatar automaticky změní na ten, který máš na této platformě."}
+                onClose={() => setModalOpened(null)}
+                enabled={modalOpened === Modal.CHANGE_AVATAR}
+                okAction={() => setModalOpened(null) }
+            />
+
+            <ModalDestructive
+                description="Opravdu chceš smazat tvůj avatar? Pokud máš propojený účet s nějakou platformou, budeš muset platformy odpojit, jinak se ti avatar znovu synchronizuje."
+                onClose={() => setModalOpened(null)}
+                enabled={modalOpened === Modal.REMOVE_AVATAR}
+                yesAction={() => { setUserAvatar(null); setModalOpened(null) } }
+            />
+
+            <form id="changepasswordform" onSubmit={submitChangePasswordForm}></form>
+            <form id="editprofileform"></form>
 
             <div className="settingstab-flex">
                 <div className="left">
@@ -219,21 +330,31 @@ const SettingsTab = () => {
 
                     <div className="pair">
                         <p>Staré heslo</p>
-                        <input type="password" />
+                        <input type="password" name="oldPassword" form="changepasswordform" autoComplete="new-password" />
                     </div>
 
                     <div className="pair">
                         <p>Nové heslo</p>
-                        <input type="password" />
+                        <input type="password" name="newPassword" form="changepasswordform" autoComplete="old-password" onInput={checkPasswordConditions} />
                     </div>
+
+
 
                     <div className="pair">
                         <p>Nové heslo potvrzení</p>
-                        <input type="password" />
+                        <input type="password" name="newPasswordConfirmation" form="changepasswordform" autoComplete="old-password" />
+                    </div>
+
+                    <div className="pair pwdconditions" ref={pwdconddiv} style={{ display: "none"}}>
+                        <p ref={pwdcond1}>Alespoň 8 znaků</p>
+                        <p ref={pwdcond5}>Alespoň 1 malé písmeno</p>
+                        <p ref={pwdcond2}>Alespoň 1 velké písmeno</p>
+                        <p ref={pwdcond3}>Alespoň 1 číslo</p>
+                        <p ref={pwdcond4}>Alespoň 1 speciální znak</p>
                     </div>
 
                     <div className="buttons">
-                        <Button type={ButtonType.PRIMARY} text="Uložit změny" />
+                        <Button type={ButtonType.PRIMARY} text="Uložit změny" form="changepasswordform" buttonType="submit" name="submitButton" disabled />
                     </div>
                 </div>
 
@@ -243,22 +364,22 @@ const SettingsTab = () => {
 
                         <div className="pair">
                             <p>Jméno</p>
-                            <input type="text" disabled value={loggedUser.displayName}/>
+                            <input type="text" disabled value={loggedUser.displayName} name="displayName" form="editprofileform" />
                         </div>
 
                         <div className="pair">
                             <p>Email</p>
-                            <input type="text" disabled value={loggedUser.email}/>
+                            <input type="text" disabled value={loggedUser.email} name="email" form="editprofileform" />
                         </div>
 
                         <div className="pair">
                             <p>Třída</p>
-                            <input type="text" disabled value={loggedUser.class ?? "Žádná"}/>
+                            <input type="text" disabled value={loggedUser.class ?? "Žádná"} name="class" form="editprofileform" />
                         </div>
 
                         <div className="pair">
                             <p>Pohlaví</p>
-                            <select name="gender" defaultValue={loggedUser?.gender ?? "NULL"}>
+                            <select name="gender" defaultValue={loggedUser?.gender ?? "NULL"} form="editprofileform">
                                 <option value="MALE">Muž</option>
                                 <option value="FEMALE">Žena</option>
                                 <option value="OTHER">Ostatní</option>
@@ -275,15 +396,15 @@ const SettingsTab = () => {
 
                         <div className="buttons">
                             <Button type={ButtonType.SECONDARY} text="Zrušit změny" />
-                            <Button type={ButtonType.PRIMARY} text="Uložit změny" />
+                            <Button type={ButtonType.PRIMARY} text="Uložit změny" form="editprofileform" />
                         </div>
                     </div>
 
                     <div className="avatar-edit">
                         <Avatar size={"248px"} src={userAvatar} name={loggedUser.displayName} />
                         <div className="buttons">
-                            <div className="edit" style={{ '--m': 'url(/images/icons/brush.svg)'} as CSSProperties} title="Upravit"></div>
-                            <div className="delete" style={{ '--m': 'url(/images/icons/trash.svg)'} as CSSProperties} title="Smazat" onClick={() => setUserAvatar(null) }></div>
+                            <div className="edit" style={{ '--m': 'url(/images/icons/edit.svg)'} as CSSProperties} title="Upravit" onClick={() => setModalOpened(Modal.CHANGE_AVATAR) }></div>
+                            <div className="delete" style={{ '--m': 'url(/images/icons/trash.svg)'} as CSSProperties} title="Smazat" onClick={() => setModalOpened(Modal.REMOVE_AVATAR) }></div>
                         </div>
                     </div>
                 </div>

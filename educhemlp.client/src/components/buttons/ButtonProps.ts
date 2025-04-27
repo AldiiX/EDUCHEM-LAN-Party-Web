@@ -5,6 +5,10 @@ export interface ButtonProps {
     className?: string;
     type: ButtonType;
     style?: ButtonStyle;
+    form?: string | null;
+    buttonType?: "button" | "submit" | "reset";
+    name?: string | null;
+    disabled?: boolean;
 }
 export enum ButtonType {
     PRIMARY = "primary",

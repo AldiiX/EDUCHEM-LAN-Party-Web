@@ -78,6 +78,7 @@
                             >.button {
                                 mask-image: url('../../../public/images/icons/trash.svg');
                                 rotate: 0deg;
+                                background-color: var(--accent-color);
                             }
                         }
                     }
@@ -149,9 +150,16 @@
                 flex-direction: column;
                 gap: 4px;
                 align-items: start;
+                width: 250px;
 
                 input,select {
                     width: 100%;
+                }
+            }
+
+            .pwdconditions {
+                >p:is(.valid) {
+                    text-decoration: line-through;
                 }
             }
 

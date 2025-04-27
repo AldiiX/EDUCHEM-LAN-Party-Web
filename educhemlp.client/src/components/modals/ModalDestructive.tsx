@@ -14,11 +14,12 @@ interface ModalDestructiveActionProps {
     noAction?: () => void;
     noText?: string;
     title?: string;
+    canBeClosedByClickingOutside?: boolean;
 }
 
-export const ModalDestructive = ({ title = "Potvrzení akce", description, enabled, onClose, className = "", yesAction, noAction = onClose, yesText = "Ano", noText = "Ne" }: ModalDestructiveActionProps) => {
+export const ModalDestructive = ({ title = "Potvrzení akce", description, enabled, onClose, className = "", yesAction, noAction = onClose, yesText = "Ano", noText = "Ne", canBeClosedByClickingOutside = false }: ModalDestructiveActionProps) => {
     return (
-        <Modal onClose={onClose} enabled={enabled} className={"modaldestructive-51bd1a61-b3c0-4e83-9c9d-4897316db398 " + className}>
+        <Modal onClose={onClose} enabled={enabled} className={"modaldestructive-51bd1a61-b3c0-4e83-9c9d-4897316db398 " + className} canBeClosedByClickingOutside={canBeClosedByClickingOutside}>
             <div className="closebutton" onClick={onClose}></div>
 
             <div className="icon"></div>

@@ -53,6 +53,51 @@ public class APIv1 : Controller {
         return new JsonResult(obj);
     }
 
+    [HttpPost("loggeduser/password")]
+    public IActionResult ChangeLoggedUserPassword([FromBody] Dictionary<string, object?> data) {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if (acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
+        string? oldPassword = data.TryGetValue("oldPassword", out var _oldPassword) ? _oldPassword?.ToString() : null;
+        string? newPassword = data.TryGetValue("newPassword", out var _newPassword) ? _newPassword?.ToString() : null;
+        if (oldPassword == null || newPassword == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'oldPassword' nebo 'newPassword'" });
+
+        // stare hesla se musi shodovat
+        if (Utilities.EncryptPassword(oldPassword) != acc.Password) return new BadRequestObjectResult(new { success = false, message = "Staré heslo je špatně" });
+
+        // overeni platnosti hesla
+        switch (newPassword.Length) { // overeni lengthu hesla
+            case < 8: return new BadRequestObjectResult(new { success = false, message = "Heslo musí mít alespoň 8 znaků" });
+            case > 64: return new BadRequestObjectResult(new { success = false, message = "Heslo musí mít maximálně 64 znaků" });
+        }
+
+        if (newPassword == oldPassword) return new BadRequestObjectResult(new { success = false, message = "Nové heslo se nesmí shodovat se starým heslem" });
+        if(!Utilities.IsPasswordValid(newPassword)) return new BadRequestObjectResult(new { success = false, message = "Heslo musí obsahovat alespoň jedno velké písmeno, jedno číslo a jeden speciální znak." });
+
+        // encrypnuti hesla
+        var encryptedNewPassword = Utilities.EncryptPassword(newPassword);
+
+        // zapsani do db
+        using var conn = Database.GetConnection();
+        if (conn == null) return new StatusCodeResult(500);
+
+        var command = new MySqlCommand(
+            """
+            UPDATE users SET password=@password WHERE id=@id;
+            """, conn
+        );
+
+        command.Parameters.AddWithValue("@password", encryptedNewPassword);
+        command.Parameters.AddWithValue("@id", acc.ID);
+
+        if(command.ExecuteNonQuery() <= 0) return new JsonResult(new { success = false, message = "Nepodařilo se změnit heslo." }) { StatusCode = 500 };
+
+
+
+        Auth.AuthUser(acc.Email, encryptedNewPassword);
+        return new NoContentResult();
+    }
+
     [HttpGet("loggeduser/connections")]
     public IActionResult GetLoggedUserConnections() {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();

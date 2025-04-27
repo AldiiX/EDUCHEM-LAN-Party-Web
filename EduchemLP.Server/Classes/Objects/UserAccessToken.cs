@@ -24,7 +24,7 @@ public partial class User {
 
 
         [JsonConstructor]
-        public UserAccessToken (int userId, UserAccessTokenPlatform platform, string accessToken, string refreshToken, UserAccessTokenType type) {
+        public UserAccessToken (int userId, UserAccessTokenPlatform platform, string? accessToken, string? refreshToken, UserAccessTokenType type) {
             UserId = userId;
             Platform = platform;
             AccessToken = accessToken;
@@ -33,8 +33,8 @@ public partial class User {
         }
 
         public int UserId { get; private set; }
-        public string AccessToken { get; private set; }
-        public string RefreshToken { get; private set; }
+        public string? AccessToken { get; private set; }
+        public string? RefreshToken { get; private set; }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public UserAccessTokenPlatform Platform { get; private set; }
