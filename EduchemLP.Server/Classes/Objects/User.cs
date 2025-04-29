@@ -26,7 +26,7 @@ public partial class User {
 
 
     [JsonConstructor]
-    private User(int id, string displayName, string email, string password, string? @class, UserAccountType accountType, DateTime lastUpdated, UserGender? gender, string? avatar, List<UserAccessToken>? accessTokens) {
+    private User(int id, string displayName, string email, string password, string? @class, UserAccountType accountType, DateTime lastUpdated, UserGender? gender, string? avatar, string? banner, List<UserAccessToken>? accessTokens) {
         ID = id;
         DisplayName = displayName;
         Class = @class;
@@ -35,6 +35,7 @@ public partial class User {
         AccountType = accountType;
         LastUpdated = lastUpdated;
         Avatar = avatar;
+        Banner = banner;
         Gender = gender;
         AccessTokens = accessTokens ?? [];
     }
@@ -49,6 +50,7 @@ public partial class User {
         reader.GetDateTime("last_updated"),
         Enum.TryParse<UserGender>(reader.GetStringOrNull("gender"), out var _g ) ? _g : null,
         reader.GetStringOrNull("avatar"),
+        reader.GetStringOrNull("banner"),
         JsonSerializer.Deserialize<List<UserAccessToken>>(reader.GetStringOrNull("access_tokens") ?? "[]", JsonSerializerOptions.Web) ?? []
     ){}
 
@@ -60,6 +62,7 @@ public partial class User {
     public string Password { get; private set; }
     public string? Class { get; private set; }
     public string? Avatar { get; private set; }
+    public string? Banner { get; private set; }
     public UserAccountType AccountType { get; private set; }
     public DateTime LastUpdated { get; private set; }
     public UserGender? Gender { get; private set; }

@@ -87,6 +87,8 @@
         border-radius: 8px;
         box-shadow: 0 0 6px rgba(0, 0, 0, 0.025);
         overflow: hidden;
+        z-index: 1;
+        position: relative;
 
         thead {
             &:is(.clickable) th {
@@ -124,7 +126,6 @@
                 transition-duration: 0.2s;
                 cursor: pointer;
                 user-select: none;
-                background-color: var(--background-bg-2);
 
                 &:hover {
                     background-color: var(--element-bg-colored);
@@ -132,6 +133,8 @@
             }
 
             tr {
+                background-color: var(--background-bg-2);
+
                 &:nth-child(even) {
                     background-color: var(--element-bg);
                 }

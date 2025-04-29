@@ -8,6 +8,7 @@ import {enumEquals, logout, toggleWebTheme} from "../../utils.ts";
 import {AccountGender, AccountType, LoggedUser} from "../../interfaces.ts";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
+import {Banner} from "../../components/Banner.tsx";
 
 
 export enum AppLayoutTitleBarType {
@@ -55,21 +56,24 @@ export const AppLayoutLoggedUserSection = ({ style }: { style?: CSSProperties}) 
     }
 
     if(loggedUser) return (
-        <div className="loggeduser" style={style}>
-            <Link to="/app/account">
-                <div className="texts">
-                    <p>{ setRoleText(loggedUser) }</p>
-                    <h2>{ loggedUser?.displayName }</h2>
+        <>
+            <Banner src={loggedUser?.banner} sx={{ height: "100%" }} className="profilebannercustomization" />
+            <div className="loggeduser" style={style}>
+                <Link to="/app/account">
+                    <div className="texts">
+                        <p>{ setRoleText(loggedUser) }</p>
+                        <h2>{ loggedUser?.displayName }</h2>
+                    </div>
+
+                    <Avatar size="48px" src={loggedUser?.avatar} name={loggedUser?.displayName}  />
+                </Link>
+
+                <div className={"popover"}>
+                    <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
+                    <p onClick={ () => logout(setLoggedUser)}>Odhlásit se</p>
                 </div>
-
-                <Avatar size="48px" src={loggedUser?.avatar} name={loggedUser?.displayName}  />
-            </Link>
-
-            <div className={"popover"}>
-                <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
-                <p onClick={ () => logout(setLoggedUser)}>Odhlásit se</p>
             </div>
-        </div>
+        </>
     )
 
     if(!loggedUser) return (

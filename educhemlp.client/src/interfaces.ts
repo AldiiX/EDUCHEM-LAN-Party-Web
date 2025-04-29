@@ -10,6 +10,7 @@ export type LoggedUser = {
     gender: AccountGender | null,
     avatar: string | null,
     connections: string[] | null,
+    banner: string | null,
 }
 
 /*

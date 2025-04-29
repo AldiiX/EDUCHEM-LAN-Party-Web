@@ -666,7 +666,7 @@ const LogsTab = () => {
 
     return (
         <div className="users-wrapper">
-            <table>
+            <table style={{ marginTop: 64 }}>
                 <thead className="clickable">
                     <tr>
                         <th>Typ</th>

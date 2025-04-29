@@ -1,5 +1,5 @@
 import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
-import React, {MutableRefObject, useEffect, useRef, useState} from "react";
+import React, {CSSProperties, MutableRefObject, useEffect, useRef, useState} from "react";
 import "./Reservations.scss";
 import {SpiralUpper} from "../../components/reservation_areas/SpiralUpper.tsx";
 import {SpiralLower} from "../../components/reservation_areas/SpiralLower.tsx";
@@ -57,7 +57,8 @@ interface Reservation {
         id: number,
         displayName: string,
         class: string,
-        avatar: string,
+        avatar: string | null,
+        banner: string | null,
     } | "unknown", // kdyz uzivatel neni prihlasen, dropne to "unknown"
     createdAt: Date,
     updatedAt: Date,
@@ -661,6 +662,8 @@ export const Reservations = () => {
                                                 return (
                                                     <div key={index} className={"reservation"}>
                                                         <Avatar size={"40px"} src={reservation.user?.avatar} name={reservation.user?.displayName} />
+
+                                                        <div className={"banner profilebannercustomization"} style={{ '--banner': `url(${reservation.user?.banner})`  } as CSSProperties}></div>
 
                                                         <div className="texts">
                                                             <p className={"name"}>{reservation.user?.displayName} <span>{reservation.user?.class}</span></p>

@@ -36,7 +36,8 @@ public static class WSChat {
             sessionAccount.DisplayName,
             sessionAccount.AccountType,
             sessionAccount.Class,
-            sessionAccount.Avatar
+            sessionAccount.Avatar,
+            sessionAccount.Banner
         );
 
 
@@ -128,11 +129,12 @@ public static class WSChat {
         cmd.CommandText =
         """
             SELECT 
-              c.*, 
-              u.display_name as author_name, 
-              u.avatar as author_avatar,
-              u.class as author_class,
-              u.account_type as author_account_type
+                c.*, 
+                u.display_name as author_name, 
+                u.avatar as author_avatar,
+                u.class as author_class,
+                u.account_type as author_account_type,
+                u.banner as author_banner
             FROM chat c
             LEFT JOIN users u ON c.user_id = u.id
             ORDER BY `date` DESC LIMIT 20
@@ -153,6 +155,7 @@ public static class WSChat {
                 reader.GetStringOrNull("author_class"),
                 reader.GetString("message"),
                 reader.GetDateTime("date"),
+                reader.GetStringOrNull("author_banner"),
                 client
             );
 
@@ -182,7 +185,8 @@ public static class WSChat {
                     u.display_name as author_name, 
                     u.avatar as author_avatar,
                     u.class as author_class,
-                    u.account_type as author_account_type
+                    u.account_type as author_account_type,
+                    u.banner as author_banner
                 FROM chat c
                 LEFT JOIN users u ON c.user_id = u.id
                 WHERE c.uuid = @uuid
@@ -215,13 +219,14 @@ public static class WSChat {
                     result.GetStringOrNull("author_class"),
                     message,
                     result.GetDateTime("date"),
+                    result.GetStringOrNull("author_banner"),
                     client
                 )
             }
         };
     }
 
-    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date, Client? client = null) {
+    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date, string? userBanner, Client? client = null) {
         var obj = new JsonObject {
             ["uuid"] = uuid,
             ["author"] = new JsonObject {
@@ -230,6 +235,7 @@ public static class WSChat {
                 ["avatar"] = userAvatar,
                 ["accountType"] = userAccountType,
                 ["class"] = userClass,
+                ["banner"] = userBanner,
             },
             ["message"] = message,
             ["date"] = date,
@@ -262,7 +268,8 @@ public static class WSChat {
                 u.display_name as author_name, 
                 u.avatar as author_avatar,
                 u.class as author_class,
-                u.account_type as author_account_type
+                u.account_type as author_account_type,
+                u.banner as author_banner
             FROM chat c
             LEFT JOIN users u ON c.user_id = u.id
             WHERE c.date < @beforeDate
@@ -288,6 +295,7 @@ public static class WSChat {
                 reader.GetStringOrNull("author_class"),
                 reader.GetString("message"),
                 reader.GetDateTime("date"),
+                reader.GetStringOrNull("author_banner"),
                 client
             );
 

@@ -274,6 +274,7 @@ a {
                 text-decoration: none;
 
                 .texts {
+
                     * {
                         text-align: right;
                     }
@@ -314,6 +315,7 @@ a {
                 border-radius: 8px;
                 top: calc(100%);
                 right: 0;
+                z-index: 1;
             }
 
             &:hover {

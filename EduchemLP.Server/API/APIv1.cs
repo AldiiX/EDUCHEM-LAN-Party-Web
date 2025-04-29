@@ -35,6 +35,7 @@ public class APIv1 : Controller {
             ["accountType"] = acc.AccountType.ToString().ToUpper(),
             ["lastUpdated"] = acc.LastUpdated,
             ["avatar"] = acc.Avatar,
+            ["banner"] = acc.Banner,
             ["gender"] = acc.Gender?.ToString().ToUpper(),
         };
 
@@ -163,6 +164,7 @@ public class APIv1 : Controller {
             ["accountType"] = acc.AccountType.ToString().ToUpper(),
             ["lastUpdated"] = acc.LastUpdated,
             ["avatar"] = acc.Avatar,
+            ["banner"] = acc.Banner,
             ["gender"] = acc.Gender?.ToString().ToUpper(),
         };
 
@@ -229,6 +231,7 @@ public class APIv1 : Controller {
                 ["lastUpdated"] = reader.GetDateTime("last_updated"),
                 ["lastLoggedIn"] = reader.GetObjectOrNull("last_logged_in") != null ? (DateTime)reader.GetValue("last_logged_in") : null,
                 ["avatar"] = reader.GetStringOrNull("avatar"),
+                ["banner"] = reader.GetStringOrNull("banner"),
             };
 
             array.Add(obj);
@@ -412,8 +415,8 @@ public class APIv1 : Controller {
         command.Parameters.AddWithValue("@email", email);
         command.Parameters.AddWithValue("@displayName", displayName);
         command.Parameters.AddWithValue("@class", @class);
-        command.Parameters.AddWithValue("@accountType", accountType.ToString().ToUpper());
-        command.Parameters.AddWithValue("@gender", gender.ToString().ToUpper());
+        command.Parameters.AddWithValue("@accountType", accountType.ToString()?.ToUpper());
+        command.Parameters.AddWithValue("@gender", gender.ToString()?.ToUpper());
 
 
         // zapsani do logu

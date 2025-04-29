@@ -1,0 +1,18 @@
+/* Banner.module.scss */
+.banner {
+    max-height: 182px;
+    aspect-ratio: 3/1;
+    position: absolute;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: var(--banner) !important;
+    z-index: 0;
+    pointer-events: none;
+    right:0;
+    top:0;
+    mask-image: url("../assets/banner_mask_fromtop.png");
+    mask-size: contain;
+    mask-position: top right;
+    mask-repeat: no-repeat;
+}

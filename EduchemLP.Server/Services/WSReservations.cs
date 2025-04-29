@@ -36,7 +36,8 @@ public static class WSReservations {
             sessionAccount?.DisplayName ?? "Guest",
             sessionAccount?.AccountType,
             sessionAccount?.Class,
-            sessionAccount?.Avatar
+            sessionAccount?.Avatar,
+            sessionAccount?.Banner
         );
 
 
@@ -222,6 +223,7 @@ public static class WSReservations {
                     usr.display_name AS user_display_name, 
                     usr.class AS user_class,
                     usr.avatar AS user_avatar,
+                    usr.banner AS user_banner,
                     COALESCE(room.id, NULL) AS room_id, 
                     COALESCE(room.limit_of_seats, NULL) AS room_limit, 
                     COALESCE(room.available, NULL) AS room_available,
@@ -251,6 +253,7 @@ public static class WSReservations {
                     ["displayName"] = reader.GetStringOrNull("user_display_name"),
                     ["class"] = loggedUser.AccountType > User.UserAccountType.STUDENT ? reader.GetStringOrNull("user_class") : null,
                     ["avatar"] = reader.GetStringOrNull("user_avatar"),
+                    ["banner"] = reader.GetStringOrNull("user_banner"),
                 } : null : "unknown",
 
                 ["room"] = reader.GetStringOrNull("room_id") != null ? new JsonObject() {
