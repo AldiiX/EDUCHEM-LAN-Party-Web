@@ -56,8 +56,12 @@ public class InstagramOAuthController : Controller {
         cmd.Parameters.AddWithValue("@accessToken", body?["access_token"]?.ToString());
         cmd.ExecuteNonQuery();
 
-        _ = account.UpdateAvatarByConnectedPlatform();
+        // znovu reauth
+        account = await Auth.ReAuthUserAsync();
+        if(account is null) return RedirectPermanent("/app/account?tab=settings");
 
+
+        await account.UpdateAvatarByConnectedPlatformAsync();
         return Redirect("/app/account");
     }
 }

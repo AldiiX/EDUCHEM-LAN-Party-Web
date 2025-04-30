@@ -4,7 +4,7 @@ import React, {CSSProperties, useEffect, useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useStore} from "../../store.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
-import {logout, toggleWebTheme} from "../../utils.ts";
+import {authUser, logout, toggleWebTheme} from "../../utils.ts";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
 import {create} from "zustand";
@@ -42,6 +42,7 @@ enum Tab {
 const SettingsTab = () => {
     const loggedUser: LoggedUser = useStore((state) => state.loggedUser);
     const setLoggedUser = useStore((state) => state.setLoggedUser);
+    const setUserAuthed = useStore((state) => state.setUserAuthed);
 
     // podminky pro zmenu hesla
     const pwdconddiv = useRef<HTMLParagraphElement>(null);
@@ -52,18 +53,20 @@ const SettingsTab = () => {
     const pwdcond5 = useRef<HTMLParagraphElement>(null);
 
     enum Modal {
-        REMOVE_PLATFORM, REMOVE_AVATAR, CHANGE_AVATAR
+        REMOVE_PLATFORM, REMOVE_AVATAR, CHANGE_AVATAR, CHANGE_BANNER, REMOVE_BANNER
     }
 
     const [modalOpened, setModalOpened] = useState<Modal | null>(null);
     const [modalSelectedPlatform, setModalSelectedPlatform] = useState("");
 
     const [userAvatar, setUserAvatar] = useState<string | null>(null);
+    const [userBanner, setUserBanner] = useState<string | null>(null);
 
 
     useEffect(() => {
         if (loggedUser) {
             setUserAvatar(loggedUser.avatar);
+            setUserBanner(loggedUser.banner);
         }
     }, [loggedUser]);
 
@@ -209,12 +212,11 @@ const SettingsTab = () => {
     }
 
     function submitChangeProfileForm(e: React.FormEvent<HTMLFormElement>) {
-        // console.log("Submitting change password form");
-
         e.preventDefault();
         const form = e.currentTarget;
         const gender = form.gender.value;
-        const avatar = (document.querySelector(".page-account .settingstab-flex .avatar-edit > .avatar img") as HTMLImageElement)?.src;
+        const avatar = userAvatar;
+        const banner = userBanner;
 
         fetch("/api/v1/loggeduser/", {
             method: "PUT",
@@ -223,7 +225,8 @@ const SettingsTab = () => {
             },
             body: JSON.stringify({
                 gender,
-                avatar
+                avatar,
+                banner
             }),
         }).then(async (res) => {
             if(!res.ok) {
@@ -235,7 +238,8 @@ const SettingsTab = () => {
 
             toast.success("Profil úspěšně upraven");
             setModalOpened(null);
-            form.reset();
+            authUser(setLoggedUser, setUserAuthed);
+            //form.reset();
         })
     }
 
@@ -307,6 +311,21 @@ const SettingsTab = () => {
                 onClose={() => setModalOpened(null)}
                 enabled={modalOpened === Modal.REMOVE_AVATAR}
                 yesAction={() => { setUserAvatar(null); setModalOpened(null) } }
+            />
+
+            <ModalInformative
+                title="Změna banneru"
+                description="Banner v aktuální době nelze změnit."
+                onClose={() => setModalOpened(null)}
+                enabled={modalOpened === Modal.CHANGE_BANNER}
+                okAction={() => setModalOpened(null) }
+            />
+
+            <ModalDestructive
+                description="Opravdu chceš smazat tvůj banner? Tato akce je nevratná."
+                onClose={() => setModalOpened(null)}
+                enabled={modalOpened === Modal.REMOVE_BANNER}
+                yesAction={() => { setUserBanner(null); setModalOpened(null) } }
             />
 
             <form id="changepasswordform" onSubmit={submitChangePasswordForm}></form>
@@ -427,24 +446,52 @@ const SettingsTab = () => {
                         </div>
 
                         <div className="avatar-edit mobile-show">
-                            <Avatar size={"248px"} src={userAvatar} name={loggedUser.displayName} />
+                            <div className="avatar-div">
+                                <Avatar src={userAvatar} name={loggedUser.displayName} />
+                                <div className="buttons">
+                                    <div className="edit" style={{ '--m': 'url(/images/icons/edit.svg)'} as CSSProperties} title="Upravit" onClick={() => setModalOpened(Modal.CHANGE_AVATAR) }></div>
+                                    <div className="delete" style={{ '--m': 'url(/images/icons/trash.svg)'} as CSSProperties} title="Smazat" onClick={() => setModalOpened(Modal.REMOVE_AVATAR) }></div>
+                                </div>
+                            </div>
+
+                            <div className="banner-div">
+                                <div className={"banner" + " " + (!userBanner ? "empty" : "") } style={{ '--banner': `url(${userBanner})` } as CSSProperties }></div>
+                                <div className="buttons">
+                                    <div className="edit" style={{ '--m': 'url(/images/icons/edit.svg)'} as CSSProperties} title="Upravit" onClick={() => setModalOpened(Modal.CHANGE_BANNER) }></div>
+                                    <div className="delete" style={{ '--m': 'url(/images/icons/trash.svg)'} as CSSProperties} title="Smazat" onClick={() => setModalOpened(Modal.REMOVE_BANNER) }></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="buttons">
+                            <Button type={ButtonType.SECONDARY} text="Zrušit změny" onClick={() => {
+                                setUserAvatar(loggedUser.avatar);
+                                setUserBanner(loggedUser.banner);
+                                setModalOpened(null);
+
+                                // form reset
+                                const form = document.getElementById("editprofileform") as HTMLFormElement;
+                                form.reset();
+                            }} />
+                            <Button type={ButtonType.PRIMARY} text="Uložit změny" form="editprofileform" buttonType="submit" />
+                        </div>
+                    </div>
+
+                    <div className="avatar-edit mobile-hide">
+                        <div className="avatar-div">
+                            <Avatar src={userAvatar} name={loggedUser.displayName} />
                             <div className="buttons">
                                 <div className="edit" style={{ '--m': 'url(/images/icons/edit.svg)'} as CSSProperties} title="Upravit" onClick={() => setModalOpened(Modal.CHANGE_AVATAR) }></div>
                                 <div className="delete" style={{ '--m': 'url(/images/icons/trash.svg)'} as CSSProperties} title="Smazat" onClick={() => setModalOpened(Modal.REMOVE_AVATAR) }></div>
                             </div>
                         </div>
 
-                        <div className="buttons">
-                            <Button type={ButtonType.SECONDARY} text="Zrušit změny" />
-                            <Button type={ButtonType.PRIMARY} text="Uložit změny" form="editprofileform" buttonType="submit" />
-                        </div>
-                    </div>
-
-                    <div className="avatar-edit mobile-hide">
-                        <Avatar size={"248px"} src={userAvatar} name={loggedUser.displayName} />
-                        <div className="buttons">
-                            <div className="edit" style={{ '--m': 'url(/images/icons/edit.svg)'} as CSSProperties} title="Upravit" onClick={() => setModalOpened(Modal.CHANGE_AVATAR) }></div>
-                            <div className="delete" style={{ '--m': 'url(/images/icons/trash.svg)'} as CSSProperties} title="Smazat" onClick={() => setModalOpened(Modal.REMOVE_AVATAR) }></div>
+                        <div className="banner-div">
+                            <div className={"banner" + " " + (!userBanner ? "empty" : "") } style={{ '--banner': `url(${userBanner})` } as CSSProperties }></div>
+                            <div className="buttons">
+                                <div className="edit" style={{ '--m': 'url(/images/icons/edit.svg)'} as CSSProperties} title="Upravit" onClick={() => setModalOpened(Modal.CHANGE_BANNER) }></div>
+                                <div className="delete" style={{ '--m': 'url(/images/icons/trash.svg)'} as CSSProperties} title="Smazat" onClick={() => setModalOpened(Modal.REMOVE_BANNER) }></div>
+                            </div>
                         </div>
                     </div>
                 </div>

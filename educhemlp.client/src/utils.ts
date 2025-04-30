@@ -1,3 +1,28 @@
+export function authUser(setLoggedUser: Function, setUserAuthed: Function) {
+    fetch("/api/v1/loggeduser", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+        .then((response) => {
+            if (response.status === 200) {
+                return response.json();
+            } else {
+                throw new Error("Failed to fetch logged user");
+            }
+        })
+        .then((data) => {
+            setLoggedUser(data);
+            setUserAuthed(true);
+        })
+        .catch((error) => {
+            console.error("Error fetching logged user:", error);
+            setLoggedUser(null);
+            setUserAuthed(false);
+        });
+}
+
 export const getCookie = (name: string) => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);

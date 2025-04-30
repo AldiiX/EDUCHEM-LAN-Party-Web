@@ -155,7 +155,7 @@ public partial class User {
 
         // aktualizace picovin
         _ = UpdateLastLoggedInAsync(user.ID);
-        if (updateUserByConnectedPlatforms) _ = user.UpdateAvatarByConnectedPlatform();
+        if (updateUserByConnectedPlatforms) _ = user.UpdateAvatarByConnectedPlatformAsync();
 
         // nastavení do kontextu
         var httpContext = HttpContextService.Current;
@@ -199,7 +199,7 @@ public partial class User {
         await cmd.ExecuteNonQueryAsync();
     }
 
-    public async Task UpdateAvatarByConnectedPlatform() {
+    public async Task UpdateAvatarByConnectedPlatformAsync() {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return;
 
@@ -278,6 +278,9 @@ public partial class User {
         cmd.Parameters.AddWithValue("@id", ID);
         cmd.Parameters.AddWithValue("@avatar", newAvatarLink);
         await cmd.ExecuteNonQueryAsync();
+
+        // aktualizace avataru v session
+        await Classes.Auth.ReAuthUserAsync();
     }
 
     public static User? Create(string email, string displayName, string? @class, UserGender gender, UserAccountType accountType, bool sendToEmail = false) => CreateAsync(email, displayName, @class, gender, accountType, sendToEmail).Result;
@@ -332,7 +335,7 @@ public partial class User {
     // platformove veci
     private async Task<string?> GenerateDiscordAccessTokenAsync() {
         var discordAccessToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.DISCORD);
-        if (discordAccessToken is null) return null;
+        if (discordAccessToken?.RefreshToken is null) return null;
 
         using var client = new HttpClient();
         await using var conn = await Database.GetConnectionAsync();
@@ -342,6 +345,7 @@ public partial class User {
 
         // zjištění platnosti tokenu
         var testRequest = await client.GetAsync("https://discord.com/api/users/@me");
+        //Console.WriteLine(testRequest.ToJsonString());
 
         // když je token neplatný - přegeneruje se
         if (testRequest.StatusCode == System.Net.HttpStatusCode.Unauthorized) {
@@ -383,7 +387,7 @@ public partial class User {
 
             await using var cmd = new MySqlCommand(updateQuery, conn);
             cmd.Parameters.AddWithValue("@userId", ID);
-            cmd.Parameters.AddWithValue("@platform", UserAccessToken.UserAccessTokenPlatform.DISCORD.ToString().ToUpper());
+            cmd.Parameters.AddWithValue("@platform", nameof(UserAccessToken.UserAccessTokenPlatform.DISCORD).ToUpper());
             cmd.Parameters.AddWithValue("@accessToken", refreshContent["access_token"]?.ToString());
             cmd.Parameters.AddWithValue("@refreshToken", refreshContent["refresh_token"]?.ToString());
             await cmd.ExecuteNonQueryAsync();
@@ -453,7 +457,7 @@ public partial class User {
 
     private async Task<string?> GenerateGoogleAccessTokenAsync() {
         var googleAccessToken = AccessTokens.FirstOrDefault(x => x.Platform == UserAccessToken.UserAccessTokenPlatform.GOOGLE);
-        if (googleAccessToken is null) return null;
+        if (googleAccessToken?.RefreshToken is null) return null;
 
         using var client = new HttpClient();
         await using var conn = await Database.GetConnectionAsync();

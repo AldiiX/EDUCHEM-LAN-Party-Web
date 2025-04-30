@@ -60,10 +60,9 @@ public class APIv1 : Controller {
         if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
 
         // overeni parametru
-        Classes.Objects.User.UserGender? gender = data.TryGetValue("gender", out var _g ) ? _g as Classes.Objects.User.UserGender? : null;
+        User.UserGender? gender = data.TryGetValue("gender", out var _g) ? Enum.TryParse(_g?.ToString(), out User.UserGender _g2) ? _g2 : null : null;
         string? avatar = data.TryGetValue("avatar", out var _avatar) ? _avatar?.ToString() : null;
-
-        Console.WriteLine(data.ToJsonString()); // TODO: dodělat
+        string? banner = data.TryGetValue("banner", out var _banner) ? _banner?.ToString() : null;
 
         // poslani do db
         using var conn = Database.GetConnection();
@@ -73,13 +72,15 @@ public class APIv1 : Controller {
             """
             UPDATE users 
             SET 
-                avatar=@avatar,
+                avatar=IF(@avatar IS NULL, NULL, avatar), -- povleno pouze smazani
+                banner=IF(@banner IS NULL, NULL, banner), -- povleno pouze smazani
                 gender=@gender
             WHERE id=@id;
             """, conn
         );
 
         command.Parameters.AddWithValue("@avatar", avatar);
+        command.Parameters.AddWithValue("@banner", banner);
         command.Parameters.AddWithValue("@gender", gender.ToString()?.ToUpper());
         command.Parameters.AddWithValue("@id", acc.ID);
 
@@ -90,7 +91,6 @@ public class APIv1 : Controller {
 
         // nastaveni aktualni instance do session
         Auth.ReAuthUser();
-
         return new NoContentResult();
     }
 

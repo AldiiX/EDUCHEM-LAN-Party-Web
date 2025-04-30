@@ -211,18 +211,59 @@
         .avatar-edit {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 24px;
+            $avatarWidth: 264px;
+            justify-content: center;
 
-            >.avatar {
-                margin: 0 auto;
+            >.avatar-div,
+            >.banner-div {
+                display: flex;
+                gap: 16px;
             }
 
-            >.buttons {
+            >.banner-div {
+                >.banner {
+                    width: $avatarWidth;
+                    aspect-ratio: 3/1;
+                    background-color: var(--element-bg);
+                    background-size: cover;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    background-image: var(--banner) !important;
+                    z-index: 0;
+                    pointer-events: none;
+                    border-radius: 8px;
+                    position: relative;
+
+                    &:is(.empty)::before {
+                        content: 'Banner';
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: var(--text-color-secondary);
+                    }
+                }
+            }
+
+            >.avatar-div {
+                >.avatar {
+                    margin: 0;
+                    width: $avatarWidth;
+
+                    .letter {
+                        font-size: calc($avatarWidth / 3);
+                    }
+                }
+            }
+
+            .buttons {
                 display: flex;
+                flex-direction: column;
                 gap: 8px;
                 justify-content: center;
-                width: 130px;
-                margin: 0 auto;
+                width: fit-content;
+                margin: 0;
 
                 >div {
                     box-sizing: content-box;

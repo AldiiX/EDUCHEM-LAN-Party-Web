@@ -58,8 +58,12 @@ public class DiscordOAuthController : Controller {
         cmd.Parameters.AddWithValue("@refreshToken", body?["refresh_token"]?.ToString());
         cmd.ExecuteNonQuery();
 
-        _ = account.UpdateAvatarByConnectedPlatform();
+        // znovu reauth
+        account = Auth.ReAuthUser();
+        if(account is null) return RedirectPermanent("/app/account?tab=settings");
 
+
+        account.UpdateAvatarByConnectedPlatformAsync().Wait();
         return RedirectPermanent("/app/account?tab=settings");
     }
 }

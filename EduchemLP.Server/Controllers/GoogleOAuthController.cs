@@ -55,8 +55,12 @@ public class GoogleOAuthController : Controller {
         cmd.Parameters.AddWithValue("@refreshToken", refreshToken);
         await cmd.ExecuteNonQueryAsync();
 
-        _ = account.UpdateAvatarByConnectedPlatform();
+        // znovu reauth
+        account = await Auth.ReAuthUserAsync();
+        if(account is null) return RedirectPermanent("/app/account?tab=settings");
 
+
+        await account.UpdateAvatarByConnectedPlatformAsync();
         return Redirect("/app/account?tab=settings");
     }
 }

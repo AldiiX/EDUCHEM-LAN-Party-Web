@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import "./assets/pure.css";
 import './Main.scss';
-import {getCookie} from "./utils.ts";
+import {authUser, getCookie} from "./utils.ts";
 import {useStore} from "./store.tsx";
 import {Map} from "./pages/app/Map.tsx";
 import {AppMobileMenuDiv} from "./components/AppMobileMenuDiv.tsx";
@@ -94,17 +94,7 @@ const App = () => {
         // vymazani loading animace
         document.getElementById("loading")?.remove();
 
-        fetch("/api/v1/loggeduser").then(async res => {
-            if(!res.ok) {
-                setUserAuthed(true);
-                return;
-            }
-
-
-            const data = await res.json();
-            setLoggedUser(data);
-            setUserAuthed(true);
-        });
+        authUser(setLoggedUser, setUserAuthed);
 
         (window as any).minecraft = _e;
 
