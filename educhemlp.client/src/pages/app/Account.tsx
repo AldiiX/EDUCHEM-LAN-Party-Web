@@ -315,7 +315,7 @@ const SettingsTab = () => {
 
             <ModalInformative
                 title="Změna banneru"
-                description="Banner v aktuální době nelze změnit."
+                description="Banner nelze změnit, změnit ho může jen administrátor."
                 onClose={() => setModalOpened(null)}
                 enabled={modalOpened === Modal.CHANGE_BANNER}
                 okAction={() => setModalOpened(null) }

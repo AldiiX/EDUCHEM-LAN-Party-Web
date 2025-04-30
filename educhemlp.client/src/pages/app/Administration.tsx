@@ -30,6 +30,7 @@ interface User {
     gender: AccountGender | null,
     lastUpdated: string,
     lastLoggedIn: string,
+    banner: string | null,
 }
 
 interface AdminStore {
@@ -127,7 +128,7 @@ const UsersTab = () => {
     const closeModal = useAdminStore((state) => state.closeModal);
     const loggedUser: LoggedUser = useStore((state => state.loggedUser));
 
-    const selectedUser = useAdminStore((state) => state.selectedUser);
+    const selectedUser: User | null = useAdminStore((state) => state.selectedUser);
     const setSelectedUser = useAdminStore((state) => state.setSelectedUser);
 
     const openedModal = useAdminStore((state) => state.openedModal);
@@ -348,9 +349,10 @@ const UsersTab = () => {
                     <>
                         <div className="top">
                             {
-                                selectedUser?.avatar ? (
-                                    <div className="banner"
-                                         style={{'--bg': `url(${selectedUser?.avatar})`} as CSSProperties}></div>
+                                selectedUser?.banner ? (
+                                    <div className="userdefined-banner" style={{'--banner': `url(${selectedUser?.banner})`} as CSSProperties}></div>
+                                ) : selectedUser?.avatar ? (
+                                    <div className="banner" style={{'--bg': `url(${selectedUser?.avatar})`} as CSSProperties}></div>
                                 ) : null
                             }
 
@@ -519,7 +521,7 @@ const UsersTab = () => {
 
                                             <div className="buttons">
                                                 {
-                                                    enumEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.SUPERADMIN) ? (
+                                                    enumEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.SUPERADMIN) && loggedUser?.id !== selectedUser?.id ? (
                                                         <TextWithIcon text="Přihlásit se" iconSrc="/images/icons/login.svg" onClick={() => {}}/>
                                                     ) : null
                                                 }

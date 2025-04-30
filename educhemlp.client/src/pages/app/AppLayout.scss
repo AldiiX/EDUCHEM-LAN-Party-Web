@@ -274,9 +274,12 @@ a {
                 text-decoration: none;
 
                 .texts {
-
                     * {
                         text-align: right;
+                    }
+
+                    p,h2 {
+                        text-shadow: 0 1px 8px var(--background-bg);
                     }
 
                     >h2 {

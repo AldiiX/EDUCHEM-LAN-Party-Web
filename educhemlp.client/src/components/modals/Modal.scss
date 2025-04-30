@@ -147,6 +147,19 @@
                 }
             }
 
+            >.userdefined-banner {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-image: var(--banner) !important;
+                z-index: 0;
+                pointer-events: none;
+                border-radius: 8px;
+            }
+
             >.avatar {
                 position: relative;
                 width: 200px;

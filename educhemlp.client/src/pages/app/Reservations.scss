@@ -678,6 +678,10 @@
                         >.texts {
                             flex-grow: 1;
                             z-index: 1;
+
+                            p {
+                                text-shadow: 0 1px 8px var(--element-bg);
+                            }
                         }
 
                         .banner {

@@ -6,6 +6,7 @@ import "./ModalInformative.scss";
 
 interface ModalInformativeActionProps {
     description: string;
+    descriptionTextAlign?: "left" | "center" | "right" | "justify";
     onClose: () => void;
     enabled: boolean;
     className?: string;
@@ -15,7 +16,7 @@ interface ModalInformativeActionProps {
     canBeClosedByClickingOutside?: boolean;
 }
 
-export const ModalInformative = ({ title = null, description, enabled, onClose, className = "", okAction, okText = "Rozumím", canBeClosedByClickingOutside = true }: ModalInformativeActionProps) => {
+export const ModalInformative = ({ title = null, description, enabled, onClose, className = "", okAction, okText = "Rozumím", canBeClosedByClickingOutside = true, descriptionTextAlign = "center" }: ModalInformativeActionProps) => {
     return (
         <Modal onClose={onClose} enabled={enabled} className={"modalinformative-fe1613b6-531d-40c1-a2ba-52d0ed659dfd " + className} canBeClosedByClickingOutside={canBeClosedByClickingOutside}>
             <div className="closebutton" onClick={onClose}></div>
@@ -26,7 +27,7 @@ export const ModalInformative = ({ title = null, description, enabled, onClose, 
                 title && <h1>{ title }</h1>
             }
 
-            <p>{ description }</p>
+            <p style={{ textAlign: descriptionTextAlign }}>{ description }</p>
 
             <div className="buttons">
                 <Button type={ButtonType.PRIMARY} style={ButtonStyle.ROUNDER} text={okText} onClick={okAction}/>
