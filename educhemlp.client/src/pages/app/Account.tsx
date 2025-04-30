@@ -172,7 +172,7 @@ const SettingsTab = () => {
     }
 
     function submitChangePasswordForm(e: React.FormEvent<HTMLFormElement>) {
-        console.log("Submitting change password form");
+       // console.log("Submitting change password form");
 
         e.preventDefault();
         const form = e.currentTarget;
@@ -203,6 +203,37 @@ const SettingsTab = () => {
             }
 
             toast.success("Úspěšně změněno heslo");
+            setModalOpened(null);
+            form.reset();
+        })
+    }
+
+    function submitChangeProfileForm(e: React.FormEvent<HTMLFormElement>) {
+        // console.log("Submitting change password form");
+
+        e.preventDefault();
+        const form = e.currentTarget;
+        const gender = form.gender.value;
+        const avatar = (document.querySelector(".page-account .settingstab-flex .avatar-edit > .avatar img") as HTMLImageElement)?.src;
+
+        fetch("/api/v1/loggeduser/", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                gender,
+                avatar
+            }),
+        }).then(async (res) => {
+            if(!res.ok) {
+                const data = await res.json();
+                console.error("Chyba při úpravě profilu: ", data.message);
+                toast.error(`Chyba při úpravě profilu: ${data.message}`);
+                return;
+            }
+
+            toast.success("Profil úspěšně upraven");
             setModalOpened(null);
             form.reset();
         })
@@ -279,7 +310,7 @@ const SettingsTab = () => {
             />
 
             <form id="changepasswordform" onSubmit={submitChangePasswordForm}></form>
-            <form id="editprofileform"></form>
+            <form id="editprofileform" onSubmit={submitChangeProfileForm}></form>
 
             <div className="settingstab-flex">
                 <div className="left">
@@ -405,7 +436,7 @@ const SettingsTab = () => {
 
                         <div className="buttons">
                             <Button type={ButtonType.SECONDARY} text="Zrušit změny" />
-                            <Button type={ButtonType.PRIMARY} text="Uložit změny" form="editprofileform" />
+                            <Button type={ButtonType.PRIMARY} text="Uložit změny" form="editprofileform" buttonType="submit" />
                         </div>
                     </div>
 

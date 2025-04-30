@@ -54,6 +54,46 @@ public class APIv1 : Controller {
         return new JsonResult(obj);
     }
 
+    [HttpPut("loggeduser")]
+    public IActionResult EditLoggedUser([FromBody] Dictionary<string, object?> data) {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
+        // overeni parametru
+        Classes.Objects.User.UserGender? gender = data.TryGetValue("gender", out var _g ) ? _g as Classes.Objects.User.UserGender? : null;
+        string? avatar = data.TryGetValue("avatar", out var _avatar) ? _avatar?.ToString() : null;
+
+        Console.WriteLine(data.ToJsonString()); // TODO: dodělat
+
+        // poslani do db
+        using var conn = Database.GetConnection();
+        if(conn == null) return new StatusCodeResult(500);
+
+        var command = new MySqlCommand(
+            """
+            UPDATE users 
+            SET 
+                avatar=@avatar,
+                gender=@gender
+            WHERE id=@id;
+            """, conn
+        );
+
+        command.Parameters.AddWithValue("@avatar", avatar);
+        command.Parameters.AddWithValue("@gender", gender.ToString()?.ToUpper());
+        command.Parameters.AddWithValue("@id", acc.ID);
+
+        if(command.ExecuteNonQuery() <= 0) return new JsonResult(new { success = false, message = "Nepodařilo se změnit údaje." }) { StatusCode = 500 };
+
+        // zapsani do logu
+        DbLogger.Log(DbLogger.LogType.INFO, $"Uživatel {acc.DisplayName} ({acc.Email}) si změnil údaje.", "user-edit");
+
+        // nastaveni aktualni instance do session
+        Auth.ReAuthUser();
+
+        return new NoContentResult();
+    }
+
     [HttpPost("loggeduser/password")]
     public IActionResult ChangeLoggedUserPassword([FromBody] Dictionary<string, object?> data) {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();

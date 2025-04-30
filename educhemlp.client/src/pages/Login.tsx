@@ -50,7 +50,7 @@ export const Login = () => {
             <div className={"left-side"}>
                 <div className="title">
                     <div className="logo"></div>
-                    <h1>Educhem<br/>LAN Party</h1></div>
+                    <h1>EDUCHEM<br/>LAN Party</h1></div>
                 <div className={"login-container"}>
                     <Box
                         className={"login-form"}
