@@ -77,8 +77,8 @@ const Theme = () => {
 }
 
 const App = () => {
-    const setLoggedUser = useStore(state => state.setLoggedUser);
     const loggedUser = useStore(state => state.loggedUser);
+    const setLoggedUser = useStore(state => state.setLoggedUser);
     const setUserAuthed = useStore(state => state.setUserAuthed);
 
     let theme = getCookie("theme");
@@ -124,6 +124,7 @@ const App = () => {
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/app/login" element={<Navigate to="/login" />} />
                     <Route path="/app" element={<Navigate to="/app/reservations" />} />
                     <Route path="/app/reservations" element={<Reservations />} />
                     <Route path="/app/attendance" element={<Attendance />} />

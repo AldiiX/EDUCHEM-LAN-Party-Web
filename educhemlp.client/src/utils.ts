@@ -4,23 +4,15 @@ export function authUser(setLoggedUser: Function, setUserAuthed: Function) {
         headers: {
             "Content-Type": "application/json",
         },
-    })
-        .then((response) => {
-            if (response.status === 200) {
-                return response.json();
-            } else {
-                throw new Error("Failed to fetch logged user");
-            }
-        })
-        .then((data) => {
-            setLoggedUser(data);
-            setUserAuthed(true);
-        })
-        .catch((error) => {
-            console.error("Error fetching logged user:", error);
+    }).then(async (response) => {
+        const data = await response.json();
+
+        if(!response.ok){
             setLoggedUser(null);
-            setUserAuthed(false);
-        });
+        } else setLoggedUser(data);
+
+        setUserAuthed(true);
+    });
 }
 
 export const getCookie = (name: string) => {
