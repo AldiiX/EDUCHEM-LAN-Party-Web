@@ -169,22 +169,14 @@ export function formatTime(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000);
     const totalMinutes = Math.floor(totalSeconds / 60);
     const totalHours = Math.floor(totalMinutes / 60);
-    const totalDays = Math.floor(totalHours / 24);
-    const months = Math.floor(totalDays / 30);
-    const days = totalDays % 30;
+    const days = Math.floor(totalHours / 24);
     const hours = totalHours % 24;
     const minutes = totalMinutes % 60;
     const seconds = totalSeconds % 60;
 
     const parts: string[] = [];
 
-    if (months > 0) {
-        parts.push(`${months}m`);
-        parts.push(`${days}d`);
-        parts.push(`${hours}h`);
-        parts.push(`${minutes}min`);
-        parts.push(`${seconds}s`);
-    } else if (days > 0) {
+    if (days > 0) {
         parts.push(`${days}d`);
         parts.push(`${hours}h`);
         parts.push(`${minutes}min`);
