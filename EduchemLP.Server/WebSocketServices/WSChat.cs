@@ -259,12 +259,14 @@ public static class WSChat {
         cmd.Parameters.AddWithValue("@uuid", uuid);
         cmd.Parameters.AddWithValue("@userId", client.ID);
         cmd.Parameters.AddWithValue("@message", message);
+        cmd.Parameters.AddWithValue("@replyingToUuid", null); // TODO: implementovat
 
         MySqlDataReader? result;
 
         try {
             result = await cmd.ExecuteReaderAsync() as MySqlDataReader;
-        } catch (MySqlException) {
+        } catch (MySqlException e) {
+            //Console.WriteLine(e);
             return null;
         }
 
