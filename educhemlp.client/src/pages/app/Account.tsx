@@ -208,6 +208,15 @@ const SettingsTab = () => {
             toast.success("Úspěšně změněno heslo");
             setModalOpened(null);
             form.reset();
+
+            //resetovani podminek
+            pwdcond1.current!.classList.remove("valid");
+            pwdcond2.current!.classList.remove("valid");
+            pwdcond3.current!.classList.remove("valid");
+            pwdcond4.current!.classList.remove("valid");
+            pwdcond5.current!.classList.remove("valid");
+            pwdconddiv.current!.style.display = "none";
+            form.submitButton?.setAttribute("disabled", "disabled");
         })
     }
 

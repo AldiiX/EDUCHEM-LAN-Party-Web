@@ -8,8 +8,15 @@ import {Modal} from "../../components/modals/Modal.tsx";
 import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 import {toast} from "react-toastify";
 import Switch, {switchClasses} from '@mui/joy/Switch';
-import {AccountGender, AccountType, BasicAPIResponse, Log, LoggedUser} from "../../interfaces.ts";
-import {compareEnumValues, enumEquals, enumIsGreater, enumIsGreaterOrEquals, enumIsSmaller} from "../../utils.ts";
+import {AccountGender, AccountType, AppSettings, BasicAPIResponse, Log, LoggedUser} from "../../interfaces.ts";
+import {
+    compareEnumValues,
+    enumEquals,
+    enumIsGreater,
+    enumIsGreaterOrEquals,
+    enumIsSmaller,
+    getAppSettings
+} from "../../utils.ts";
 import {create} from "zustand";
 import {ButtonStyle, ButtonType} from "../../components/buttons/ButtonProps.ts";
 import {Button} from "../../components/buttons/Button.tsx";
@@ -18,7 +25,7 @@ import {Button} from "../../components/buttons/Button.tsx";
 // region shared veci
 enum Modals { USER, DELETE_CONFIRMATION, RESETPASSWORD_CONFIRMATION }
 
-enum Tab { USERS, RESERVATIONS, LOGS, FORUM_POSTS }
+enum Tab { USERS, RESERVATIONS, LOGS, FORUM_POSTS, APP_SETTINGS }
 
 interface User {
     id: number,
@@ -720,6 +727,147 @@ const ForumPostsTab = () => {
 
 
 
+
+// nastaveni aplikace
+const AppSettingsTab = () => {
+    const appSettings: AppSettings | null = useStore((state) => state.appSettings);
+    const setAppSettings = useStore((state) => state.setAppSettings);
+    const [reservationsStatus, setReservationsStatus] = useState(appSettings?.reservationsStatus ?? "CLOSED");
+
+
+
+    function submitEditAppSettingsForm(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        const form = e.currentTarget;
+
+        const reservationsStatus = form.reservationsStatus.value as string;
+        const reservationsEnabledFrom = form.reservationsEnabledFrom?.value as string | null;
+        const reservationsEnabledTo = form.reservationsEnabledTo?.value as string | null;
+        //console.log(reservationsStatus, reservationsEnabledFrom, reservationsEnabledTo);
+
+        fetch("/api/v1/appsettings", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                reservationsStatus: reservationsStatus,
+                reservationsEnabledFrom: reservationsEnabledFrom,
+                reservationsEnabledTo: reservationsEnabledTo,
+            })
+        }).then(async res => {
+            if (!res.ok) {
+                toast.error("Chyba při aktualizaci nastavení aplikace.");
+                return;
+            }
+
+            getAppSettings(setAppSettings);
+            toast.success("Nastavení aplikace úspěšně uloženo.");
+        });
+    }
+
+    function resetEditAppSettingsForm() {
+        const form = document.getElementById("editappsettings") as HTMLFormElement;
+        form.reset();
+        setReservationsStatus(appSettings?.reservationsStatus ?? "CLOSED");
+    }
+
+    function submitEditAppSettingsChatForm(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        const form = e.currentTarget;
+
+        const chatEnabled = form.chatEnabled?.value as string | null;
+
+        fetch("/api/v1/appsettings", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                chatEnabled: chatEnabled,
+            })
+        }).then(async res => {
+            if (!res.ok) {
+                toast.error("Chyba při aktualizaci nastavení aplikace.");
+                return;
+            }
+
+            getAppSettings(setAppSettings);
+            toast.success("Nastavení aplikace úspěšně uloženo.");
+        });
+    }
+
+    function resetEditAppSettingsChatForm() {
+        const form = document.getElementById("editappsettingschat") as HTMLFormElement;
+        form.reset();
+        setReservationsStatus(appSettings?.reservationsStatus ?? "CLOSED");
+    }
+
+
+
+    return (
+        <div className="appsettings-tab">
+            <div className="appsettings">
+                <form id="editappsettings" onSubmit={submitEditAppSettingsForm}></form>
+
+                <p className="nadpis">Nastavení rezervací</p>
+
+
+                <div className="pair">
+                    <p>Status</p>
+                    <select name="reservationsStatus" defaultValue={appSettings?.reservationsStatus ?? ""} form="editappsettings" onChange={(e) => setReservationsStatus(e.target.value as any)}>
+                        <option value="USE_TIMER">Použít časovač</option>
+                        <option value="OPEN">Zapnuto</option>
+                        <option value="CLOSED">Vypnuto</option>
+                    </select>
+                </div>
+
+                {
+                    reservationsStatus === "USE_TIMER" ? (
+                        <>
+                            <div className="pair">
+                                <p>Povoleno od</p>
+                                <input type="datetime-local" defaultValue={appSettings?.reservationsEnabledFrom} name="reservationsEnabledFrom" form="editappsettings" />
+                            </div>
+
+                            <div className="pair">
+                                <p>Povoleno do</p>
+                                <input type="datetime-local" defaultValue={appSettings?.reservationsEnabledTo} name="reservationsEnabledTo" form="editappsettings" />
+                            </div>
+                        </>
+                    ) : null
+                }
+
+                <div className="buttons">
+                    <Button type={ButtonType.SECONDARY} text="Zrušit změny" onClick={() => resetEditAppSettingsForm() } />
+                    <Button type={ButtonType.PRIMARY} text="Uložit změny" form="editappsettings" buttonType="submit" />
+                </div>
+            </div>
+
+            <div className="appsettings">
+                <form id="editappsettingschat" onSubmit={submitEditAppSettingsChatForm}></form>
+                <p className="nadpis">Nastavení chatu</p>
+
+
+                <div className="pair">
+                    <p>Viditelnost</p>
+                    <select name="chatEnabled" defaultValue={String(appSettings?.chatEnabled ?? "true")} form="editappsettingschat">
+                        <option value="true">Povolené</option>
+                        <option value="false">Zakázané</option>
+                    </select>
+                </div>
+
+                <div className="buttons">
+                    <Button type={ButtonType.SECONDARY} text="Zrušit změny" onClick={() => resetEditAppSettingsChatForm() } />
+                    <Button type={ButtonType.PRIMARY} text="Uložit změny" form="editappsettingschat" buttonType="submit" />
+                </div>
+            </div>
+        </div>
+    )
+}
+
+
+
 // main komponent
 export const Administration = () => {
     const navigate = useNavigate();
@@ -754,6 +902,12 @@ export const Administration = () => {
                 <p onClick={() => setSelectedTab(Tab.RESERVATIONS)} className={selectedTab === Tab.RESERVATIONS ? "active" : ""}>Rezervace</p>
                 <p onClick={() => setSelectedTab(Tab.FORUM_POSTS)} className={selectedTab === Tab.FORUM_POSTS ? "active" : ""}>Forum příspěvky</p>
                 <p onClick={() => setSelectedTab(Tab.LOGS)} className={selectedTab === Tab.LOGS ? "active" : ""}>Bezpečnostní logy</p>
+
+                {
+                    enumIsGreaterOrEquals(loggedUser?.accountType, AccountType, AccountType.ADMIN) ? (
+                        <p onClick={() => setSelectedTab(Tab.APP_SETTINGS)} className={selectedTab === Tab.APP_SETTINGS ? "active" : ""}>Nastavení aplikace</p>
+                    ) : null
+                }
             </div>
 
             {
@@ -765,6 +919,8 @@ export const Administration = () => {
                     <ReservationsTab/>
                 ) : selectedTab === Tab.FORUM_POSTS ? (
                     <ForumPostsTab/>
+                ) : selectedTab === Tab.APP_SETTINGS ? (
+                    <AppSettingsTab />
                 ) : null
             }
         </AppLayout>

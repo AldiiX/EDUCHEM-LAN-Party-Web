@@ -13,6 +13,15 @@ export type LoggedUser = {
     banner: string | null,
 }
 
+
+export type AppSettings = {
+    reservationsStatus: "USE_TIMER" | "OPEN" | "CLOSED",
+    reservationsEnabledFrom: string,
+    reservationsEnabledTo: string,
+    reservationsEnabledRightNow: boolean,
+    chatEnabled: boolean,
+}
+
 /*
 * typ účtu LoggedUser classy
 * */

@@ -127,6 +127,12 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
     font-weight: 800;
 }
 
+@font-face {
+    font-family: "monocraft";
+    src: url('../public/fonts/Monocraft.ttc') format('truetype');
+    font-weight: 400;
+}
+
 
 .button-primary,
 .button-secondary {

@@ -15,6 +15,21 @@ export function authUser(setLoggedUser: Function, setUserAuthed: Function) {
     });
 }
 
+export function getAppSettings(setAppSettings: Function) {
+    fetch("/api/v1/appsettings", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    }).then(async (response) => {
+        const data = await response.json();
+
+        if(!response.ok){
+            //setAppSettings(null);
+        } else setAppSettings(data);
+    });
+}
+
 export const getCookie = (name: string) => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -148,4 +163,26 @@ export function enumToString<T extends Record<string, string>>(
     }
 
     return undefined;
+}
+
+export function formatTime(ms: number): string {
+    const totalSeconds = Math.floor(ms / 1000);
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    const totalHours = Math.floor(totalMinutes / 60);
+    const totalDays = Math.floor(totalHours / 24);
+    const months = Math.floor(totalDays / 30);
+    const days = totalDays % 30;
+    const hours = totalHours % 24;
+    const minutes = totalMinutes % 60;
+    const seconds = totalSeconds % 60;
+
+    const parts: string[] = [];
+
+    if (months) parts.push(`${months}m`);
+    if (days) parts.push(`${days}d`);
+    if (hours) parts.push(`${hours}h`);
+    if (minutes) parts.push(`${minutes}min`);
+    parts.push(`${seconds}s`);
+
+    return parts.join(' ');
 }

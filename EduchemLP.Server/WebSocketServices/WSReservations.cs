@@ -7,7 +7,7 @@ using EduchemLP.Server.Classes.Objects;
 using MySql.Data.MySqlClient;
 using Client = EduchemLP.Server.Classes.Objects.WSClientUser;
 
-namespace EduchemLP.Server.Services;
+namespace EduchemLP.Server.WebSocketServices;
 
 
 public static class WSReservations {
@@ -76,6 +76,8 @@ public static class WSReservations {
 
             switch (action) {
                 case "reserve": {
+                    if (!AppSettings.AreReservationsEnabledRightNow) break;
+
                     string? room = messageJson?["room"]?.ToString();
                     string? computer = messageJson?["computer"]?.ToString();
 
@@ -107,6 +109,8 @@ public static class WSReservations {
                 } break;
 
                 case "deleteReservation": {
+                    if (!AppSettings.AreReservationsEnabledRightNow) break;
+
                     await using var conn = await Database.GetConnectionAsync();
                     if (conn == null) break;
 

@@ -8,7 +8,7 @@ using EduchemLP.Server.Classes.Objects;
 using MySql.Data.MySqlClient;
 using Client = EduchemLP.Server.Classes.Objects.WSClientUser;
 
-namespace EduchemLP.Server.Services;
+namespace EduchemLP.Server.WebSocketServices;
 /*
  * V pripade ze se uzivatel pripoji do socketu, tak se mu zobrazi poslednich 10 sprav
  * Aby backend prijmal zpravy a v pripade ze se ta sprava posle, tak se zobrazi vsem ostatnim
@@ -29,6 +29,8 @@ public static class WSChat {
             await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Unauthorized", CancellationToken.None);
             return;
         }
+
+        if (!CheckIfChatIsEnabled()) return;
         
         var client = new Client(
             webSocket,
@@ -75,6 +77,8 @@ public static class WSChat {
             // zpracovani zpravy
             string messageString = Encoding.UTF8.GetString(buffer, 0, result.Count);
             if (string.IsNullOrWhiteSpace(messageString)) continue;
+
+            CheckIfChatIsEnabled();
 
             JsonNode? messageJson;
             try {
@@ -337,6 +341,21 @@ public static class WSChat {
             foreach (var client in ConnectedUsers)
                 client.BroadcastAsync(json).Wait();
         }
+    }
+
+    private static bool CheckIfChatIsEnabled() {
+        if (AppSettings.ChatEnabled) return true;
+
+        // odpojeni vsech lidi ze socketu
+        lock (ConnectedUsers) {
+            foreach (var client in ConnectedUsers) {
+                client.Disconnect();
+            }
+
+            ConnectedUsers.Clear();
+        }
+
+        return false;
     }
 
     /*static WSChat() {

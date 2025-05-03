@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Services;
@@ -135,7 +134,7 @@ public static class Utilities {
 
         if (!password.Any(char.IsDigit)) return false;
 
-        if (!password.Any(c => "!@#$%^&*()_+-=[]{}|;':\",.<>?/".Contains(c))) return false;
+        if (!password.Any(c => "ěščřžýáíéůú!@#$%^&*()_+-=[]{}|;':\",.<>?/".Contains(c))) return false;
 
         return true;
     }

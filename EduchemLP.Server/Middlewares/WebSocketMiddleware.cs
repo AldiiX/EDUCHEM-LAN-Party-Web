@@ -1,5 +1,5 @@
 ﻿using System.Net.WebSockets;
-using EduchemLP.Server.Services;
+using EduchemLP.Server.WebSocketServices;
 
 namespace EduchemLP.Server.Middlewares;
 

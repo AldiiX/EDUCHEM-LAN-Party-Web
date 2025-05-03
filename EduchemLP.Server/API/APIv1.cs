@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Models;
@@ -104,7 +103,7 @@ public class APIv1 : Controller {
         if (oldPassword == null || newPassword == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'oldPassword' nebo 'newPassword'" });
 
         // stare hesla se musi shodovat
-        if (Utilities.EncryptPassword(oldPassword) != acc.Password) return new BadRequestObjectResult(new { success = false, message = "Staré heslo je špatně" });
+        if (!Utilities.VerifyPassword(oldPassword, acc.Password)) return new BadRequestObjectResult(new { success = false, message = "Staré heslo je špatně" });
 
         // overeni platnosti hesla
         switch (newPassword.Length) { // overeni lengthu hesla
@@ -226,9 +225,54 @@ public class APIv1 : Controller {
         string email = credentials[0];
         string password = credentials.Length > 1 ? credentials[1] : "";
 
-        _ = Auth.AuthUser(email, Utilities.EncryptPassword(password));
-
+        Auth.AuthUser(email, password, true);
         return Redirect(redirect ?? "/app");
+    }
+
+    [HttpGet("appsettings")]
+    public IActionResult GetAppSettings() {
+        return new OkObjectResult(new {
+                reservationsStatus = AppSettings.ReservationsStatus.ToString().ToUpper(),
+                reservationsEnabledFrom = AppSettings.ReservationsEnabledFrom,
+                reservationsEnabledTo = AppSettings.ReservationsEnabledTo,
+                reservationsEnabledRightNow = AppSettings.AreReservationsEnabledRightNow,
+                chatEnabled = AppSettings.ChatEnabled,
+            }
+        );
+    }
+
+    [HttpPut("appsettings")]
+    public IActionResult SetAppSettings([FromBody] Dictionary<string, object?> data) {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc == null || acc.AccountType < Classes.Objects.User.UserAccountType.ADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nelze upravit nastavení, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+
+        AppSettings.ReservationStatusType status = data.TryGetValue("reservationsStatus", out var _status) ? Enum.TryParse(_status?.ToString(), out AppSettings.ReservationStatusType _status2) ? _status2 : AppSettings.ReservationStatusType.CLOSED : AppSettings.ReservationStatusType.CLOSED;
+        DateTime? from = data.TryGetValue("reservationsEnabledFrom", out var _from) ? DateTime.TryParse(_from?.ToString(), out var _from2) ? _from2 : null : null;
+        DateTime? to = data.TryGetValue("reservationsEnabledTo", out var _to) ? DateTime.TryParse(_to?.ToString(), out var _to2) ? _to2 : null : null;
+        bool? chatEnabled = data.TryGetValue("chatEnabled", out var _chatEnabled) ? bool.TryParse(_chatEnabled?.ToString(), out var _chatEnabled2) ? _chatEnabled2 : null : null;
+
+
+        // asynch picovinky
+        var t1 = Task.Run(() => AppSettings.ReservationsStatus = status);
+
+        var t2 = Task.Run(() => {
+            if(from == null) return;
+            AppSettings.ReservationsEnabledFrom = (DateTime)from;
+        });
+
+        var t3 = Task.Run(() => {
+            if(to == null) return;
+            AppSettings.ReservationsEnabledTo = (DateTime)to;
+        });
+
+        var t4 = Task.Run(() => {
+            if(chatEnabled == null) return;
+            AppSettings.ChatEnabled = (bool)chatEnabled;
+        });
+
+
+        Task.WaitAll(t1, t2, t3, t4);
+        return new NoContentResult();
     }
 
     #if DEBUG

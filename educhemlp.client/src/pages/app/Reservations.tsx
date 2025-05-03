@@ -13,6 +13,8 @@ import {toast} from "react-toastify";
 import {create} from "zustand";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
+import {AppSettings} from "../../interfaces.ts";
+import {formatTime, getAppSettings} from "../../utils.ts";
 
 
 // global store
@@ -83,8 +85,14 @@ const SelectedReservation = () => {
     const selectedReservation = useReservationsStore((state) => state.selectedReservation);
     const setSelectedReservation = useReservationsStore((state) => state.setSelectedReservation);
     const socket = useReservationsStore((state) => state.socket);
+    const appSettings: AppSettings = useStore((state) => state.appSettings);
 
     const reserve = async (room: string | null, computer: string | null) => {
+        if(!appSettings.reservationsEnabledRightNow) {
+            toast.error("Změny v rezervacích nejsou povoleny.");
+            return;
+        }
+
         if(!socket.current) {
             toast.error("Rezervace není dostupná, zkuste to prosím později.");
             return;
@@ -98,6 +106,11 @@ const SelectedReservation = () => {
     }
 
     const deleteReservation = async () => {
+        if(!appSettings.reservationsEnabledRightNow) {
+            toast.error("Změny v rezervacích nejsou povoleny.");
+            return;
+        }
+
         if(!socket.current) return;
 
         socket.current.send(JSON.stringify({ action: "deleteReservation" }));
@@ -192,44 +205,48 @@ const SelectedReservation = () => {
                 )}
 
                 {/* Tlačítka */}
-                {loggedUser !== null ? (
-                    selectedReservation?.type === "computer" ? (
-                        selectedReservation?.reservations?.[0]?.user !== "unknown" && selectedReservation?.reservations?.[0]?.user?.id === loggedUser?.id ? (
+                {
+                    appSettings.reservationsEnabledRightNow ? (
+                        loggedUser !== null ? (
+                            selectedReservation?.type === "computer" ? (
+                            selectedReservation?.reservations?.[0]?.user !== "unknown" && selectedReservation?.reservations?.[0]?.user?.id === loggedUser?.id ? (
+                                <>
+                                    <div className="divider"></div>
+                                    <div className="buttons">
+                                        <Button type={ButtonType.SECONDARY} text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation()} />
+                                    </div>
+                                </>
+                            ) : selectedReservation?.reservations.length === 0 ? (
+                                <>
+                                    <div className="divider"></div>
+                                    <div className="buttons">
+                                        <Button type={ButtonType.PRIMARY} text="Rezervovat" icon="/images/icons/computer.svg" onClick={() => reserve(null, selectedReservation?.id) } />
+                                    </div>
+                                </>
+                            ) : null
+                        ) : selectedReservation?.reservations.find((r: any) => r.user?.id === loggedUser?.id) ? (
                             <>
                                 <div className="divider"></div>
                                 <div className="buttons">
-                                    <Button type={ButtonType.SECONDARY} text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation()} />
+                                    <Button type={ButtonType.SECONDARY} text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation() } />
                                 </div>
                             </>
-                        ) : selectedReservation?.reservations.length === 0 ? (
+                        ) : selectedReservation?.reservations.length < selectedReservation?.limitOfSeats ? (
                             <>
                                 <div className="divider"></div>
                                 <div className="buttons">
-                                    <Button type={ButtonType.PRIMARY} text="Rezervovat" icon="/images/icons/computer.svg" onClick={() => reserve(null, selectedReservation?.id) } />
+                                    <Button type={ButtonType.PRIMARY} text="Rezervovat" icon="/images/icons/door.svg" onClick={() => reserve(selectedReservation?.id, null) } />
                                 </div>
                             </>
                         ) : null
-                    ) : selectedReservation?.reservations.find((r: any) => r.user?.id === loggedUser?.id) ? (
-                        <>
-                            <div className="divider"></div>
-                            <div className="buttons">
-                                <Button type={ButtonType.SECONDARY} text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation() } />
-                            </div>
-                        </>
-                    ) : selectedReservation?.reservations.length < selectedReservation?.limitOfSeats ? (
-                        <>
-                            <div className="divider"></div>
-                            <div className="buttons">
-                                <Button type={ButtonType.PRIMARY} text="Rezervovat" icon="/images/icons/door.svg" onClick={() => reserve(selectedReservation?.id, null) } />
-                            </div>
-                        </>
+                        ) : selectedReservation?.reservations.length === 0 ? (
+                            <>
+                                <div className="divider"></div>
+                                <p>Pro rezervování <Link to="/login" style={{ color: "var(--accent-color)"}}>se přihlaš</Link>.</p>
+                            </>
+                        ) : null
                     ) : null
-                ) : selectedReservation?.reservations.length === 0 ? (
-                    <>
-                        <div className="divider"></div>
-                        <p>Pro rezervování <Link to="/login" style={{ color: "var(--accent-color)"}}>se přihlaš</Link>.</p>
-                    </>
-                ) : null}
+                }
             </div>
         </div>
     )
@@ -273,6 +290,10 @@ export const Reservations = () => {
     const userAuthed = useStore((state) => state.userAuthed);
     const mapRef = useRef<HTMLDivElement>(null);
     const isFirstRender = useRef(true);
+    const appSettings: AppSettings = useStore((state) => state.appSettings);
+    const setAppSettings = useStore((state) => state.setAppSettings);
+    const [countdownText, setCountdownText] = useState<string | null>(null);
+    const [countdownText2, setCountdownText2] = useState<string | null>(null);
 
 
     // region ostatní funkce
@@ -526,6 +547,41 @@ export const Reservations = () => {
         }, 750);
     }, [loggedUser, userAuthed]);
 
+    // effekt pro časovač když jsou rezervace s časovačem
+    useEffect(() => {
+        if (appSettings.reservationsStatus !== "USE_TIMER") {
+            setCountdownText(null);
+            return;
+        }
+
+        const updateCountdown = () => {
+            const now = Date.now();
+            const from = new Date(appSettings.reservationsEnabledFrom).getTime();
+            const to = new Date(appSettings.reservationsEnabledTo).getTime();
+
+            if (now < from) {
+                const diff = from - now;
+                setCountdownText(`Rezervace se otevírají za`);
+                setCountdownText2(formatTime(diff));
+            } else if (now < to) {
+                const diff = to - now;
+                setCountdownText(`Rezervace se uzavírají za`);
+                setCountdownText2(formatTime(diff));
+            } else {
+                setCountdownText("Rezervace jsou uzavřeny");
+                setCountdownText2(null);
+            }
+
+            // v pripade ze se odpocet odpocita, tak se znovu nacte appsettings
+            if(now > to || now < from) getAppSettings(setAppSettings);
+        }
+
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
+
+        return () => clearInterval(interval);
+    }, [appSettings]);
+
 
 
     return (
@@ -542,8 +598,20 @@ export const Reservations = () => {
                 ))}
             </div>
 
-            <div className={"map-wrapper"}>
+            <div className="map-wrapper">
                 <div className="map" ref={mapRef}>
+
+                    <div className="reservations-status">
+                        {appSettings.reservationsStatus === "CLOSED" ? (
+                            <p>Rezervace jsou uzavřeny</p>
+                        ) : (
+                            <>
+                                <p>{countdownText}</p>
+                                <h1>{countdownText2}</h1>
+                            </>
+                        )}
+                    </div>
+
                     <div className="legend">
                         <h3>Legenda mapy:</h3>
                         <div className="legend-item">
@@ -581,16 +649,15 @@ export const Reservations = () => {
                                     : "serverstatus"
                         }>
                             <div className="icon"></div>
-                            <p className="text">
-                                { socketStatus === null
-                                    ? "Připojování k serveru..."
-                                    : socketStatus === ReservationSocketStatus.CONNECTED
-                                        ? "Připojeno k serveru"
-                                        : socketStatus === ReservationSocketStatus.DISCONNECTED
-                                            ? "Chyba připojení k serveru, restartuj stránku"
-                                            : null
-                                }
-                            </p>
+                            {
+                                socketStatus === null ? (
+                                    <p className="text">Připojování k serveru...</p>
+                                ) : socketStatus === ReservationSocketStatus.CONNECTED ? (
+                                    <p className="text">Připojeno k serveru</p>
+                                ) : socketStatus === ReservationSocketStatus.DISCONNECTED ? (
+                                    <p className="text">Chyba připojení k serveru, restartuj stránku</p>
+                                ) : null
+                            }
                         </div>
 
                         <div className="viewers" title="Připojení uživatelé">

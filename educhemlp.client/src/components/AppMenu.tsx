@@ -1,7 +1,7 @@
 import {Link, useLocation} from "react-router-dom";
 import {useStore} from "../store.tsx";
 import {useEffect, useState} from "react";
-import {AccountType, LoggedUser} from "../interfaces.ts";
+import {AccountType, AppSettings, LoggedUser} from "../interfaces.ts";
 
 interface AppMenuProps {
     onClick?: () => void;
@@ -13,6 +13,7 @@ export const AppMenu = ({ onClick }: AppMenuProps) => {
     const { setMenuOpened } = useStore();
     const location = useLocation();
     const loggedUser = useStore().loggedUser as LoggedUser;
+    const appSettings: AppSettings = useStore((state) => state.appSettings);
 
     useEffect(() => {
         setCurrentPage(location.pathname);
@@ -41,7 +42,7 @@ export const AppMenu = ({ onClick }: AppMenuProps) => {
             </Link>
 
             {
-                loggedUser !== null
+                loggedUser !== null && appSettings.chatEnabled
                     ? <Link to={"/app/chat"} onClick={onClick} className={currentPage === "/app/chat" ? "active" : ""}>
                         <div style={{ maskImage: 'url(/images/icons/chat.svg)' }}></div>
                         <p>Chat</p>
