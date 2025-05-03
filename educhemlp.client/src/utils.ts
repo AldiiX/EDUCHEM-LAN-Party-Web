@@ -178,11 +178,27 @@ export function formatTime(ms: number): string {
 
     const parts: string[] = [];
 
-    if (months) parts.push(`${months}m`);
-    if (days) parts.push(`${days}d`);
-    if (hours) parts.push(`${hours}h`);
-    if (minutes) parts.push(`${minutes}min`);
-    parts.push(`${seconds}s`);
+    if (months > 0) {
+        parts.push(`${months}m`);
+        parts.push(`${days}d`);
+        parts.push(`${hours}h`);
+        parts.push(`${minutes}min`);
+        parts.push(`${seconds}s`);
+    } else if (days > 0) {
+        parts.push(`${days}d`);
+        parts.push(`${hours}h`);
+        parts.push(`${minutes}min`);
+        parts.push(`${seconds}s`);
+    } else if (hours > 0) {
+        parts.push(`${hours}h`);
+        parts.push(`${minutes}min`);
+        parts.push(`${seconds}s`);
+    } else if (minutes > 0) {
+        parts.push(`${minutes}min`);
+        parts.push(`${seconds}s`);
+    } else {
+        parts.push(`${seconds}s`);
+    }
 
     return parts.join(' ');
 }
