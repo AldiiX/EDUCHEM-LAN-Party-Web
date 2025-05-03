@@ -551,6 +551,7 @@ export const Reservations = () => {
     useEffect(() => {
         if (appSettings.reservationsStatus !== "USE_TIMER") {
             setCountdownText(null);
+            setCountdownText2(null);
             return;
         }
 
