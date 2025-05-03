@@ -140,7 +140,25 @@ public static class WSChat {
         if (conn == null) return;
 
         // kontrola jestli uzivatel ma pravo smazat zpravu jinych uzivatelu 
+        if (client.AccountType < User.UserAccountType.TEACHER) {
+            await using var cmd1 = conn.CreateCommand();
+            cmd1.CommandText = "SELECT user_id FROM chat WHERE uuid = @uuid";
+            cmd1.Parameters.AddWithValue("@uuid", messageUuid);
+            await using var reader = await cmd1.ExecuteReaderAsync() as MySqlDataReader;
+            if (reader == null) return;
+            if (!await reader.ReadAsync()) return;
+            
+            var messageUserId = reader.GetInt32("user_id");
+            if (messageUserId != client.ID) {
+                await client.BroadcastAsync(new JsonObject {
+                    ["action"] = "error",
+                    ["message"] = "Nemáte oprávnění smazat tuto zprávu."
+                }.ToString());
+                return;
+            }
+        }
         
+        //mazani zpravy 
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = "UPDATE chat SET deleted = 1 WHERE uuid = @uuid";
         cmd.Parameters.AddWithValue("@uuid", messageUuid);
@@ -197,6 +215,7 @@ public static class WSChat {
                 reader.GetString("message"),
                 reader.GetDateTime("date"),
                 reader.GetStringOrNull("author_banner"),
+                reader.GetBoolean("deleted"),
                 client
             );
 
@@ -268,13 +287,14 @@ public static class WSChat {
                     message,
                     result.GetDateTime("date"),
                     result.GetStringOrNull("author_banner"),
+                    result.GetBoolean("deleted"),
                     client
                 )
             }
         };
     }
 
-    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date, string? userBanner, Client? client = null) {
+    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date,  string? userBanner, bool deleted, Client? client = null) {
         var obj = new JsonObject {
             ["uuid"] = uuid,
             ["author"] = new JsonObject {
@@ -345,6 +365,7 @@ public static class WSChat {
                 reader.GetString("message"),
                 reader.GetDateTime("date"),
                 reader.GetStringOrNull("author_banner"),
+                reader.GetBoolean("deleted"),
                 client
             );
 

@@ -10,7 +10,7 @@ interface TextWithIconProps {
     color?: string;
     onClick?: () => void;
     gapBetween?: number;
-    style: React.CSSProperties;
+    style?: React.CSSProperties;
 }
 
 export const TextWithIcon = ({ text, iconSrc, iconSize = 14, textSize = 16, className, color = "var(--text-color)", onClick, gapBetween = 8, style = {} }: TextWithIconProps) => {

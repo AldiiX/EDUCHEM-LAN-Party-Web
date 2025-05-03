@@ -121,7 +121,17 @@ export const Chat = () => {
         //console.log(!firstMessageRender.current && scrollContainer.scrollTop === 0 && wsRef.current?.readyState === WebSocket.OPEN && messagesRef.current.length > 0)
         //console.log(!firstMessageRender.current , scrollContainer.scrollTop === 0 , wsRef.current?.readyState === WebSocket.OPEN , messagesRef.current.length > 0)
         //console.log(messagesRef.current);
-
+        
+        // pri scrollovani nahoru se ukaze button na scroll dolu 
+        const scrollToBottomButton = document.querySelector(".scroll-to-bottom") as HTMLElement | null;
+        if (scrollToBottomButton) {
+            if (scrollContainer.scrollTop < scrollContainer.scrollHeight - scrollContainer.clientHeight - 50) {
+                scrollToBottomButton.classList.add("show");
+            } else {
+                scrollToBottomButton.classList.remove("show");
+            }
+        }
+        
         // loadovani starsich zprav pri scrollu
         if (!firstMessageRender.current && scrollContainer.scrollTop === 0 && wsRef.current?.readyState === WebSocket.OPEN && messagesRef.current.length > 0) {
             setMoreMessagesLoading(true);
@@ -303,7 +313,7 @@ export const Chat = () => {
                 action: "deleteMessage",
                 uuid: messageUuid,
             })
-        );
+        );  
 
         // zavreni vsech popoveru
         setForceCloseMenuPopover((prev) => !prev);
@@ -316,6 +326,7 @@ export const Chat = () => {
                 message.uuid === messageUuid ? { ...message, deleted: 1 } : message
             )
         );
+        
     };
 
     const sendMessage = () => {
@@ -471,7 +482,7 @@ export const Chat = () => {
                                                             {
                                                                isOwn || enumIsGreaterOrEquals(loggedUser.accountType, AccountType, AccountType.TEACHER) ? (
                                                                     <TextWithIcon
-                                                                        onClick={() => handleDeleteMessage(message.uuid)}
+                                                                        onClick={() => handleDeleteMessage(message.uuid) }
                                                                         color={"var(--error-color)"}
                                                                         text={"Smazat"}
                                                                         iconSrc={"/images/icons/trash.svg"}
