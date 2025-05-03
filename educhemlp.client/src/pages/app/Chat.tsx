@@ -98,7 +98,7 @@ export const Chat = () => {
     const lastSendTimeRef = useRef<number>(0);
     const setConnectedUsers = useChatStore((state) => state.setConnectedUsers);
     const [forceCloseMenuPopover, setForceCloseMenuPopover] = useState<boolean>(false);
-    
+    const scrollToBottomButtonRef = useRef<HTMLDivElement | null>(null);
 
 
     // datumy v cestine textem
@@ -123,12 +123,11 @@ export const Chat = () => {
         //console.log(messagesRef.current);
         
         // pri scrollovani nahoru se ukaze button na scroll dolu 
-        const scrollToBottomButton = document.querySelector(".scroll-to-bottom") as HTMLElement | null;
-        if (scrollToBottomButton) {
+        if (scrollToBottomButtonRef.current) {
             if (scrollContainer.scrollTop < scrollContainer.scrollHeight - scrollContainer.clientHeight - 50) {
-                scrollToBottomButton.classList.add("show");
+                scrollToBottomButtonRef.current.classList.add("show");
             } else {
-                scrollToBottomButton.classList.remove("show");
+                scrollToBottomButtonRef.current.classList.remove("show");
             }
         }
         
@@ -143,7 +142,15 @@ export const Chat = () => {
             }));
         }
     };
+    const handleScrollToBottom = () => {
+        const scrollContainer = document.querySelector("body #app .right") as HTMLElement | null;
+        if (!scrollContainer) return;
 
+        scrollContainer.scrollTo({
+            top: scrollContainer.scrollHeight,
+            behavior: "smooth",
+        });
+    };
     function accountTypeTranslate(accountType: string): string {
         switch (accountType) {
             case "STUDENT":
@@ -503,6 +510,9 @@ export const Chat = () => {
             </div>
 
             <div className="chat-input">
+                <div className={"scroll-button"} ref={scrollToBottomButtonRef} onClick={handleScrollToBottom} >
+                    <div className={"scroll-icon"}></div>
+                </div>
                 <div className="inputdiv">
                     <input
                         type="text"

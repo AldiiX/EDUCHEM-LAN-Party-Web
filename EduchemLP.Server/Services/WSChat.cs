@@ -216,6 +216,7 @@ public static class WSChat {
                 reader.GetDateTime("date"),
                 reader.GetStringOrNull("author_banner"),
                 reader.GetBoolean("deleted"),
+                reader.GetStringOrNull("replying_to_uuid"),
                 client
             );
 
@@ -237,8 +238,8 @@ public static class WSChat {
         var uuid = Guid.NewGuid().ToString();
         cmd.CommandText =
             """
-                INSERT INTO chat (uuid, user_id, message, date, deleted)
-                VALUES (@uuid, @userId, @message, NOW(), 0);
+                INSERT INTO chat (uuid, user_id, message, date, deleted, replying_to_uuid)
+                VALUES (@uuid, @userId, @message, NOW(), 0, @replyingToUuid);
 
                 SELECT 
                     c.*, 
@@ -288,13 +289,14 @@ public static class WSChat {
                     result.GetDateTime("date"),
                     result.GetStringOrNull("author_banner"),
                     result.GetBoolean("deleted"),
+                    result.GetStringOrNull("replying_to_uuid"),
                     client
                 )
             }
         };
     }
 
-    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date,  string? userBanner, bool deleted, Client? client = null) {
+    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date,  string? userBanner, bool deleted, string? replyingToUuid, Client? client = null) {
         var obj = new JsonObject {
             ["uuid"] = uuid,
             ["author"] = new JsonObject {
@@ -307,7 +309,8 @@ public static class WSChat {
             },
             ["message"] = message,
             ["date"] = date,
-            ["deleted"] = deleted
+            ["deleted"] = deleted,
+            ["replyingToUuid"] = replyingToUuid
         };
 
         // cenzura veci
@@ -366,6 +369,7 @@ public static class WSChat {
                 reader.GetDateTime("date"),
                 reader.GetStringOrNull("author_banner"),
                 reader.GetBoolean("deleted"),
+                reader.GetStringOrNull("replying_to_uuid"),
                 client
             );
 
