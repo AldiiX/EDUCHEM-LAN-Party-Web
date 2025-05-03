@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^7.0.2",
     "@mui/joy": "^5.0.0-beta.52",
     "@mui/x-charts": "^7.29.1",
     "react": "^18.3.1",

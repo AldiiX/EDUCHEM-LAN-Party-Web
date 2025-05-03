@@ -4,12 +4,14 @@ import {useStore} from "../../store.tsx";
 import React, {useEffect, useRef, useState} from "react";
 import "./Chat.scss";
 import {Avatar} from "../../components/Avatar.tsx";
-import {enumIsGreater} from "../../utils.ts";
+import {enumIsGreater, enumIsGreaterOrEquals} from "../../utils.ts";
 import {AccountType} from "../../interfaces.ts";
 import {toast} from "react-toastify";
 import {create} from "zustand/index";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
+import MenuPopover from "../../components/MenuPopover.tsx";
+import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 
 
 enum ChatSocketState {
@@ -95,7 +97,8 @@ export const Chat = () => {
     const firstMessageRender = useRef<boolean>(true);
     const lastSendTimeRef = useRef<number>(0);
     const setConnectedUsers = useChatStore((state) => state.setConnectedUsers);
-
+    const [forceCloseMenuPopover, setForceCloseMenuPopover] = useState<boolean>(false);
+    const scrollToBottomButtonRef = useRef<HTMLDivElement | null>(null);
 
 
     // datumy v cestine textem
@@ -118,7 +121,16 @@ export const Chat = () => {
         //console.log(!firstMessageRender.current && scrollContainer.scrollTop === 0 && wsRef.current?.readyState === WebSocket.OPEN && messagesRef.current.length > 0)
         //console.log(!firstMessageRender.current , scrollContainer.scrollTop === 0 , wsRef.current?.readyState === WebSocket.OPEN , messagesRef.current.length > 0)
         //console.log(messagesRef.current);
-
+        
+        // pri scrollovani nahoru se ukaze button na scroll dolu 
+        if (scrollToBottomButtonRef.current) {
+            if (scrollContainer.scrollTop < scrollContainer.scrollHeight - scrollContainer.clientHeight - 50) {
+                scrollToBottomButtonRef.current.classList.add("show");
+            } else {
+                scrollToBottomButtonRef.current.classList.remove("show");
+            }
+        }
+        
         // loadovani starsich zprav pri scrollu
         if (!firstMessageRender.current && scrollContainer.scrollTop === 0 && wsRef.current?.readyState === WebSocket.OPEN && messagesRef.current.length > 0) {
             setMoreMessagesLoading(true);
@@ -130,7 +142,15 @@ export const Chat = () => {
             }));
         }
     };
+    const handleScrollToBottom = () => {
+        const scrollContainer = document.querySelector("body #app .right") as HTMLElement | null;
+        if (!scrollContainer) return;
 
+        scrollContainer.scrollTo({
+            top: scrollContainer.scrollHeight,
+            behavior: "smooth",
+        });
+    };
     function accountTypeTranslate(accountType: string): string {
         switch (accountType) {
             case "STUDENT":
@@ -160,7 +180,7 @@ export const Chat = () => {
         ws.onmessage = (e) => { // kdyz prijdou novy zpravy ze socketu
             const data = JSON.parse(e.data);
             const action = data.action;
-
+            
             if (action === "sendMessages") {
                 const newMessages = data.messages?.reverse();
                 if (!newMessages || newMessages.length === 0) return;
@@ -227,6 +247,17 @@ export const Chat = () => {
                 setNoMoreMessagesToFetch(false);
             }
 
+            else if (action === "deleteMessage") {
+                const uuid = data.uuid;
+                if (!uuid) return;
+
+                setMessages((prevMessages) => {
+                    const updated = prevMessages.filter(msg => msg.uuid !== uuid);
+                    messagesRef.current = updated;
+                    return updated;
+                });
+            }
+
             else if (action === "noMoreMessagesToFetch") {
                 setNoMoreMessagesToFetch(true);
                 setMoreMessagesLoading(false);
@@ -235,8 +266,15 @@ export const Chat = () => {
             else if (action === "updateConnectedUsers") {
                 setConnectedUsers(data.users as ConnectedUser[]);
             }
-        };
 
+            else if (action === "error") {
+                const errorMessage = data.message;
+                if (errorMessage) {
+                    toast.error(errorMessage);
+                }
+            }
+        };
+        
         ws.onerror = () => toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
 
         ws.onclose = () => {
@@ -274,6 +312,29 @@ export const Chat = () => {
             if(body) body.style.overscrollBehavior = "auto";
         };
     }, []);
+    const handleDeleteMessage = (messageUuid: string) => {
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
+        wsRef.current.send(
+            JSON.stringify({
+                action: "deleteMessage",
+                uuid: messageUuid,
+            })
+        );  
+
+        // zavreni vsech popoveru
+        setForceCloseMenuPopover((prev) => !prev);
+        requestAnimationFrame(() => {
+            setForceCloseMenuPopover((prev) => !prev);
+        });
+
+        setMessages((prevMessages) =>
+            prevMessages.map((message) =>
+                message.uuid === messageUuid ? { ...message, deleted: 1 } : message
+            )
+        );
+        
+    };
 
     const sendMessage = () => {
         const now = Date.now();
@@ -363,39 +424,81 @@ export const Chat = () => {
                                                     <span>{formatDateToCzech(message.date)}</span>
                                                 </div>
                                             )}
-
-                                            <div className={`chat-message ${isOwn ? "own-message" : "other-message"}`}>
-                                                {!isOwn ? (
-                                                    <>
-                                                        <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
-                                                        <div className="texts">
-                                                            <div className="name-and-date">
-                                                                <h1>
-                                                                    {message.author.name}
-
-                                                                    { message.author.class && (
-                                                                        <span className="class">
-                                                                    &nbsp;• {message.author.class}
-                                                                </span>
-                                                                    )}
-
-                                                                    {
-                                                                        enumIsGreater(message.author.accountType, AccountType, AccountType.STUDENT) && (
-                                                                            <span className="role">&lt;{ accountTypeTranslate(message.author.accountType) }&gt;</span>
-                                                                        )
-                                                                    }
-                                                                </h1>
-                                                                <span className="msg-time">{time}</span>
+                                            <div className={`wrapped-message ${isOwn ? "own-message" : "other-message"}`}>
+                                                <div className={`chat-message ${isOwn ? "own-message" : "other-message"}`}>
+                                                    {!isOwn ? (
+                                                        <>
+                                                            <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
+                                                            <div className="texts">
+                                                                <div className="name-and-date">
+                                                                    <h1>
+                                                                        {message.author.name}
+    
+                                                                        { message.author.class && (
+                                                                            <span className="class">
+                                                                        &nbsp;• {message.author.class}
+                                                                    </span>
+                                                                        )}
+    
+                                                                        {
+                                                                            enumIsGreater(message.author.accountType, AccountType, AccountType.STUDENT) && (
+                                                                                <span className="role">&lt;{ accountTypeTranslate(message.author.accountType) }&gt;</span>
+                                                                            )
+                                                                        }
+                                                                    </h1>
+                                                                    <span className="msg-time">{time}</span>
+                                                                </div>
+                                                                <article>{ message.message }</article>
                                                             </div>
-                                                            <article>{ message.message }</article>
+                                                        </>
+                                                    ) : (
+                                                        <div className="texts">
+                                                            <p>{message.message}</p>
+                                                            <span className="msg-time">{time}</span>
                                                         </div>
-                                                    </>
-                                                ) : (
-                                                    <div className="texts">
-                                                        <p>{message.message}</p>
-                                                        <span className="msg-time">{time}</span>
-                                                    </div>
-                                                )}
+                                                    )}
+                                                </div>
+                                                <div className={"buttons"}>
+                                                    <MenuPopover forceClose={forceCloseMenuPopover} className={isOwn ? "own-message" : ""} mainComponent={
+                                                        <div style={{
+                                                            width: 12,
+                                                            height: 12,
+                                                            mask: "url(/images/icons/more_vert.svg) no-repeat center",
+                                                            maskSize: "contain",
+                                                            backgroundColor: "var(--text-color-3)",
+                                                            margin: 12,
+                                                        }}></div>
+                                                    } placement={isOwn ? "right" : "left"} innerStyle={{ display: "flex", flexDirection: "column" }}>
+                                                            <TextWithIcon
+                                                                text={"Kopírovat"}
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(message.message).then();
+                                                                    toast.success("Zpráva zkopírována do schránky.", { autoClose: 1500 });
+                                                                }}
+                                                                iconSrc={"/images/icons/copy.svg"}
+                                                                style={{ padding: "4px 0" }}
+                                                            />
+
+                                                            <TextWithIcon
+                                                                text={"Odpovědět"}
+                                                                iconSrc={"/images/icons/reply.svg"}
+                                                                onClick={() => {}}
+                                                                style={{ padding: "4px 0" }}
+                                                            />
+
+                                                            {
+                                                               isOwn || enumIsGreaterOrEquals(loggedUser.accountType, AccountType, AccountType.TEACHER) ? (
+                                                                    <TextWithIcon
+                                                                        onClick={() => handleDeleteMessage(message.uuid) }
+                                                                        color={"var(--error-color)"}
+                                                                        text={"Smazat"}
+                                                                        iconSrc={"/images/icons/trash.svg"}
+                                                                        style={{ padding: "4px 0" }}
+                                                                    />
+                                                               ) : null
+                                                            }
+                                                    </MenuPopover>
+                                                </div>
                                             </div>
                                         </React.Fragment>
                                     );
@@ -407,6 +510,9 @@ export const Chat = () => {
             </div>
 
             <div className="chat-input">
+                <div className={"scroll-button"} ref={scrollToBottomButtonRef} onClick={handleScrollToBottom} >
+                    <div className={"scroll-icon"}></div>
+                </div>
                 <div className="inputdiv">
                     <input
                         type="text"
@@ -414,6 +520,7 @@ export const Chat = () => {
                         onChange={(e) => setInputText(e.target.value)}
                         placeholder="Napiš zprávu..."
                         onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                        maxLength={1024}
                     />
                     <button className={"sent-message-button"} onClick={sendMessage}></button>
                 </div>

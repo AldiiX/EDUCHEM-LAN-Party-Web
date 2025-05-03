@@ -55,6 +55,7 @@ html:is(.theme-dark) {
     --error-background: #2c1717;
     --bgimage: url('../public/images/backgrounds/island_night.jpg');
     --applayout-right-titlebar-border-color: var(--background-bg-2);
+    --popover-border-color: var(--background-bg-2);
 
     // pro mapu
     --pc-available: var(--accent-color);
@@ -84,6 +85,7 @@ html:is(.theme-light) {
     --error-background: #ffb7b7;
     --bgimage: url('../public/images/backgrounds/island3.jpg');
     --applayout-right-titlebar-border-color: transparent;
+    --popover-border-color: var(--background-bg-2);
 
     // pro mapu
     --pc-available: var(--accent-color);

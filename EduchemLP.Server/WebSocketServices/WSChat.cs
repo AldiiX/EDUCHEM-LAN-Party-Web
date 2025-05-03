@@ -97,8 +97,13 @@ public static class WSChat {
                         break;
 
                     var savedMessage = await SaveMessageToDb(client, messageText);
-                    if (savedMessage == null)
+                    if (savedMessage == null) {
+                        await client.BroadcastAsync(new JsonObject {
+                            ["action"] = "error",
+                            ["message"] = "Chyba při ukládání zprávy do databáze."
+                        }.ToString());
                         break;
+                    }
 
                     var messageJsonString = savedMessage.ToString();
 
@@ -106,7 +111,15 @@ public static class WSChat {
                         connectedClient.BroadcastAsync(messageJsonString).Wait();
                     }
                 } break;
+                
+                case "deleteMessage": {
+                    var messageUuid = messageJson?["uuid"]?.ToString();
+                    if (string.IsNullOrWhiteSpace(messageUuid))
+                        break;
 
+                    await DeleteMessage(client, messageUuid);
+                } break;
+                
                 case "loadOlderMessages": {
                     var beforeUuid = messageJson?["beforeUuid"]?.ToString();
                     if (string.IsNullOrWhiteSpace(beforeUuid)) break;
@@ -126,6 +139,51 @@ public static class WSChat {
 
     
     //logisticky metody
+    private static async Task DeleteMessage(Client client, string messageUuid) {
+        await using var conn = await Database.GetConnectionAsync();
+        if (conn == null) return;
+
+        // kontrola jestli uzivatel ma pravo smazat zpravu jinych uzivatelu 
+        if (client.AccountType < User.UserAccountType.TEACHER) {
+            await using var cmd1 = conn.CreateCommand();
+            cmd1.CommandText = "SELECT user_id FROM chat WHERE uuid = @uuid";
+            cmd1.Parameters.AddWithValue("@uuid", messageUuid);
+            await using var reader = await cmd1.ExecuteReaderAsync() as MySqlDataReader;
+            if (reader == null) return;
+            if (!await reader.ReadAsync()) return;
+            
+            var messageUserId = reader.GetInt32("user_id");
+            if (messageUserId != client.ID) {
+                await client.BroadcastAsync(new JsonObject {
+                    ["action"] = "error",
+                    ["message"] = "Nemáte oprávnění smazat tuto zprávu."
+                }.ToString());
+                return;
+            }
+        }
+        
+        //mazani zpravy 
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE chat SET deleted = 1 WHERE uuid = @uuid";
+        cmd.Parameters.AddWithValue("@uuid", messageUuid);
+        cmd.Parameters.AddWithValue("@userId", client.ID);
+
+        var affectedRows = await cmd.ExecuteNonQueryAsync();
+        if (affectedRows > 0) {
+            
+            var deleteMessageJson = new JsonObject {
+                ["action"] = "deleteMessage",
+                ["uuid"] = messageUuid
+            };
+
+            lock (ConnectedUsers) {
+                foreach (var connectedClient in ConnectedUsers) {
+                    connectedClient.BroadcastAsync(deleteMessageJson.ToString()).Wait();
+                }
+            }
+        }
+    }
+    
     private static async Task<bool> SendInicialChat(this Client client) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return false;
@@ -141,6 +199,7 @@ public static class WSChat {
                 u.banner as author_banner
             FROM chat c
             LEFT JOIN users u ON c.user_id = u.id
+            WHERE c.deleted = 0
             ORDER BY `date` DESC LIMIT 20
         """;
         
@@ -160,6 +219,8 @@ public static class WSChat {
                 reader.GetString("message"),
                 reader.GetDateTime("date"),
                 reader.GetStringOrNull("author_banner"),
+                reader.GetBoolean("deleted"),
+                reader.GetStringOrNull("replying_to_uuid"),
                 client
             );
 
@@ -181,8 +242,8 @@ public static class WSChat {
         var uuid = Guid.NewGuid().ToString();
         cmd.CommandText =
             """
-                INSERT INTO chat (uuid, user_id, message, date)
-                VALUES (@uuid, @userId, @message, NOW());
+                INSERT INTO chat (uuid, user_id, message, date, deleted, replying_to_uuid)
+                VALUES (@uuid, @userId, @message, NOW(), 0, @replyingToUuid);
 
                 SELECT 
                     c.*, 
@@ -199,7 +260,14 @@ public static class WSChat {
         cmd.Parameters.AddWithValue("@userId", client.ID);
         cmd.Parameters.AddWithValue("@message", message);
 
-        var result = await cmd.ExecuteReaderAsync() as MySqlDataReader;
+        MySqlDataReader? result;
+
+        try {
+            result = await cmd.ExecuteReaderAsync() as MySqlDataReader;
+        } catch (MySqlException) {
+            return null;
+        }
+
         if (result == null) return null;
 
         if (!await result.ReadAsync()) return null;
@@ -224,13 +292,15 @@ public static class WSChat {
                     message,
                     result.GetDateTime("date"),
                     result.GetStringOrNull("author_banner"),
+                    result.GetBoolean("deleted"),
+                    result.GetStringOrNull("replying_to_uuid"),
                     client
                 )
             }
         };
     }
 
-    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date, string? userBanner, Client? client = null) {
+    private static JsonObject CreateMessageObject(string uuid, int userId, string userName, string? userAvatar, string userAccountType, string? userClass, string message, DateTime date,  string? userBanner, bool deleted, string? replyingToUuid, Client? client = null) {
         var obj = new JsonObject {
             ["uuid"] = uuid,
             ["author"] = new JsonObject {
@@ -243,6 +313,8 @@ public static class WSChat {
             },
             ["message"] = message,
             ["date"] = date,
+            ["deleted"] = deleted,
+            ["replyingToUuid"] = replyingToUuid
         };
 
         // cenzura veci
@@ -276,7 +348,7 @@ public static class WSChat {
                 u.banner as author_banner
             FROM chat c
             LEFT JOIN users u ON c.user_id = u.id
-            WHERE c.date < @beforeDate
+            WHERE c.date < @beforeDate AND c.deleted = 0
             ORDER BY c.date DESC
             LIMIT 20
             """;
@@ -300,6 +372,8 @@ public static class WSChat {
                 reader.GetString("message"),
                 reader.GetDateTime("date"),
                 reader.GetStringOrNull("author_banner"),
+                reader.GetBoolean("deleted"),
+                reader.GetStringOrNull("replying_to_uuid"),
                 client
             );
 
