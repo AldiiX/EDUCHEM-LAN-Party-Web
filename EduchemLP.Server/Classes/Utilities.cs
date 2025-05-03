@@ -97,20 +97,6 @@ public static class Utilities {
         return HttpContextService.Current.Items["loggeduser"] as User;
     }
 
-    [Obsolete("Tato metoda se už nepoužívá, slouží jen jako předloha pro nové metody a aby byla uchována historie.", true)]
-    public static string GenerateRandomAuthKey(int length = 48) {
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        var random = new Random();
-        var keyBuilder = new StringBuilder(length);
-
-        for (int i = 0; i < length; i++) {
-            var randomIndex = random.Next(chars.Length);
-            keyBuilder.Append(chars[randomIndex]);
-        }
-
-        return keyBuilder.ToString();
-    }
-
     public static string GenerateRandomPassword(int length = 24) {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ěščřž!@*";
         var random = new Random();
@@ -124,60 +110,13 @@ public static class Utilities {
         return passwordBuilder.ToString();
     }
 
-    public static string EncryptStringWithKey(string plainText, string key) {
-        using Aes aes = Aes.Create();
-        aes.Key = GenerateValidKey(key);
-        aes.Padding = PaddingMode.PKCS7;
-        aes.IV = new byte[16];
+    public static string EncryptPassword(in string password) => BCrypt.Net.BCrypt.HashPassword(password);
 
-        using var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
-        byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
-        byte[] encryptedBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
-        return Convert.ToBase64String(encryptedBytes);
+    public static bool VerifyPassword(in string password, in string hashedPassword) {
+        if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(hashedPassword)) return false;
+
+        return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
     }
-
-    public static string DecryptStringWithKey(string encryptedText, string key) {
-        using Aes aes = Aes.Create();
-        aes.Key = GenerateValidKey(key);
-        aes.Padding = PaddingMode.PKCS7;
-        aes.IV = new byte[16];
-
-        using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-        byte[] encryptedBytes = Convert.FromBase64String(encryptedText);
-        byte[] plainBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
-        return Encoding.UTF8.GetString(plainBytes);
-    }
-
-    private static byte[] GenerateValidKey(string key) {
-        using SHA256 sha256 = SHA256.Create();
-        return sha256.ComputeHash(Encoding.UTF8.GetBytes(key));
-    }
-
-    private static string EncryptWithSHA512(in string password) {
-        using SHA512 sha512 = SHA512.Create();
-        byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-        byte[] sha512HashBytes = sha512.ComputeHash(passwordBytes);
-        StringBuilder sb = new StringBuilder();
-        foreach (byte b in sha512HashBytes) {
-            sb.Append(b.ToString("x2"));
-        }
-        return sb.ToString();
-    }
-
-    private static string EncryptWithMD5(in string password) {
-        using MD5 md5 = MD5.Create();
-        byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-        byte[] md5HashBytes = md5.ComputeHash(passwordBytes);
-        StringBuilder sb = new StringBuilder();
-        foreach (byte b in md5HashBytes) {
-            sb.Append(b.ToString("x2"));
-        }
-
-
-        return sb.ToString();
-    }
-
-    public static string EncryptPassword(in string password) => EncryptWithSHA512(password) + EncryptWithMD5(password[0] + "" + password[1] + "" + password[^1]);
 
     public static async Task<bool> AreReservationsEnabledAsync() {
         bool r = bool.TryParse(await Database.GetDataAsync("enableReservations") as string, out bool result) && result;
@@ -185,5 +124,25 @@ public static class Utilities {
         return r;
     }
 
+    public static bool IsPasswordValid(in string password) {
+        if (string.IsNullOrEmpty(password)) return false;
+
+        if (password.Length < 8) return false;
+
+        if (!password.Any(char.IsUpper)) return false;
+
+        if (!password.Any(char.IsLower)) return false;
+
+        if (!password.Any(char.IsDigit)) return false;
+
+        if (!password.Any(c => "!@#$%^&*()_+-=[]{}|;':\",.<>?/".Contains(c))) return false;
+
+        return true;
+    }
+
     public static bool AreReservationsEnabled() => AreReservationsEnabledAsync().Result;
+
+    public static string ToJsonString(this object obj) {
+        return JsonSerializer.Serialize(obj);
+    }
 }

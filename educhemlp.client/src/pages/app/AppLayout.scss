@@ -278,6 +278,10 @@ a {
                         text-align: right;
                     }
 
+                    p,h2 {
+                        text-shadow: 0 1px 8px var(--background-bg);
+                    }
+
                     >h2 {
                         font-size: 20px;
                         color: var(--accent-color);
@@ -314,6 +318,7 @@ a {
                 border-radius: 8px;
                 top: calc(100%);
                 right: 0;
+                z-index: 1;
             }
 
             &:hover {

@@ -95,6 +95,13 @@ html:is(.theme-light) {
     --shapes-color: #f4f4f4;
     --table-color: #d9d9d9;
     --line-color: #585858;
+
+
+
+
+    .profilebannercustomization {
+        opacity: 0 !important;
+    }
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -160,6 +167,16 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
 
     &:hover {
         background-color: var(--accent-color-darker);
+    }
+
+    &:disabled {
+        color: var(--accent-color-text);
+        cursor: not-allowed;
+        opacity: 0.5;
+
+        &:hover {
+            background-color: var(--accent-color);
+        }
     }
 }
 
@@ -237,6 +254,10 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
         border-width: 1px;
         font-weight: normal;
     }
+
+    &:disabled {
+        cursor: not-allowed;
+    }
 }
 
 
@@ -252,10 +273,49 @@ input, select, textarea {
     &:focus, &:focus-visible {
         outline: none;
     }
+
+    &:disabled {
+        color: var(--text-color-3);
+        //border: 1px solid var(--text-color-3);
+        cursor: not-allowed;
+        user-select: none;
+    }
+}
+
+.mobile-hide-flex {
+    display: flex !important;
+}
+
+.mobile-hide,
+.mobile-hide-grid {
+    display: grid !important;
+}
+
+.mobile-show,
+.mobile-show-flex,
+.mobile-show-grid {
+    display: none !important;
 }
 
 
+
+
 @media (max-width: 768px) {
+    .mobile-hide,
+    .mobile-hide-flex,
+    .mobile-hide-grid {
+        display: none !important;
+    }
+
+    .mobile-show,
+    .mobile-show-grid {
+        display: grid !important;
+    }
+
+    .mobile-show-flex {
+        display: flex !important;
+    }
+
     ::-webkit-scrollbar {
         width: 4px;
     }

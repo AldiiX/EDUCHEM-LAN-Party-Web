@@ -1,3 +1,28 @@
+export function authUser(setLoggedUser: Function, setUserAuthed: Function) {
+    fetch("/api/v1/loggeduser", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+        .then((response) => {
+            if (response.status === 200) {
+                return response.json();
+            } else {
+                throw new Error("Failed to fetch logged user");
+            }
+        })
+        .then((data) => {
+            setLoggedUser(data);
+            setUserAuthed(true);
+        })
+        .catch((error) => {
+            console.error("Error fetching logged user:", error);
+            setLoggedUser(null);
+            setUserAuthed(false);
+        });
+}
+
 export const getCookie = (name: string) => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -94,4 +119,41 @@ export function compareEnumValues<T extends Record<string, string | number>>(
     const bVal = parseEnumValue(enumType, b);
     if (aVal === null || bVal === null) return null;
     return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+}
+
+
+export function stringToEnum<T extends Record<string, string>>(
+    enumObject: T,
+    value: string | null
+): T[keyof T] | undefined {
+    if (!value) return undefined;
+
+    const upperValue = value.toUpperCase();
+
+    const matchingKey = Object.keys(enumObject).find(
+        (key) => key.toUpperCase() === upperValue
+    );
+
+    if (matchingKey) {
+        return enumObject[matchingKey as keyof T];
+    }
+
+    return undefined;
+}
+
+export function enumToString<T extends Record<string, string>>(
+    enumObject: T,
+    value: T[keyof T] | null
+): string | undefined {
+    if (value === null) return undefined;
+
+    const matchingKey = Object.keys(enumObject).find(
+        (key) => enumObject[key as keyof T] === value
+    );
+
+    if (matchingKey) {
+        return matchingKey;
+    }
+
+    return undefined;
 }

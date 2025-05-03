@@ -12,17 +12,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="dotenv.net" Version="3.2.1" />
-    <PackageReference Include="MailKit" Version="4.10.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="9.0.3" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.2" />
+    <PackageReference Include="MailKit" Version="4.11.0" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="9.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
-      <Version>9.*-*</Version>
+      <Version>9.0.4</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.2" />
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
-    <PackageReference Include="MimeKit" Version="4.10.0" />
-    <PackageReference Include="MySql.Data" Version="9.2.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
+    <PackageReference Include="MimeKit" Version="4.11.0" />
+    <PackageReference Include="MySql.Data" Version="9.3.0" />
   </ItemGroup>
 
   <ItemGroup>

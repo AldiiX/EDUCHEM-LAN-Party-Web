@@ -104,7 +104,7 @@
     }
 
     &:is(.user-modal) .modal-content {
-        border-radius: 10px;
+        border-radius: 24px;
         overflow: hidden;
         position: fixed;
         top: 50%;
@@ -115,6 +115,11 @@
         max-width: 400px;
         padding: 0;
         box-shadow:  0 0 20px 0 rgba(0, 0, 0, 0.22);
+
+        .closebutton {
+            top: 12px;
+            right: 12px;
+        }
         
         >.top {
             position: relative;
@@ -140,6 +145,19 @@
                     background-position: bottom center;
                     filter: blur(40px);
                 }
+            }
+
+            >.userdefined-banner {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-image: var(--banner) !important;
+                z-index: 0;
+                pointer-events: none;
+                border-radius: 8px;
             }
 
             >.avatar {

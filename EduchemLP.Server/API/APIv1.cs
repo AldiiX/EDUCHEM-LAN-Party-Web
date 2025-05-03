@@ -25,18 +25,161 @@ public class APIv1 : Controller {
     [HttpGet("loggeduser")]
     public IActionResult GetLoggedUser() {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
         var obj = new JsonObject {
-            ["id"] = acc?.ID,
-            ["displayName"] = acc?.DisplayName,
-            ["email"] = acc?.Email,
-            ["class"] = acc?.Class,
-            ["accountType"] = acc?.AccountType.ToString().ToUpper(),
-            ["lastUpdated"] = acc?.LastUpdated,
-            ["avatar"] = acc?.Avatar,
-            ["gender"] = acc?.Gender?.ToString().ToUpper(),
+            ["id"] = acc.ID,
+            ["displayName"] = acc.DisplayName,
+            ["email"] = acc.Email,
+            ["class"] = acc.Class,
+            ["accountType"] = acc.AccountType.ToString().ToUpper(),
+            ["lastUpdated"] = acc.LastUpdated,
+            ["avatar"] = acc.Avatar,
+            ["banner"] = acc.Banner,
+            ["gender"] = acc.Gender?.ToString().ToUpper(),
         };
 
-        return acc == null ? new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" }) : new JsonResult(obj);
+        // přidání connections
+        var arr = new JsonArray();
+
+        foreach (var token in acc.AccessTokens) {
+            arr.Add(token.Platform.ToString().ToUpper());
+        }
+
+        obj["connections"] = arr;
+
+
+
+        // vraceni json objektu
+        return new JsonResult(obj);
+    }
+
+    [HttpPut("loggeduser")]
+    public IActionResult EditLoggedUser([FromBody] Dictionary<string, object?> data) {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
+        // overeni parametru
+        User.UserGender? gender = data.TryGetValue("gender", out var _g) ? Enum.TryParse(_g?.ToString(), out User.UserGender _g2) ? _g2 : null : null;
+        string? avatar = data.TryGetValue("avatar", out var _avatar) ? _avatar?.ToString() : null;
+        string? banner = data.TryGetValue("banner", out var _banner) ? _banner?.ToString() : null;
+
+        // poslani do db
+        using var conn = Database.GetConnection();
+        if(conn == null) return new StatusCodeResult(500);
+
+        var command = new MySqlCommand(
+            """
+            UPDATE users 
+            SET 
+                avatar=IF(@avatar IS NULL, NULL, avatar), -- povleno pouze smazani
+                banner=IF(@banner IS NULL, NULL, banner), -- povleno pouze smazani
+                gender=@gender
+            WHERE id=@id;
+            """, conn
+        );
+
+        command.Parameters.AddWithValue("@avatar", avatar);
+        command.Parameters.AddWithValue("@banner", banner);
+        command.Parameters.AddWithValue("@gender", gender.ToString()?.ToUpper());
+        command.Parameters.AddWithValue("@id", acc.ID);
+
+        if(command.ExecuteNonQuery() <= 0) return new JsonResult(new { success = false, message = "Nepodařilo se změnit údaje." }) { StatusCode = 500 };
+
+        // zapsani do logu
+        DbLogger.Log(DbLogger.LogType.INFO, $"Uživatel {acc.DisplayName} ({acc.Email}) si změnil údaje.", "user-edit");
+
+        // nastaveni aktualni instance do session
+        Auth.ReAuthUser();
+        return new NoContentResult();
+    }
+
+    [HttpPost("loggeduser/password")]
+    public IActionResult ChangeLoggedUserPassword([FromBody] Dictionary<string, object?> data) {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if (acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
+        string? oldPassword = data.TryGetValue("oldPassword", out var _oldPassword) ? _oldPassword?.ToString() : null;
+        string? newPassword = data.TryGetValue("newPassword", out var _newPassword) ? _newPassword?.ToString() : null;
+        if (oldPassword == null || newPassword == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'oldPassword' nebo 'newPassword'" });
+
+        // stare hesla se musi shodovat
+        if (Utilities.EncryptPassword(oldPassword) != acc.Password) return new BadRequestObjectResult(new { success = false, message = "Staré heslo je špatně" });
+
+        // overeni platnosti hesla
+        switch (newPassword.Length) { // overeni lengthu hesla
+            case < 8: return new BadRequestObjectResult(new { success = false, message = "Heslo musí mít alespoň 8 znaků" });
+            case > 64: return new BadRequestObjectResult(new { success = false, message = "Heslo musí mít maximálně 64 znaků" });
+        }
+
+        if (newPassword == oldPassword) return new BadRequestObjectResult(new { success = false, message = "Nové heslo se nesmí shodovat se starým heslem" });
+        if(!Utilities.IsPasswordValid(newPassword)) return new BadRequestObjectResult(new { success = false, message = "Heslo musí obsahovat alespoň jedno velké písmeno, jedno číslo a jeden speciální znak." });
+
+        // encrypnuti hesla
+        var encryptedNewPassword = Utilities.EncryptPassword(newPassword);
+
+        // zapsani do db
+        using var conn = Database.GetConnection();
+        if (conn == null) return new StatusCodeResult(500);
+
+        var command = new MySqlCommand(
+            """
+            UPDATE users SET password=@password WHERE id=@id;
+            """, conn
+        );
+
+        command.Parameters.AddWithValue("@password", encryptedNewPassword);
+        command.Parameters.AddWithValue("@id", acc.ID);
+
+        if(command.ExecuteNonQuery() <= 0) return new JsonResult(new { success = false, message = "Nepodařilo se změnit heslo." }) { StatusCode = 500 };
+
+
+
+        Auth.AuthUser(acc.Email, newPassword, true);
+        return new NoContentResult();
+    }
+
+    [HttpGet("loggeduser/connections")]
+    public IActionResult GetLoggedUserConnections() {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if (acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
+
+        var arr = new JsonArray();
+
+        foreach (var token in acc.AccessTokens) {
+            arr.Add(token.Platform.ToString().ToUpper());
+        }
+
+        return new JsonResult(arr);
+    }
+
+    [HttpDelete("loggeduser/connections")]
+    public IActionResult DeleteLoggedUserConnection([FromBody] Dictionary<string, object?> data) {
+        var acc = Utilities.GetLoggedAccountFromContextOrNull();
+        if (acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
+
+        // overeni parametru
+        string? p = data.TryGetValue("platform", out var _p) ? _p?.ToString()?.ToUpper() : null;
+        if (p == null || !Enum.TryParse(p.ToUpper(), out User.UserAccessToken.UserAccessTokenPlatform platform)) return new BadRequestObjectResult(new { success = false, message = "Neplatná platforma" });
+
+
+
+        // zapsani do db
+        using var conn = Database.GetConnection();
+        if (conn == null) return new StatusCodeResult(500);
+
+        var command = new MySqlCommand(
+            """
+            DELETE FROM users_access_tokens WHERE platform=@platform AND user_id=@userId;
+            """, conn
+        );
+
+        command.Parameters.AddWithValue("@platform", platform.ToString().ToUpper());
+        command.Parameters.AddWithValue("@userId", acc.ID);
+
+
+        return command.ExecuteNonQuery() > 0 ? new NoContentResult() : new JsonResult(new { success = false, message = "Nepodařilo se odstranit připojení." }) { StatusCode = 500 };
     }
 
     [HttpPost("loggeduser")]
@@ -50,7 +193,7 @@ public class APIv1 : Controller {
             email = email.Trim() + "@educhem.cz";
         }
 
-        var acc = Auth.AuthUser(email, Utilities.EncryptPassword(password));
+        var acc = Auth.AuthUser(email, password, true);
         if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Neplatný email nebo heslo" });
 
         var obj = new JsonObject {
@@ -61,6 +204,7 @@ public class APIv1 : Controller {
             ["accountType"] = acc.AccountType.ToString().ToUpper(),
             ["lastUpdated"] = acc.LastUpdated,
             ["avatar"] = acc.Avatar,
+            ["banner"] = acc.Banner,
             ["gender"] = acc.Gender?.ToString().ToUpper(),
         };
 
@@ -127,6 +271,7 @@ public class APIv1 : Controller {
                 ["lastUpdated"] = reader.GetDateTime("last_updated"),
                 ["lastLoggedIn"] = reader.GetObjectOrNull("last_logged_in") != null ? (DateTime)reader.GetValue("last_logged_in") : null,
                 ["avatar"] = reader.GetStringOrNull("avatar"),
+                ["banner"] = reader.GetStringOrNull("banner"),
             };
 
             array.Add(obj);
@@ -310,8 +455,8 @@ public class APIv1 : Controller {
         command.Parameters.AddWithValue("@email", email);
         command.Parameters.AddWithValue("@displayName", displayName);
         command.Parameters.AddWithValue("@class", @class);
-        command.Parameters.AddWithValue("@accountType", accountType.ToString().ToUpper());
-        command.Parameters.AddWithValue("@gender", gender.ToString().ToUpper());
+        command.Parameters.AddWithValue("@accountType", accountType.ToString()?.ToUpper());
+        command.Parameters.AddWithValue("@gender", gender.ToString()?.ToUpper());
 
 
         // zapsani do logu
