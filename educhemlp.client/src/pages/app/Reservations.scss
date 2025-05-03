@@ -770,6 +770,17 @@
             max-height: none;
             height: auto;
 
+            .reservations-status {
+                align-items: start;
+                left: 24px;
+                transform: none;
+                text-align: left;
+
+                h1 {
+                    font-size: 24px;
+                }
+            }
+
             >.map {
                 width: 100%;
                 height: 80vh;
@@ -782,6 +793,10 @@
 
                 >.chart {
                     display: none;
+                }
+
+                >.legend {
+                    left: 12px;
                 }
             }
 
