@@ -246,14 +246,17 @@ public class APIv1 : Controller {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();
         if(acc == null || acc.AccountType < Classes.Objects.User.UserAccountType.ADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nelze upravit nastavení, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
-        AppSettings.ReservationStatusType status = data.TryGetValue("reservationsStatus", out var _status) ? Enum.TryParse(_status?.ToString(), out AppSettings.ReservationStatusType _status2) ? _status2 : AppSettings.ReservationStatusType.CLOSED : AppSettings.ReservationStatusType.CLOSED;
+        AppSettings.ReservationStatusType? status = data.TryGetValue("reservationsStatus", out var _status) ? Enum.TryParse(_status?.ToString(), out AppSettings.ReservationStatusType _status2) ? _status2 : null : null;
         DateTime? from = data.TryGetValue("reservationsEnabledFrom", out var _from) ? DateTime.TryParse(_from?.ToString(), out var _from2) ? _from2 : null : null;
         DateTime? to = data.TryGetValue("reservationsEnabledTo", out var _to) ? DateTime.TryParse(_to?.ToString(), out var _to2) ? _to2 : null : null;
         bool? chatEnabled = data.TryGetValue("chatEnabled", out var _chatEnabled) ? bool.TryParse(_chatEnabled?.ToString(), out var _chatEnabled2) ? _chatEnabled2 : null : null;
 
 
         // asynch picovinky
-        var t1 = Task.Run(() => AppSettings.ReservationsStatus = status);
+        var t1 = Task.Run(() => {
+            if(status == null) return;
+            AppSettings.ReservationsStatus = (AppSettings.ReservationStatusType) status;
+        });
 
         var t2 = Task.Run(() => {
             if(from == null) return;
