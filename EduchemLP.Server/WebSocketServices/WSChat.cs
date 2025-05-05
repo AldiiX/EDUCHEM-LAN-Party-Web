@@ -9,10 +9,7 @@ using MySql.Data.MySqlClient;
 using Client = EduchemLP.Server.Classes.Objects.WSClientUser;
 
 namespace EduchemLP.Server.WebSocketServices;
-/*
- * V pripade ze se uzivatel pripoji do socketu, tak se mu zobrazi poslednich 10 sprav
- * Aby backend prijmal zpravy a v pripade ze se ta sprava posle, tak se zobrazi vsem ostatnim
- */
+
 
 
 public static class WSChat {

@@ -25,7 +25,21 @@ interface ConnectedUser {
     name: string,
     avatar?: string | null,
 }
-
+interface Message{
+    uuid: string,
+    author: {
+            accountType: "STUDENT" | "TEACHER" | "ADMIN" |"SUPERADMIN",
+            avatar: string,
+            banner: string,
+            class: string | null,
+            id: number,
+            name: string,
+        },
+    date: string,
+    deleted: number,
+    message: string,
+    replyingToUuid: string | null,
+}
 interface ChatStore {
     connectedUsers: ConnectedUser[];
     setConnectedUsers: (users: ConnectedUser[]) => void;
@@ -99,7 +113,7 @@ export const Chat = () => {
     const setConnectedUsers = useChatStore((state) => state.setConnectedUsers);
     const [forceCloseMenuPopover, setForceCloseMenuPopover] = useState<boolean>(false);
     const scrollToBottomButtonRef = useRef<HTMLDivElement | null>(null);
-
+    const [replyingToMessage, setReplyingToMessage] = useState <Message | null> (null);
 
     // datumy v cestine textem
     const formatDateToCzech = (dateString: string) => {
@@ -482,7 +496,7 @@ export const Chat = () => {
                                                             <TextWithIcon
                                                                 text={"Odpovědět"}
                                                                 iconSrc={"/images/icons/reply.svg"}
-                                                                onClick={() => {}}
+                                                                onClick={() => {setReplyingToMessage(messages.find(m => m.uuid === message.uuid) ?? null)}}
                                                                 style={{ padding: "4px 0" }}
                                                             />
 
@@ -512,6 +526,10 @@ export const Chat = () => {
             <div className="chat-input">
                 <div className={"scroll-button"} ref={scrollToBottomButtonRef} onClick={handleScrollToBottom} >
                     <div className={"scroll-icon"}></div>
+                </div>
+                <div className={"reply"}>
+                    <p>{ replyingToMessage?.message }</p>
+                    <div className={"cancel-reply"} onClick={() => setReplyingToMessage(null)}></div>
                 </div>
                 <div className="inputdiv">
                     <input

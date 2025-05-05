@@ -150,6 +150,9 @@
                     }
                 }
                 >.chat-message {
+                    
+                    
+                    
                     width: fit-content;
                     max-width: 60%;
                     padding: 12px;
@@ -169,7 +172,11 @@
                             overflow: hidden;
                             color: var(--text-color-darker);
                             margin-top: 4px;
+                            word-break: keep-all;           /* Do NOT break words */
+                            overflow-wrap: break-word;      /* Wrap only at spaces */
+                            white-space: normal;            /* Allow wrapping */
                         }
+                        
                         >.name-and-date {
                             display: flex;
                             justify-content: space-between;
@@ -232,6 +239,9 @@
                         align-self: flex-start;
                         background-color: var(--element-bg);
                         color: black;
+                        >.texts{
+                            width: calc(100% - 24px - 8px);
+                        }
     
                         .name-and-date {
                             >.msg-time {
@@ -251,6 +261,8 @@
         width: calc(100vw - 361px - 48px*2);
         background-color: var(--background-bg);
         
+        
+        
         >.scroll-button{
             opacity: 0;
             pointer-events: none;
@@ -268,6 +280,8 @@
             transition: opacity 0.3s ease, all 0.3s ease;
             cursor: pointer;
             z-index: 0;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.025);
+            
             &:is(.show){
                 transform: translate(-50%, -8px);
                 bottom: 112px;
@@ -295,7 +309,14 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 100%;
+            >.reply{
+                >p{
 
+                }
+                >.cancel-reply{
+
+                }
+            }
             >input {
                 width: 100%;
                 padding: 12px;
@@ -389,6 +410,10 @@
                     .chat-message {
                         max-width: 80%;
                     }
+                    
+                    .buttons{
+                        display: none;     
+                    }
                 }
             }
         }
@@ -397,6 +422,12 @@
             bottom: calc(64px);
             width: calc(100% - 48px);
             height: 64px;
+            
+            >.scroll-button{
+                &:is(.show){    
+                    bottom: 64px;
+                }
+            }
         }
     }
 }
