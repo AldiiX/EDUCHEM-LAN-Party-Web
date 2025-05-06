@@ -260,8 +260,10 @@
         height: $input-div-height;
         width: calc(100vw - 361px - 48px*2);
         background-color: var(--background-bg);
-        
-        
+        &:is(.has-reply) {
+            //height: calc($input-div-height + 32px);
+            padding-top: 40px;
+        }
         
         >.scroll-button{
             opacity: 0;
@@ -301,6 +303,41 @@
             }
         }
 
+        >.reply{
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 40px;
+            border-radius: 8px;
+            background-color: var(--element-bg);
+            border: 1px solid var(--background-bg);
+            bottom: 100%;
+            padding: 0 12px;
+
+            >p {
+                margin: 0;
+                padding: 0;
+                font-size: 14px;
+                color: var(--text-color);
+                flex: 1;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+
+            >.cancel-reply {
+                width: 16px;
+                height: 16px;
+                cursor: pointer;
+                background-color: var(--text-color);
+                mask: url("../../../public/images/icons/x.svg") no-repeat center;
+                mask-size: contain;
+                margin-left: 12px;
+            }
+        }
+        
+        
         >.inputdiv {
             display: flex;
             align-items: center;
@@ -309,14 +346,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 100%;
-            >.reply{
-                >p{
-
-                }
-                >.cancel-reply{
-
-                }
-            }
+            
             >input {
                 width: 100%;
                 padding: 12px;

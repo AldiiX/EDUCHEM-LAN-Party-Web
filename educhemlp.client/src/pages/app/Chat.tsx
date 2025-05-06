@@ -523,14 +523,17 @@ export const Chat = () => {
                 }
             </div>
 
-            <div className="chat-input">
+            <div className={`chat-input ${replyingToMessage ? "has-reply" : ""}`}>
                 <div className={"scroll-button"} ref={scrollToBottomButtonRef} onClick={handleScrollToBottom} >
                     <div className={"scroll-icon"}></div>
                 </div>
-                <div className={"reply"}>
-                    <p>{ replyingToMessage?.message }</p>
-                    <div className={"cancel-reply"} onClick={() => setReplyingToMessage(null)}></div>
-                </div>
+                
+                {replyingToMessage && (
+                    <div className="reply">
+                        <p>{replyingToMessage.message}</p>
+                        <div className="cancel-reply" onClick={() => setReplyingToMessage(null)}></div>
+                    </div>
+                )}
                 <div className="inputdiv">
                     <input
                         type="text"
