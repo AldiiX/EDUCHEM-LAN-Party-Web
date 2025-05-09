@@ -16,7 +16,7 @@ function createWindow() {
         icon: path.join(__dirname, 'assets', 'icon.png'),
     });
 
-    if(process.env.NODE_ENV !== 'production') {
+    if(process.env.NODE_ENV === "development") {
         win.loadURL('http://localhost:3154/app').then(r => {});
         win.webContents.openDevTools();
     }

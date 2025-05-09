@@ -3,14 +3,36 @@
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
+  "build": {
+    "appId": "com.aldiix.educhemlp",
+    "productName": "EDUCHEM LAN Party",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    }
+  },
   "scripts": {
     "start": "cross-env NODE_ENV=development electron .",
-    "build": "cross-env NODE_ENV=production electron ."
+    "build": "cross-env NODE_ENV=production electron-builder"
   },
   "author": "AldiiX",
   "license": "MIT",
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "electron": "^36.2.0"
+    "electron": "^36.2.0",
+    "electron-builder": "^26.0.12"
   }
 }
