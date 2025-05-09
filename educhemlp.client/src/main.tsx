@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, lazy } from 'react';
+import { StrictMode, useEffect, lazy, CSSProperties } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import "./assets/pure.css";
@@ -10,6 +10,7 @@ import {AppMobileMenuDiv} from "./components/AppMobileMenuDiv.tsx";
 import { ToastContainer } from 'react-toastify';
 import {ErrorView as AppErrorView} from "./pages/app/ErrorView.tsx";
 import {ErrorView} from "./pages/ErrorView.tsx";
+import {CurrentPage} from "./interfaces.ts";
 
 const Home = lazy(() => import('./pages/Home.tsx'));
 const Login = lazy(() => import('./pages/Login.tsx'));
@@ -25,23 +26,95 @@ const Account = lazy(() => import('./pages/app/Account.tsx'));
 
 const RouteTitle = () => {
     const location = useLocation();
+    const setCurrentPage = useStore(state => state.setCurrentPage);
 
     useEffect(() => {
-        const routeTitles: { [key: string]: string } = {
-            '/': 'Domů • EDUCHEM LAN Party',
-            '/app': 'Aplikace • EDUCHEM LAN Party',
-            '/app/reservations': 'Rezervace • EDUCHEM LAN Party',
-            '/app/map': 'Mapa • EDUCHEM LAN Party',
-            '/app/attendance': 'Příchody / Odchody • EDUCHEM LAN Party',
-            '/app/administration': 'Administrace • EDUCHEM LAN Party',
-            '/app/tournaments': 'Turnaje • EDUCHEM LAN Party',
-            '/app/announcements': 'Oznámení • EDUCHEM LAN Party',
-            '/app/chat': 'Chat • EDUCHEM LAN Party',
-            '/app/forum': 'Forum • EDUCHEM LAN Party',
-            '/app/account': 'Můj účet • EDUCHEM LAN Party',
-        };
+        const routes : { [key: string]: CurrentPage } = {
+            '/': {
+                name: 'Domů',
+                id: '/',
+                icon: '/images/icons/home.svg',
+                url: '/',
+                title: "Domů • EDUCHEM LAN Party"
+            },
 
-        document.title = routeTitles[location.pathname] || 'EDUCHEM LAN Party';
+            '/login': {
+                name: 'Login',
+                id: '/login',
+                icon: '/images/icons/login.svg',
+                url: '/login',
+                title: "Login • EDUCHEM LAN Party"
+            },
+
+            '/app/reservations': {
+                name: 'Rezervace',
+                id: '/app/reservations',
+                icon: '/images/icons/calc.svg',
+                url: '/app/reservations',
+                title: "Rezervace • EDUCHEM LAN Party"
+            },
+            '/app/attendance': {
+                name: 'Příchody / Odchody',
+                id: '/app/attendance',
+                icon: '/images/icons/user_in_building.svg',
+                url: '/app/attendance',
+                title: "Příchody / Odchody • EDUCHEM LAN Party"
+            },
+            '/app/administration': {
+                name: 'Administrace',
+                id: '/app/administration',
+                icon: '/images/icons/user_with_shield.svg',
+                url: '/app/administration',
+                title: "Administrace • EDUCHEM LAN Party"
+            },
+            '/app/announcements': {
+                name: 'Oznámení',
+                id: '/app/announcements',
+                icon: '/images/icons/bell.svg',
+                url: '/app/announcements',
+                title: "Oznámení • EDUCHEM LAN Party"
+            },
+            '/app/tournaments': {
+                name: 'Turnaje',
+                id: '/app/tournaments',
+                icon: '/images/icons/trophy_star.svg',
+                url: '/app/tournaments',
+                title: "Turnaje • EDUCHEM LAN Party"
+            },
+            '/app/chat': {
+                name: 'Chat',
+                id: '/app/chat',
+                icon: '/images/icons/chat.svg',
+                url: '/app/chat',
+                title: "Chat • EDUCHEM LAN Party"
+            },
+            '/app/forum': {
+                name: 'Forum',
+                id: '/app/forum',
+                icon: '/images/icons/forum.svg',
+                url: '/app/forum',
+                title: "Forum • EDUCHEM LAN Party"
+            },
+            '/app/map': {
+                name: 'Mapa školy',
+                id: '/app/map',
+                icon: '/images/icons/map.svg',
+                url: '/app/map',
+                title: "Mapa • EDUCHEM LAN Party"
+            },
+            '/app/account': {
+                name: 'Můj účet',
+                id: '/app/account',
+                icon: '/images/icons/account.svg',
+                url: '/app/account',
+                title: "Můj účet • EDUCHEM LAN Party"
+            },
+        }
+
+        const currentPage: CurrentPage | null = routes[location.pathname];
+        document.title = currentPage?.title ?? "EDUCHEM LAN Party";
+
+        setCurrentPage(currentPage);
     }, [location]);
 
     return null;
@@ -83,6 +156,14 @@ const AppInner = () => {
     const setAppSettings = useStore(state => state.setAppSettings);
     const location = useLocation();
 
+    const isElectronApp = useStore(state => state.isElectronApp);
+    const setIsElectronApp = useStore(state => state.setIsElectronApp);
+
+    const isElectronAppFullscreen = useStore(state => state.isElectronAppFullscreen);
+    const setIsElectronAppFullscreen = useStore(state => state.setIsElectronAppFullscreen);
+
+    const currentPage: CurrentPage = useStore(state => state.currentPage);
+
     // effekt kterej dela to ze se pri zmene location.pathname zavola getAppSettings
     useEffect(() => {
         if(location.pathname === '/app/reservations' || location.pathname === '/app/chat') {
@@ -90,8 +171,42 @@ const AppInner = () => {
         }
     }, [loggedUser, location]);
 
+
     return (
         <>
+            {
+                isElectronApp && !isElectronAppFullscreen && (
+                    <div id="electron-title-bar">
+                        <div className="logo">
+                            <div className="icon"></div>
+                            <p className="title">EDUCHEM LAN Party</p>
+                        </div>
+
+                        <div className="location-controls">
+                            <button onClick={() => window.history.back()} style={{ '--icon': 'url(/images/icons/back_left.svg)'} as CSSProperties }></button>
+                            <button onClick={() => window.history.forward()} style={{ '--icon': 'url(/images/icons/back_right.svg)'} as CSSProperties }></button>
+                            <button onClick={() => window.location.reload()} style={{ '--icon': 'url(/images/icons/reload.svg)'} as CSSProperties }></button>
+                            <button onClick={() => window.location.href = "/app"} style={{ '--icon': 'url(/images/icons/home.svg)'} as CSSProperties }></button>
+                        </div>
+
+                        { // nastaveni current page
+                            currentPage && (
+                                <div className="current-page">
+                                    <div style={{ maskImage: `url(${currentPage.icon})` }}></div>
+                                    <p>{currentPage.name}</p>
+                                </div>
+                            )
+                        }
+
+                        <div className="controls">
+                            <button onClick={() => (window as any).electronAPI.controlWindow('minimize')} style={{ '--icon': `url(/images/icons/minimize.svg)`} as CSSProperties }></button>
+                            <button onClick={() => (window as any).electronAPI.controlWindow('maximize')} style={{ '--icon': `url(/images/icons/maximize.svg)`} as CSSProperties }></button>
+                            <button className="close" onClick={() => (window as any).electronAPI.controlWindow('close')} style={{ '--icon': `url(/images/icons/close.svg)`} as CSSProperties }></button>
+                        </div>
+                    </div>
+                )
+            }
+
             <AppMobileMenuDiv />
             <RouteTitle />
             <Routes>
@@ -119,6 +234,30 @@ const App = () => {
     const setLoggedUser = useStore(state => state.setLoggedUser);
     const setUserAuthed = useStore(state => state.setUserAuthed);
     const setAppSettings = useStore(state => state.setAppSettings);
+    const isElectronApp = useStore(state => state.isElectronApp);
+    const setIsElectronApp = useStore(state => state.setIsElectronApp);
+    const setIsElectronAppFullscreen = useStore(state => state.setIsElectronAppFullscreen);
+
+
+    // pokud je web otevren v elektronu
+    if ((window as any).electronAPI) {
+        setIsElectronApp(true);
+
+        const root = document.documentElement;
+        root.classList.add('electronApp');
+
+
+        (window as any).electronAPI.onFullscreenChanged((isFullscreen: boolean) => {
+            setIsElectronAppFullscreen(isFullscreen);
+            if (isFullscreen) {
+                root.classList.add('electronAppFullscreen');
+            } else {
+                root.classList.remove('electronAppFullscreen');
+            }
+        });
+    }
+
+
 
     let theme = getCookie("theme");
     theme ??= window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light";

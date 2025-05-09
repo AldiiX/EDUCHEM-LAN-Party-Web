@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import {AppSettings, LoggedUser} from "./interfaces.ts";
+import {AppSettings, CurrentPage, LoggedUser} from "./interfaces.ts";
 
 
 
@@ -18,6 +18,15 @@ type Store = {
 
     appSettings: AppSettings | null,
     setAppSettings: (settings: AppSettings) => void,
+
+    isElectronApp: boolean,
+    setIsElectronApp: (isElectronApp: boolean) => void,
+
+    isElectronAppFullscreen: boolean,
+    setIsElectronAppFullscreen: (isElectronAppFullscreen: boolean) => void,
+
+    currentPage: CurrentPage | null,
+    setCurrentPage: (page: CurrentPage) => void,
 };
 
 export const useStore = create<Store | any>((set: any) => ({
@@ -45,5 +54,17 @@ export const useStore = create<Store | any>((set: any) => ({
     setAppSettings: (settings: AppSettings) => set((state: Store) => {
         if (JSON.stringify(state.appSettings) === JSON.stringify(settings)) return {};
         return {appSettings: settings};
+    }),
+
+    isElectronApp: false,
+    setIsElectronApp: (isElectronApp: boolean) => set({isElectronApp: isElectronApp}),
+
+    isElectronAppFullscreen: false,
+    setIsElectronAppFullscreen: (isElectronAppFullscreen: boolean) => set({isElectronAppFullscreen: isElectronAppFullscreen}),
+
+    currentPage: null,
+    setCurrentPage: (page: CurrentPage) => set((state: Store) => {
+        if (JSON.stringify(state.currentPage) === JSON.stringify(page)) return {};
+        return {currentPage: page};
     }),
 }));

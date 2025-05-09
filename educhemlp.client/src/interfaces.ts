@@ -13,6 +13,14 @@ export type LoggedUser = {
     banner: string | null,
 }
 
+export interface CurrentPage {
+    name: string,
+    id: string,
+    icon: string,
+    url: string,
+    title: string,
+}
+
 
 export type AppSettings = {
     reservationsStatus: "USE_TIMER" | "OPEN" | "CLOSED",

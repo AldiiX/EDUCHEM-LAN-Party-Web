@@ -1,0 +1,16 @@
+{
+  "name": "educhemlp.desktop",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development electron .",
+    "build": "cross-env NODE_ENV=production electron ."
+  },
+  "author": "AldiiX",
+  "license": "MIT",
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^36.2.0"
+  }
+}

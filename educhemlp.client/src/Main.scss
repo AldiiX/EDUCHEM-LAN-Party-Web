@@ -304,6 +304,182 @@ input, select, textarea {
 }
 
 
+// pokud je to electron appka
+:root:is(.electronApp):not(.electronAppFullscreen) {
+    #root {
+        $titlebar-height: 40px;
+
+        >.parent, >#app {
+            height: calc(100vh - #{$titlebar-height});
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        #electron-title-bar {
+            position: sticky;
+            width: 100vw;
+            height: $titlebar-height;
+            background-color: var(--element-bg);
+            top: 0;
+            overflow: hidden;
+            -webkit-app-region: drag;
+            border-bottom: 1px solid var(--text-color-3);
+
+            >.location-controls {
+                position: absolute;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 16px;
+                -webkit-app-region: no-drag;
+                left: 164px;
+                height: 100%;
+                gap: 12px;
+
+                >button {
+                    background-color: transparent;
+                    border: none;
+                    cursor: pointer;
+                    height: 24px;
+                    aspect-ratio: 1/1;
+                    padding: 0;
+                    border-radius: 100%;
+
+                    &:hover {
+                        backdrop-filter: brightness(2);
+                    }
+
+                    &::before {
+                        content: '';
+                        width: 100%;
+                        height: 100%;
+                        display: block;
+                        mask-size: 12px;
+                        mask-repeat: no-repeat;
+                        mask-position: center;
+                        mask-image: var(--icon);
+                        background-color: var(--text-color);
+                    }
+
+                    &:focus-visible {
+                        outline: none;
+                        color: var(--accent-color);
+                    }
+                }
+            }
+
+            >.current-page {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                align-items: center;
+                font-size: 16px;
+                color: var(--text-color);
+                user-select: none;
+                pointer-events: none;
+                gap: 6px;
+
+                >div {
+                    width: 14px;
+                    height: $titlebar-height;
+                    mask-image: url('../public/images/logo/logo.svg');
+                    mask-size: 14px;
+                    mask-repeat: no-repeat;
+                    mask-position: center;
+                    background-color: var(--accent-color);
+                }
+
+                >p {
+                    font-size: 14px;
+                    color: var(--text-color);
+                    width: max-content;
+                }
+            }
+
+            >.logo {
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                background-color: var(--element-bg);
+                display: flex;
+                align-items: center;
+                pointer-events: none;
+                user-select: none;
+
+                >.icon {
+                    width: $titlebar-height;
+                    height: $titlebar-height;
+                    mask-image: url('../public/images/logo/logo.svg');
+                    mask-size: 16px;
+                    mask-repeat: no-repeat;
+                    mask-position: center;
+                    background-color: var(--accent-color);
+                }
+
+                >.title {
+                    font-size: 12px;
+                    color: var(--text-color);
+                    width: max-content;
+                }
+            }
+
+            >.controls {
+                right: 0;
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                user-select: none;
+                -webkit-app-region: no-drag;
+
+                button {
+                    background-color: transparent;
+                    border: none;
+                    cursor: pointer;
+                    height: $titlebar-height;
+                    aspect-ratio: 1/1;
+                    padding: 0;
+
+                    &::before {
+                        content: '';
+                        width: 100%;
+                        height: 100%;
+                        display: block;
+                        mask-size: 12px;
+                        mask-repeat: no-repeat;
+                        mask-position: center;
+                        mask-image: var(--icon);
+                        background-color: var(--text-color);
+                    }
+
+                    &:focus-visible {
+                        outline: none;
+                        color: var(--accent-color);
+                    }
+
+
+                    &:hover {
+                        background-color: var(--element-bg-colored);
+
+                        &:is(.close) {
+                            background-color: var(--error-color);
+
+                            &::before {
+                                background-color: white;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 
 
 @media (max-width: 768px) {
