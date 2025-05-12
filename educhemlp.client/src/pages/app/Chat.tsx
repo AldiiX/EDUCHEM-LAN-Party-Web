@@ -114,7 +114,7 @@ export const Chat = () => {
     const [forceCloseMenuPopover, setForceCloseMenuPopover] = useState<boolean>(false);
     const scrollToBottomButtonRef = useRef<HTMLDivElement | null>(null);
     const [replyingToMessage, setReplyingToMessage] = useState <Message | null> (null);
-
+    
     // datumy v cestine textem
     const formatDateToCzech = (dateString: string) => {
         const date = new Date(dateString);
@@ -299,33 +299,7 @@ export const Chat = () => {
 
 
 
-    // pri nacteni komponenty
-    useEffect(() => {
-        const body = document.querySelector("body");
-        if(body) body.style.overscrollBehavior = "none";
-
-
-        const checkAndAddScrollListener = () => {
-            const scrollContainer = document.querySelector("body #app .right");
-            if (!scrollContainer) {
-                setTimeout(checkAndAddScrollListener, 100); // retry za 100ms
-            } else {
-                scrollContainer.addEventListener("scroll", handleScroll);
-            }
-        };
-
-        checkAndAddScrollListener();
-
-        return () => {
-            wsRef.current?.close();
-
-            const scrollContainer = document.querySelector("body #app .right");
-            if (scrollContainer) scrollContainer.removeEventListener("scroll", handleScroll);
-
-            const body = document.querySelector("body");
-            if(body) body.style.overscrollBehavior = "auto";
-        };
-    }, []);
+    
     const handleDeleteMessage = (messageUuid: string) => {
         if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
 
@@ -364,10 +338,60 @@ export const Chat = () => {
         lastSendTimeRef.current = now; // uložení času odeslání
         setInputText("");
     };
+    
+    
+    // pri nacteni komponenty
+    useEffect(() => {
+        const body = document.querySelector("body");
+        if(body) body.style.overscrollBehavior = "none";
 
 
+        const checkAndAddScrollListener = () => {
+            const scrollContainer = document.querySelector("body #app .right");
+            if (!scrollContainer) {
+                setTimeout(checkAndAddScrollListener, 100); // retry za 100ms
+            } else {
+                scrollContainer.addEventListener("scroll", handleScroll);
+            }
+        };
 
+        checkAndAddScrollListener();
 
+        return () => {
+            wsRef.current?.close();
+
+            const scrollContainer = document.querySelector("body #app .right");
+            if (scrollContainer) scrollContainer.removeEventListener("scroll", handleScroll);
+
+            const body = document.querySelector("body");
+            if(body) body.style.overscrollBehavior = "auto";
+        };
+    }, []);
+    
+    // padding pro reply 
+    useEffect(() => {
+        const scrollContainer = document.querySelector("body #app .right .content-wrapper");
+        const rightScrollContainer = document.querySelector("body #app .right");
+        if (!scrollContainer) return;
+        
+        
+        // v pripade ze uzivateel se nachazi uplne dole tak pri reply se scrollne dolu
+        if (rightScrollContainer !== null && rightScrollContainer.scrollHeight - rightScrollContainer.scrollTop - rightScrollContainer.clientHeight < 50) {
+            requestAnimationFrame(() => {
+                rightScrollContainer.scrollTo({
+                    top: rightScrollContainer.scrollHeight,
+                    behavior: "auto",
+                });    
+            })
+        }
+        
+        if (replyingToMessage) {
+            scrollContainer.classList.add("has-reply");
+        } else {
+            scrollContainer.classList.remove("has-reply");
+        }
+    }, [replyingToMessage]);
+    
     // zamezení přístupu k administraci spatnym uzivatelum
     useEffect(() => {
         if (userAuthed && !loggedUser) {
@@ -381,7 +405,7 @@ export const Chat = () => {
     if (!userAuthed || !loggedUser) {
         return null;
     }
-
+    
 
 
     return (
@@ -530,7 +554,11 @@ export const Chat = () => {
                 
                 {replyingToMessage && (
                     <div className="reply">
-                        <p>{replyingToMessage.message}</p>
+                        <div className={"reply-text"}>
+                            <Avatar name={replyingToMessage.author.name} src={replyingToMessage.author.avatar} size={"24px"}></Avatar>
+                            <p>{replyingToMessage.author.name} :</p>
+                            <article>{replyingToMessage.message}</article> 
+                        </div>
                         <div className="cancel-reply" onClick={() => setReplyingToMessage(null)}></div>
                     </div>
                 )}

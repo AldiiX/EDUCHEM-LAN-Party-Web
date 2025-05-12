@@ -1,4 +1,9 @@
 ﻿$input-div-height: 96px;
+body #app .right .content-wrapper{
+    &:is(.has-reply){
+         padding-bottom: calc(48px + 32px);
+    }
+}
 
 .page-chat {
     .titlebar {
@@ -150,9 +155,6 @@
                     }
                 }
                 >.chat-message {
-                    
-                    
-                    
                     width: fit-content;
                     max-width: 60%;
                     padding: 12px;
@@ -263,6 +265,11 @@
         &:is(.has-reply) {
             //height: calc($input-div-height + 32px);
             padding-top: 40px;
+            >.inputdiv{
+                input{
+                    border-radius: 0 0 8px 8px !important;
+                }
+            }
         }
         
         >.scroll-button{
@@ -308,22 +315,30 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 40px;
-            border-radius: 8px;
-            background-color: var(--element-bg);
-            border: 1px solid var(--background-bg);
-            bottom: 100%;
+            height: 48px;
+            width: 100%;
+            border-radius: 8px 8px 0 0;
+            background-color: var(--element-bg-2);
+            bottom: 115%;
             padding: 0 12px;
 
-            >p {
-                margin: 0;
-                padding: 0;
-                font-size: 14px;
-                color: var(--text-color);
-                flex: 1;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
+            >.reply-text {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                >p{
+                    
+                }
+                >article{
+                    margin: 0;
+                    padding: 0;
+                    font-size: 16px;
+                    color: var(--text-color);
+                    flex: 1;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                }
             }
 
             >.cancel-reply {
@@ -357,7 +372,7 @@
                 color: var(--text-color);
                 height: 48px;
                 border: 2px solid transparent;
-
+                
                 &:focus {
                     outline: none;
                     border-color: var(--accent-color);
