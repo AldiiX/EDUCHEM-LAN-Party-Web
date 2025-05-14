@@ -39,6 +39,7 @@ interface Message{
     deleted: number,
     message: string,
     replyingToUuid: string | null,
+    replyingToMessage: Message | null,
 }
 interface ChatStore {
     connectedUsers: ConnectedUser[];
@@ -332,11 +333,13 @@ export const Chat = () => {
 
         wsRef.current.send(JSON.stringify({
             action: "sendMessage",
-            message: inputText
+            message: inputText,
+            replyingToUuid: replyingToMessage ? replyingToMessage.uuid : null,
         }));
 
         lastSendTimeRef.current = now; // uložení času odeslání
         setInputText("");
+        setReplyingToMessage(null); // zruseni reply
     };
     
     
@@ -441,7 +444,7 @@ export const Chat = () => {
                             }
 
                             {
-                                messages.map((message, index) => {
+                                messages.map((message:Message, index) => {
                                     const isOwn = message.author.id === loggedUser.id;
 
                                     const dateObj = new Date(message.date);
@@ -464,6 +467,10 @@ export const Chat = () => {
                                             )}
                                             <div className={`wrapped-message ${isOwn ? "own-message" : "other-message"}`}>
                                                 <div className={`chat-message ${isOwn ? "own-message" : "other-message"}`}>
+                                                    {message.replyingToMessage && (
+                                                        <div className={"replying-to"}></div>
+                                                    )
+                                                    }
                                                     {!isOwn ? (
                                                         <>
                                                             <Avatar size={"32px"} src={message.author.avatar} name={message.author.name} />
@@ -546,7 +553,7 @@ export const Chat = () => {
                     ) : null
                 }
             </div>
-
+           
             <div className={`chat-input ${replyingToMessage ? "has-reply" : ""}`}>
                 <div className={"scroll-button"} ref={scrollToBottomButtonRef} onClick={handleScrollToBottom} >
                     <div className={"scroll-icon"}></div>
@@ -557,7 +564,7 @@ export const Chat = () => {
                         <div className={"reply-text"}>
                             <Avatar name={replyingToMessage.author.name} src={replyingToMessage.author.avatar} size={"24px"}></Avatar>
                             <p>{replyingToMessage.author.name} :</p>
-                            <article>{replyingToMessage.message}</article> 
+                            <article className={"text-message"}>{replyingToMessage.message}</article>
                         </div>
                         <div className="cancel-reply" onClick={() => setReplyingToMessage(null)}></div>
                     </div>
@@ -567,7 +574,7 @@ export const Chat = () => {
                         type="text"
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
-                        placeholder="Napiš zprávu..."
+                        placeholder={ replyingToMessage ? "Odpovědět na zprávu..." : "Napište zprávu..."}
                         onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                         maxLength={1024}
                     />

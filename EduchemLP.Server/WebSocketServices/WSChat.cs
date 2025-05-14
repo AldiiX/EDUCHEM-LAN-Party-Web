@@ -93,7 +93,7 @@ public static class WSChat {
                     if (string.IsNullOrWhiteSpace(messageText))
                         break;
 
-                    var savedMessage = await SaveMessageToDb(client, messageText);
+                    var savedMessage = await SaveMessageToDb(client, messageText, messageJson?["replyingToUuid"]?.ToString());
                     if (savedMessage == null) {
                         await client.BroadcastAsync(new JsonObject {
                             ["action"] = "error",
@@ -231,7 +231,7 @@ public static class WSChat {
         return true;
     }
 
-    private static async Task<JsonObject?> SaveMessageToDb(Client client, string message) {
+    private static async Task<JsonObject?> SaveMessageToDb(Client client, string message, string? replyingToUuid) {
         await using var conn = await Database.GetConnectionAsync();
         if (conn == null) return null;
         await using var cmd = conn.CreateCommand();
@@ -256,7 +256,7 @@ public static class WSChat {
         cmd.Parameters.AddWithValue("@uuid", uuid);
         cmd.Parameters.AddWithValue("@userId", client.ID);
         cmd.Parameters.AddWithValue("@message", message);
-        cmd.Parameters.AddWithValue("@replyingToUuid", null); // TODO: implementovat
+        cmd.Parameters.AddWithValue("@replyingToUuid", replyingToUuid); 
 
         MySqlDataReader? result;
 

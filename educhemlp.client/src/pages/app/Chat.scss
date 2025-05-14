@@ -321,15 +321,21 @@ body #app .right .content-wrapper{
             background-color: var(--element-bg-2);
             bottom: 115%;
             padding: 0 12px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
 
             >.reply-text {
                 display: flex;
                 gap: 8px;
                 align-items: center;
+                min-width: 0;
+                flex: 1;
+                
                 >p{
-                    
+                    font-weight: bold;
                 }
-                >article{
+                >.text-message{
                     margin: 0;
                     padding: 0;
                     font-size: 16px;
@@ -338,6 +344,8 @@ body #app .right .content-wrapper{
                     overflow: hidden;
                     white-space: nowrap;
                     text-overflow: ellipsis;
+                    max-width: 100%;
+                    display: block;
                 }
             }
 
