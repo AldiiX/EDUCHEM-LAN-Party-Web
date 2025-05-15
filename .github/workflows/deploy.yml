@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   deploy:
@@ -15,11 +14,16 @@ jobs:
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_IP }}
-          port: ${{ secrets.SERVER_SSH_PORT }}       
+          port: ${{ secrets.SERVER_SSH_PORT }}
           username: ${{ secrets.SERVER_SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
+
+            echo "Adding GitHub to known_hosts..."
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
             REPO_DIR="/home/${{ secrets.SERVER_SSH_USER }}/repos/${{ github.repository }}"
             echo "Going to repo dir: $REPO_DIR"
 
@@ -35,7 +39,7 @@ jobs:
             echo "Building Docker image..."
             docker build -t ${{ github.repository }}:latest .
 
-            echo "Stopping existing container..."
+            echo "Stopping existing container if exists..."
             docker stop ${{ github.repository }} || true
             docker rm ${{ github.repository }} || true
 
