@@ -162,11 +162,12 @@ public static class WSReservations {
                     ConnectedClients.Remove(client);
                 }
 
-                // connectedUsers zasifrovani dat
+                // connectedUsers = zasifrovani dat
                 var connectedUsers = new JsonArray();
 
                 foreach (var c in clients.DistinctBy(c => c.ID).ToList()) {
-                    if (c.AccountType == null) {
+                    // pokud c je anonymni uzivatel nebo pokud client je anonymni uzivatel
+                    if (c.AccountType == null || client.AccountType == null) {
                         connectedUsers.Add("unknown");
                         continue;
                     }
