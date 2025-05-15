@@ -430,7 +430,8 @@ public class APIv1 : Controller {
         command.ExecuteNonQuery();
 
         // odeslani emailu
-        string webLink = "https://" + Program.ROOT_DOMAIN + "/api/v1/lg?u=" + Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Email + " " + newPassword));
+        string credentialsBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Email + " " + newPassword));
+        string webLink = "https://" + Program.ROOT_DOMAIN + "/api/v1/lg?u=" + Uri.EscapeDataString(credentialsBase64);
         _ = EmailService.SendHTMLEmailAsync(user.Email, "Obnovení hesla k EDUCHEM LAN Party", "~/Views/Emails/UserResetPassword.cshtml",
             new EmailUserRegisterModel(newPassword, webLink, user.Email)
         );
