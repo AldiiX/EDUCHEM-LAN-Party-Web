@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -14,30 +15,29 @@ jobs:
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_IP }}
-          port: ${{ secrets.SERVER_SSH_PORT }}
+          port: ${{ secrets.SERVER_SSH_PORT }}       
           username: ${{ secrets.SERVER_SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -e
-
             REPO_DIR="/home/${{ secrets.SERVER_SSH_USER }}/repos/${{ github.repository }}"
             echo "Going to repo dir: $REPO_DIR"
 
             if [ ! -d "$REPO_DIR" ]; then
               echo "Repo folder doesn't exist, cloning..."
-              git clone git@github.com:${{ github.repository }}.git "$REPO_DIR"
+              git clone git@github.com:${{ github.repository }}.git $REPO_DIR
             fi
 
-            cd "$REPO_DIR"
+            cd $REPO_DIR
             git fetch --all
             git reset --hard origin/main
 
             echo "Building Docker image..."
-            docker build -t "${{ github.repository }}:latest" .
+            docker build -t ${{ github.repository }}:latest .
 
             echo "Stopping existing container..."
-            docker stop "${{ github.repository }}" || true
-            docker rm "${{ github.repository }}" || true
+            docker stop ${{ github.repository }} || true
+            docker rm ${{ github.repository }} || true
 
             echo "Starting container..."
-            docker run -d --name "${{ github.repository }}" -p ${{ secrets.APP_PORT }}:80 "${{ github.repository }}:latest"
+            docker run -d --name ${{ github.repository }} -p ${{ secrets.APP_PORT }}:80 ${{ github.repository }}:latest
