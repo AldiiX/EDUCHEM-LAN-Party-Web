@@ -1,8 +1,3 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
 version: 2
 updates:
   # NPM dependencies (React frontend)
@@ -14,11 +9,10 @@ updates:
     commit-message:
       prefix: "CHORE: "
       include: "scope"
-    allow:
-      - dependency-type: "direct"
-        update-type: "version-update:semver-minor"
-      - dependency-type: "indirect"
-        update-type: "version-update:semver-minor"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     groups:
       all-deps:
         patterns:
@@ -46,8 +40,11 @@ updates:
     commit-message:
       prefix: "CHORE: "
       include: "scope"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
     groups:
       all-nugets:
         patterns:
           - "*"
-
