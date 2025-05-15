@@ -14,6 +14,11 @@ updates:
     commit-message:
       prefix: "CHORE: "
       include: "scope"
+    allow:
+      - dependency-type: "direct"
+        update-type: "version-update:semver-minor"
+      - dependency-type: "indirect"
+        update-type: "version-update:semver-minor"
     groups:
       all-deps:
         patterns:
@@ -45,3 +50,4 @@ updates:
       all-nugets:
         patterns:
           - "*"
+
