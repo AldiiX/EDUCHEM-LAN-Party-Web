@@ -2,8 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -11,42 +10,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: SSH Deploy
-        uses: appleboy/ssh-action@v0.1.7
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Build docker image
+        uses: docker/build-push-action@v5
         with:
-          host: ${{ secrets.SERVER_IP }}
-          port: ${{ secrets.SERVER_SSH_PORT }}
-          username: ${{ secrets.SERVER_SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -e
+          context: .
+          tags: test:latest
+          load: true
 
-            echo "Adding GitHub to known_hosts..."
-            mkdir -p ~/.ssh
-            ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - name: Deploy to server
+        run: |
+          echo "Volání deploy endpointu..."
 
-            REPO_DIR="/home/${{ secrets.SERVER_SSH_USER }}/repos/${{ github.repository }}"
-            echo "Going to repo dir: $REPO_DIR"
+          # volani api
+          curl -s -w "\n%{http_code}" -o response.json \
+            -X POST "https://deploy.emsio.cz/ghad/df/v1/run" \
+            -H "X-GHAD-Token: ${{ secrets.DEPLOY_TOKEN }}" \
+            -H "X-GHRP-Uuid: ${{ secrets.PROJECT_UUID }}" \
+            -H "X-GHRP-Name: ${{ github.repository }}" > result.txt
 
-            # Převod názvu repa na validní docker tag: lowercase, lomítka nahrazená pomlčkou
-            DOCKER_TAG=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
-            echo "Using docker tag: $DOCKER_TAG"
+          http_code=$(tail -n1 result.txt)
+          body=$(head -n -1 result.txt)
 
-            if [ ! -d "$REPO_DIR" ]; then
-              echo "Repo folder doesn't exist, cloning..."
-              git clone git@github.com:${{ github.repository }}.git "$REPO_DIR"
-            fi
+          echo "Server odpověď: $body"
+          echo "Status code: $http_code"
 
-            cd "$REPO_DIR"
-            git fetch --all
-            git reset --hard origin/main
+          # vypis do step summary
+          echo "### 🚀 Deploy výstup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**HTTP status:** \`$http_code\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "$body" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
-            echo "Building Docker image..."
-            docker build -t "$DOCKER_TAG:latest" .
-
-            echo "Stopping existing container if running..."
-            docker stop "$DOCKER_TAG" || true
-            docker rm "$DOCKER_TAG" || true
-
-            echo "Starting new container..."
-            docker run -d --name "$DOCKER_TAG" -p ${{ secrets.APP_PORT }}:80 "$DOCKER_TAG:latest"
+          # pokud status neni 200, ukoncit jako error
+          if [ "$http_code" -ne 200 ]; then
+            echo "❌ Chyba: server vrátil $http_code"
+            exit 1
+          fi
