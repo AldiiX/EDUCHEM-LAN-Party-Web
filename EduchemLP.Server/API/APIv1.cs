@@ -251,6 +251,7 @@ public class APIv1 : Controller {
         DateTime? to = data.TryGetValue("reservationsEnabledTo", out var _to) ? DateTime.TryParse(_to?.ToString(), out var _to2) ? _to2 : null : null;
         bool? chatEnabled = data.TryGetValue("chatEnabled", out var _chatEnabled) ? bool.TryParse(_chatEnabled?.ToString(), out var _chatEnabled2) ? _chatEnabled2 : null : null;
 
+        // datetime musi byt v UTC
 
         // asynch picovinky
         var t1 = Task.Run(() => {
@@ -260,12 +261,12 @@ public class APIv1 : Controller {
 
         var t2 = Task.Run(() => {
             if(from == null) return;
-            AppSettings.ReservationsEnabledFrom = (DateTime)from;
+            AppSettings.ReservationsEnabledFrom = from.Value;
         });
 
         var t3 = Task.Run(() => {
             if(to == null) return;
-            AppSettings.ReservationsEnabledTo = (DateTime)to;
+            AppSettings.ReservationsEnabledTo = to.Value;
         });
 
         var t4 = Task.Run(() => {
