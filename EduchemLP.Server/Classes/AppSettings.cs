@@ -57,17 +57,17 @@ public static class AppSettings {
     }
     public static DateTime ReservationsEnabledTo {
         get {
-            if(_reservationsEnabledTo != null) return _reservationsEnabledTo.Value;
+            if (_reservationsEnabledTo != null) return _reservationsEnabledTo.Value;
 
             using var conn = Database.GetConnection();
-            if(conn == null) return DateTime.MaxValue;
+            if (conn == null) return DateTime.MaxValue;
 
             var cmd = new MySqlCommand("SELECT `value` FROM `settings` WHERE `property` = 'reservations_enabled_to'", conn);
             var reader = cmd.ExecuteReader();
 
-            if(reader.Read()) {
+            if (reader.Read()) {
                 var value = reader.GetString(0);
-                if(DateTime.TryParse(value, out var dateTime)) {
+                if (DateTime.TryParse(value, out var dateTime)) {
                     _reservationsEnabledTo = dateTime;
                     return dateTime;
                 }
@@ -131,20 +131,30 @@ public static class AppSettings {
             _reservationsStatus = value;
         }
     }
-    public static bool AreReservationsEnabledRightNow => ReservationsStatus == ReservationStatusType.OPEN || (ReservationsStatus == ReservationStatusType.USE_TIMER && DateTime.Now >= ReservationsEnabledFrom && DateTime.Now <= ReservationsEnabledTo);
+
+    public static bool AreReservationsEnabledRightNow {
+        get{
+            var now = DateTime.UtcNow;
+            if (ReservationsStatus == ReservationStatusType.CLOSED) return false;
+            if (ReservationsStatus == ReservationStatusType.OPEN) return true;
+
+            return now >= ReservationsEnabledFrom && now <= ReservationsEnabledTo;
+        }
+    }
+
     public static bool ChatEnabled {
         get {
-            if(_chatEnabled != null) return _chatEnabled.Value;
+            if (_chatEnabled != null) return _chatEnabled.Value;
 
             using var conn = Database.GetConnection();
-            if(conn == null) return false;
+            if (conn == null) return false;
 
             var cmd = new MySqlCommand("SELECT `value` FROM `settings` WHERE `property` = 'chat_enabled'", conn);
             var reader = cmd.ExecuteReader();
 
-            if(reader.Read()) {
+            if (reader.Read()){
                 var value = reader.GetString(0);
-                if(bool.TryParse(value, out var enabled)) {
+                if (bool.TryParse(value, out var enabled)) {
                     _chatEnabled = enabled;
                     return enabled;
                 }
@@ -156,12 +166,12 @@ public static class AppSettings {
 
         set {
             using var conn = Database.GetConnection();
-            if(conn == null) return;
+            if (conn == null) return;
 
             var cmd = new MySqlCommand("UPDATE `settings` SET `value` = @value WHERE `property` = 'chat_enabled'", conn);
             cmd.Parameters.AddWithValue("@value", value.ToString());
 
-            if(cmd.ExecuteNonQuery() == 0) {
+            if (cmd.ExecuteNonQuery() == 0) {
                 cmd = new MySqlCommand("INSERT INTO `settings` (`property`, `value`) VALUES ('chat_enabled', @value)", conn);
                 cmd.Parameters.AddWithValue("@value", value.ToString());
                 cmd.ExecuteNonQuery();

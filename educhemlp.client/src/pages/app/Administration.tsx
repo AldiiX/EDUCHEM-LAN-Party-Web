@@ -741,9 +741,20 @@ const AppSettingsTab = () => {
         const form = e.currentTarget;
 
         const reservationsStatus = form.reservationsStatus.value as string;
-        const reservationsEnabledFrom = form.reservationsEnabledFrom?.value as string | null;
-        const reservationsEnabledTo = form.reservationsEnabledTo?.value as string | null;
+        let reservationsEnabledFrom = form.reservationsEnabledFrom?.value as string | null;
+        let reservationsEnabledTo = form.reservationsEnabledTo?.value as string | null;
         //console.log(reservationsStatus, reservationsEnabledFrom, reservationsEnabledTo);
+
+        // prevedeni casu do UTC
+        if (reservationsEnabledFrom) {
+            const date = new Date(reservationsEnabledFrom);
+            reservationsEnabledFrom = date.toISOString();
+        }
+
+        if (reservationsEnabledTo) {
+            const date = new Date(reservationsEnabledTo);
+            reservationsEnabledTo = date.toISOString();
+        }
 
         fetch("/api/v1/appsettings", {
             method: "PUT",
@@ -803,6 +814,13 @@ const AppSettingsTab = () => {
         setReservationsStatus(appSettings?.reservationsStatus ?? "CLOSED");
     }
 
+    function toDatetimeLocal(utcString: string) {
+        const date = new Date(utcString);
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+
+
 
 
     return (
@@ -827,12 +845,26 @@ const AppSettingsTab = () => {
                         <>
                             <div className="pair">
                                 <p>Povoleno od</p>
-                                <input type="datetime-local" defaultValue={appSettings?.reservationsEnabledFrom} name="reservationsEnabledFrom" form="editappsettings" />
+                                <input
+                                    type="datetime-local"
+                                    defaultValue={appSettings?.reservationsEnabledFrom
+                                        ? toDatetimeLocal(appSettings.reservationsEnabledFrom)
+                                        : ""}
+                                    name="reservationsEnabledFrom"
+                                    form="editappsettings"
+                                />
                             </div>
 
                             <div className="pair">
                                 <p>Povoleno do</p>
-                                <input type="datetime-local" defaultValue={appSettings?.reservationsEnabledTo} name="reservationsEnabledTo" form="editappsettings" />
+                                <input
+                                    type="datetime-local"
+                                    defaultValue={appSettings?.reservationsEnabledTo
+                                        ? toDatetimeLocal(appSettings.reservationsEnabledTo)
+                                        : ""}
+                                    name="reservationsEnabledTo"
+                                    form="editappsettings"
+                                />
                             </div>
                         </>
                     ) : null
