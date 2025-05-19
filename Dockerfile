@@ -19,6 +19,11 @@ COPY ["educhemlp.client/educhemlp.client.esproj", "educhemlp.client/"]
 RUN dotnet restore "./EduchemLP.Server/EduchemLP.Server.csproj"
 COPY . .
 WORKDIR "/src/EduchemLP.Server"
+
+# vytvoreni prazdnyho .env souboru v tomto direktory pokud .env neexistuje
+RUN if [ ! -f ".env" ]; then touch .env; fi
+
+# buildnuti backendu
 RUN dotnet build "./EduchemLP.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Stage to publish the backend
