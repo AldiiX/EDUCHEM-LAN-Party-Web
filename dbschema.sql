@@ -16,6 +16,18 @@ USE `educhem_lan_party_dev`;
 
 -- --------------------------------------------------------
 
+
+
+
+
+
+
+
+
+
+
+
+
 --
 -- Struktura tabulky `announcements`
 --
@@ -40,7 +52,8 @@ CREATE TABLE `chat` (
                         `message` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
                         `uuid` varchar(256) NOT NULL,
                         `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        `deleted` tinyint(1) NOT NULL DEFAULT '0'
+                        `deleted` tinyint(1) NOT NULL DEFAULT '0',
+                        `replying_to_uuid` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -56,6 +69,50 @@ CREATE TABLE `computers` (
                              `is_teachers_pc` tinyint(1) NOT NULL DEFAULT '0',
                              `available` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Vypisuji data pro tabulku `computers`
+--
+
+INSERT INTO `computers` (`id`, `room_id`, `is_teachers_pc`, `available`) VALUES
+                                                                             ('VRR_PC01', 'VRR', 0, 1),
+                                                                             ('VRR_PC02', 'VRR', 0, 1),
+                                                                             ('VRR_PC03', 'VRR', 0, 1),
+                                                                             ('VRR_PC04', 'VRR', 0, 1),
+                                                                             ('VRR_PC05', 'VRR', 0, 1),
+                                                                             ('VRR_PC06', 'VRR', 0, 1),
+                                                                             ('VRR_PC07', 'VRR', 0, 1),
+                                                                             ('VRR_PC08', 'VRR', 0, 1),
+                                                                             ('VRR_PC09', 'VRR', 1, 1),
+                                                                             ('VT3_PC01', 'VT3', 0, 1),
+                                                                             ('VT3_PC02', 'VT3', 0, 1),
+                                                                             ('VT3_PC03', 'VT3', 0, 1),
+                                                                             ('VT3_PC04', 'VT3', 0, 1),
+                                                                             ('VT3_PC05', 'VT3', 0, 1),
+                                                                             ('VT3_PC06', 'VT3', 0, 1),
+                                                                             ('VT3_PC07', 'VT3', 0, 1),
+                                                                             ('VT3_PC08', 'VT3', 0, 1),
+                                                                             ('VT3_PC09', 'VT3', 0, 1),
+                                                                             ('VT3_PC10', 'VT3', 0, 1),
+                                                                             ('VT3_PC11', 'VT3', 0, 1),
+                                                                             ('VT3_PC12', 'VT3', 0, 1),
+                                                                             ('VT3_PC13', 'VT3', 0, 1),
+                                                                             ('VT3_PC14', 'VT3', 0, 1),
+                                                                             ('VT3_PC15', 'VT3', 0, 1),
+                                                                             ('VT3_PC16', 'VT3', 0, 1),
+                                                                             ('VT3_PC17', 'VT3', 0, 1),
+                                                                             ('VT3_PC18', 'VT3', 0, 1),
+                                                                             ('VT3_PC19', 'VT3', 0, 1),
+                                                                             ('VT3_PC20', 'VT3', 0, 1),
+                                                                             ('VT3_PC21', 'VT3', 0, 1),
+                                                                             ('VT3_PC22', 'VT3', 0, 1),
+                                                                             ('VT3_PC23', 'VT3', 0, 1),
+                                                                             ('VT3_PC24', 'VT3', 0, 1),
+                                                                             ('VT3_PC25', 'VT3', 1, 1),
+                                                                             ('VT3_PC26', 'VT3', 0, 1),
+                                                                             ('VT3_PC27', 'VT3', 0, 1),
+                                                                             ('VT3_PC28', 'VT3', 0, 1),
+                                                                             ('VT3_PC29', 'VT3', 0, 1);
 
 -- --------------------------------------------------------
 
@@ -188,6 +245,17 @@ CREATE TABLE `rooms` (
                          `available` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+--
+-- Vypisuji data pro tabulku `rooms`
+--
+
+INSERT INTO `rooms` (`id`, `label`, `image`, `limit_of_seats`, `available`) VALUES
+                                                                                ('07', 'Učebna 07', '07.jpg', 10, 1),
+                                                                                ('08', 'Učebna 08', '08.jpg', 16, 1),
+                                                                                ('DELICKA', 'Dělička', 'delicka.jpg', 8, 1),
+                                                                                ('VRR', 'Učebna VRR+R', 'vrr.jpg', 5, 1),
+                                                                                ('VT3', 'VT3', 'vt3_2.jpg', 0, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -197,8 +265,18 @@ CREATE TABLE `rooms` (
 DROP TABLE IF EXISTS `settings`;
 CREATE TABLE `settings` (
                             `property` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-                            `value` json NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+                            `value` varchar(2048) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='data lze menit pouze v pripade, ze je aplikace vypnuta';
+
+--
+-- Vypisuji data pro tabulku `settings`
+--
+
+INSERT INTO `settings` (`property`, `value`) VALUES
+                                                 ('chat_enabled', 'True'),
+                                                 ('reservations_enabled_from', '2025-05-19 08:56:00'),
+                                                 ('reservations_enabled_to', '2025-05-19 11:05:00'),
+                                                 ('reservations_status', 'OPEN');
 
 -- --------------------------------------------------------
 
@@ -252,7 +330,8 @@ ALTER TABLE `announcements`
 -- Indexy pro tabulku `chat`
 --
 ALTER TABLE `chat`
-    ADD PRIMARY KEY (`uuid`);
+    ADD PRIMARY KEY (`uuid`),
+    ADD KEY `chat_user_id` (`user_id`);
 
 --
 -- Indexy pro tabulku `computers`
@@ -333,6 +412,12 @@ ALTER TABLE `announcements`
     ADD CONSTRAINT `announcements_fk1` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
+-- Omezení pro tabulku `chat`
+--
+ALTER TABLE `chat`
+    ADD CONSTRAINT `chat_fk1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Omezení pro tabulku `reservations`
 --
 ALTER TABLE `reservations`
@@ -379,6 +464,7 @@ COMMIT;
 
 
 
+
 # vytvoreni uctu
 CREATE USER 'educhem_lan_party'@'%' IDENTIFIED BY 'educhem_lan_party';
 
@@ -388,16 +474,43 @@ FLUSH PRIVILEGES;
 
 
 # postnuti veci do db
-INSERT INTO `users`
-(`display_name`, `email`, `password`, `class`, `gender`, `last_updated`, `last_logged_in`, `account_type`, `avatar`)
-VALUES (
-           'Admin',
-           'admin@admin.admin',
-           'b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc864dca00da67c692296690e90c50c96b79',
-           NULL,
-           'OTHER',
-           NOW(),
-           NOW(),
-           'SUPERADMIN',
-        NULL
-       );
+SET NAMES 'utf8mb4';
+SET CHARACTER SET utf8mb4;
+ALTER TABLE users CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+INSERT INTO `users` (`id`, `display_name`, `email`, `password`, `class`, `gender`, `last_updated`, `last_logged_in`, `account_type`, `avatar`, `banner`) VALUES
+(1, 'Administrator', 'admin@admin.admin', '$2a$11$7XnPVemd77pb8WWQItw5d.azyOvrGgKN941CxPTVYy3515cCOhZ0K', 'SPECIAL', 'OTHER', '2025-04-09 00:14:10', '2025-04-08 22:12:45', 'SUPERADMIN', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzrViu6UGEqo8eEnSGQkf8497JBfHSLViSoQ&s', 'https://drscdn.500px.org/photo/1113771318/q%3D80_m%3D600/v2?sig=c18424903b06b1b1595af3bd506268530d582216cc8e319b110d3dfe7ec2d242'),
+(2, 'Miloš Navrátil', 'milos.navratil@example.com', '_', '1.A', 'MALE', '2025-06-14 14:56:11', NULL, 'STUDENT', NULL, NULL),
+(3, 'Marek Svoboda', 'marek.svoboda@example.com', '_', NULL, 'MALE', '2025-06-14 14:56:11', NULL, 'TEACHER', 'https://imgv3.fotor.com/images/blog-cover-image/a-shadow-of-a-boy-carrying-the-camera-with-red-sky-behind.jpg', NULL),
+(4, 'Jana Pokorná', 'jana.pokorna@example.com', '_', NULL, 'FEMALE', '2025-06-14 14:56:11', NULL, 'ADMIN', 'https://iso.500px.com/wp-content/uploads/2016/02/stock-photo-114337435.jpg', NULL),
+(5, 'Natálie Novotná', 'natalie.novotna@example.com', '_', '2.B', 'FEMALE', '2025-06-14 14:56:11', NULL, 'STUDENT', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThisxh_l6BA8BgSe7z2MUiaRj553YtM11PNA&s', NULL),
+(6, 'Tomáš Dvořák', 'tomas.dvorak@example.com', '_', '3.A', 'MALE', '2025-06-14 14:59:34', NULL, 'STUDENT', 'https://img.freepik.com/free-photo/couple-making-heart-from-hands-sea-shore_23-2148019887.jpg?semt=ais_hybrid&w=740', NULL),
+(7, 'Lucie Králová', 'lucie.kralova@example.com', '_', '1.B', 'FEMALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL),
+(8, 'Petr Černý', 'petr.cerny@example.com', '_', '2.A', 'MALE', '2025-06-14 14:59:34', NULL, 'STUDENT', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvFBa3G11OUBYADP7ouSBgwiiRzSYorF4dfg&s', NULL),
+(9, 'Eliška Horáková', 'eliska.horakova@example.com', '_', '3.B', 'FEMALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL),
+(10, 'Adam Nový', 'adam.novy@example.com', '_', NULL, 'MALE', '2025-06-14 14:59:34', NULL, 'TEACHER', 'https://www.shutterstock.com/image-photo/passport-photo-portrait-young-man-260nw-2437772333.jpg', 'https://static.vecteezy.com/system/resources/thumbnails/022/902/924/small/ai-generative-modern-luxury-real-estate-house-for-sale-and-rent-luxury-property-residence-concept-photo.jpg'),
+(11, 'Simona Benešová', 'simona.benesova@example.com', '_', NULL, 'FEMALE', '2025-06-14 14:59:34', NULL, 'TEACHER', 'https://img.freepik.com/premium-photo/giving-rose-png-badge-sticker-valentines-day-photo-heart-shape-transparent-background_53876-950839.jpg?semt=ais_hybrid&w=740', 'https://static.vecteezy.com/system/resources/thumbnails/054/587/101/small_2x/romantic-rose-backdrop-with-intertwined-blooms-and-hearts-for-valentines-day-highlighting-love-and-passion-with-a-warm-color-palette-perfect-for-romantic-settings-and-event-design-concepts-photo.jpeg'),
+(12, 'Ondřej Kolář', 'ondrej.kolar@example.com', '_', '1.C', 'MALE', '2025-06-14 14:59:34', NULL, 'STUDENT', 'https://5.imimg.com/data5/SELLER/Default/2023/4/300935887/RK/PR/IE/4354612/img-20220703-wa0001-500x500.jpg', NULL),
+(13, 'Tereza Malá', 'tereza.mala@example.com', '_', '2.C', 'FEMALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL),
+(14, 'Roman Havel', 'roman.havel@example.com', '_', NULL, 'MALE', '2025-06-14 14:59:34', NULL, 'ADMIN', NULL, NULL),
+(15, 'Barbora Němcová', 'barbora.nemcova@example.com', '_', '3.C', 'FEMALE', '2025-06-14 14:59:34', NULL, 'STUDENT', 'https://st2.depositphotos.com/2001755/5408/i/450/depositphotos_54081723-stock-photo-beautiful-nature-landscape.jpg', NULL),
+(16, 'Filip Růžička', 'filip.ruzicka@example.com', '_', '1.A', 'MALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL),
+(17, 'Nikola Procházková', 'nikola.prochazkova@example.com', '_', '2.B', 'FEMALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL),
+(18, 'Daniel Konečný', 'daniel.konecny@example.com', '_', '4.A', 'MALE', '2025-06-14 14:59:34', NULL, 'STUDENT', 'https://i.pinimg.com/236x/d3/4b/ec/d34becc9ecf6f8b4b5c861bf61109176.jpg', NULL),
+(19, 'Veronika Blažková', 'veronika.blazkova@example.com', '_', '1.B', 'FEMALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL),
+(20, 'Jakub Fiala', 'jakub.fiala@example.com', '_', '3.A', 'MALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL),
+(21, 'Kristýna Doležalová', 'kristyna.dolezalova@example.com', '_', NULL, 'FEMALE', '2025-06-14 14:59:34', NULL, 'ADMIN', NULL, NULL),
+(22, 'David Marek', 'david.marek@example.com', '_', '2.C', 'MALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL),
+(23, 'Kateřina Holubová', 'katerina.holubova@example.com', '_', '3.B', 'FEMALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL),
+(24, 'Matěj Šimek', 'matej.simek@example.com', '_', NULL, 'MALE', '2025-06-14 14:59:34', NULL, 'TEACHER', 'https://i.pinimg.com/236x/39/8f/da/398fdab4318b3baa65d36baf5ab3fab4.jpg', 'https://static8.depositphotos.com/1491329/1068/i/450/depositphotos_10687188-stock-photo-foggy-landscape-early-morning-mist.jpg'),
+(25, 'Alena Sedláčková', 'alena.sedlackova@example.com', '_', '1.C', 'FEMALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL);
+
+INSERT INTO `reservations` (`user_id`, `room_id`, `computer_id`, `note`, `created_at`) VALUES
+(3, NULL, 'VT3_PC15', NULL, '2025-06-14 14:57:51'),
+(5, 'DELICKA', NULL, NULL, '2025-06-14 14:57:51'),
+(7, NULL, 'VT3_PC10', NULL, '2025-06-14 15:07:53'),
+(8, 'DELICKA', NULL, NULL, '2025-06-14 15:12:52'),
+(9, NULL, 'VRR_PC06', NULL, '2025-06-14 15:12:52'),
+(13, NULL, 'VRR_PC07', NULL, '2025-06-14 15:12:52'),
+(23, NULL, 'VT3_PC06', NULL, '2025-06-14 15:07:53'),
+(24, 'VRR', NULL, NULL, '2025-06-14 15:13:33');
