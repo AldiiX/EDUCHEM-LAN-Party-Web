@@ -10,7 +10,7 @@ const target = env.ASPNETCORE_HTTPS_PORT
     ? `http://localhost:${env.ASPNETCORE_HTTPS_PORT}`
     : env.ASPNETCORE_URLS
         ? env.ASPNETCORE_URLS.split(';')[0]
-        : 'http://localhost:7055';
+        : 'http://localhost:5047';
 
 export default defineConfig(({ command, mode }: any): any => {
     // Produkční konfigurace: vypínáme HTTPS (a tedy ani generování certifikátů)
