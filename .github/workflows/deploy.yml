@@ -10,11 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Instalace curl-impersonate
+        run: |
+          sudo apt update
+          sudo apt install -y libnss3 ca-certificates zlib1g
+          curl -sLJO https://github.com/lwthiker/curl-impersonate/releases/download/v1.0.0rc2/curl-impersonate-v1.0.0rc2.x86_64-linux-gnu.tar.gz
+          tar xzf curl-impersonate-*.tar.gz
+          sudo mv curl_chrome* /usr/local/bin/
+        
       - name: Deploy to server
         shell: bash
         run: |
-          sudo apt update && sudo apt install curl-impersonate curl_chrome116
-          
           set -o pipefail
           echo "▶️ Volá se deploy endpoint…"
 
