@@ -13,11 +13,13 @@ jobs:
       - name: Deploy to server
         shell: bash
         run: |
+          sudo apt update && sudo apt install curl-impersonate curl_chrome116
+          
           set -o pipefail
           echo "▶️ Volá se deploy endpoint…"
 
           # post request na deploy endpoint
-          curl --no-buffer -X POST \
+          curl_chrome116 --no-buffer -X POST \
             -H "X-GHAD-Token: ${{ secrets.DEPLOY_TOKEN }}" \
             -H "X-GHRP-Uuid: ${{ secrets.PROJECT_UUID }}" \
             -H "X-GHRP-Name: ${{ github.repository }}" \
