@@ -36,6 +36,7 @@ public class APIv1 : Controller {
             ["avatar"] = acc.Avatar,
             ["banner"] = acc.Banner,
             ["gender"] = acc.Gender?.ToString().ToUpper(),
+            ["enableReservation"] = acc.EnableReservation,
         };
 
         // přidání connections

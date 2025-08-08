@@ -13,7 +13,7 @@ import {toast} from "react-toastify";
 import {create} from "zustand";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
-import {AppSettings} from "../../interfaces.ts";
+import {AppSettings, LoggedUser} from "../../interfaces.ts";
 import {formatTime, getAppSettings} from "../../utils.ts";
 
 
@@ -81,7 +81,7 @@ interface SelectedReservation extends Room, Reservation {
 
 // popup s aktualne zobrazenou rezervaci
 const SelectedReservation = () => {
-    const loggedUser = useStore((state) => state.loggedUser);
+    const loggedUser:LoggedUser | null = useStore((state) => state.loggedUser);
     const selectedReservation = useReservationsStore((state) => state.selectedReservation);
     const setSelectedReservation = useReservationsStore((state) => state.setSelectedReservation);
     const socket = useReservationsStore((state) => state.socket);
@@ -116,8 +116,50 @@ const SelectedReservation = () => {
         socket.current.send(JSON.stringify({ action: "deleteReservation" }));
     }
 
-    if(!selectedReservation) return null;
+    function renderButton() {
+        // v pripade ze jsou vyple rezervace
+        if(!appSettings.reservationsEnabledRightNow) return null;
+        
+        // v pripade ze uzivatel NENI prihlasen
+        if(loggedUser === null) {
+            
+        }
+        
+        // v pripade ze uzivatel je prihlasen
+        if(loggedUser !== null) {
+            // pokud je to pc rezervace
+            if(selectedReservation?.type === "computer") {
+                // pokud je to moje rezervace
+                if(selectedReservation?.reservations?.[0]?.user !== "unknown" && selectedReservation?.reservations?.[0]?.user?.id === loggedUser?.id) return (
+                    <>
+                        <div className="divider"></div>
+                        <div className="buttons">
+                            <Button type={ButtonType.SECONDARY} text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation()} />
+                        </div>
+                    </>
+                );
+                
+                // pokud neni moje rezervace
+                else if(selectedReservation?.reservations.length === 0) return (
+                    <>
+                        <div className="divider"></div>
+                        <div className="buttons">
+                            <Button type={ButtonType.PRIMARY} text="Rezervovat" icon="/images/icons/computer.svg" onClick={() => reserve(null, selectedReservation?.id) } />
+                        </div>
+                    </>
+                )
+            }
+        }
+        
+        
+    }
 
+
+
+
+
+    if(!selectedReservation) return null;
+    
     return (
         <div className="reservation-popover">
             <div className="closebutton" onClick={() => setSelectedReservation(null) }></div>
@@ -206,10 +248,11 @@ const SelectedReservation = () => {
 
                 {/* Tlačítka */}
                 {
+                    
                     appSettings.reservationsEnabledRightNow ? (
                         loggedUser !== null ? (
                             selectedReservation?.type === "computer" ? (
-                            selectedReservation?.reservations?.[0]?.user !== "unknown" && selectedReservation?.reservations?.[0]?.user?.id === loggedUser?.id ? (
+                                selectedReservation?.reservations?.[0]?.user !== "unknown" && selectedReservation?.reservations?.[0]?.user?.id === loggedUser?.id ? (
                                 <>
                                     <div className="divider"></div>
                                     <div className="buttons">
@@ -307,7 +350,7 @@ export const Reservations = () => {
                 setRooms(object.rooms as any[]);
 
                 let roomsCapac = 0;
-                for(let room of object.rooms) {
+                for (let room of object.rooms) {
                     room = room as any;
                     roomsCapac += room.limitOfSeats;
                 }
@@ -315,13 +358,19 @@ export const Reservations = () => {
                 setRoomsCapacity(roomsCapac);
                 setSocketStatus(ReservationSocketStatus.CONNECTED);
             } break;
-
+            
             case "status": {
                 setSocketStatus(ReservationSocketStatus.CONNECTED);
                 setClientsCount(object.connectedUsers.length.toString());
             } break;
+            
+            case"error": {
+                toast.error(object.message);
+            } break;
+               
         }
     }
+    
 
     const setCirclesStyle = () => {
         // reset room.reservedSpaces

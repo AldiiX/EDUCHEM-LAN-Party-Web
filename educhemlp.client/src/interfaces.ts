@@ -11,6 +11,7 @@ export type LoggedUser = {
     avatar: string | null,
     connections: string[] | null,
     banner: string | null,
+    enableReservation: boolean,
 }
 
 export interface CurrentPage {
