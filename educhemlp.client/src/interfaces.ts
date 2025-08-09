@@ -7,10 +7,11 @@ export type LoggedUser = {
     class: string | null,
     email: string,
     accountType: AccountType,
-    gender: AccountGender | null,
+    gender: "MALE" | "FEMALE" | "OTHER" | null,
     avatar: string | null,
     connections: string[] | null,
     banner: string | null,
+    enableReservation: boolean,
 }
 
 export interface CurrentPage {

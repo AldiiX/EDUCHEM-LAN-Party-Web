@@ -17,7 +17,7 @@ public static class WSReservations {
     private static readonly List<Client> ConnectedClients = [];
     private static Timer? statusTimer;
     private static readonly JsonSerializerOptions JSON_OPTIONS = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-
+    
     static WSReservations() {
         statusTimer = new Timer(Status!, null, 0, 60 * 1000);
     }
@@ -73,10 +73,25 @@ public static class WSReservations {
 
             var action = messageJson?["action"]?.ToString();
             if (action == null) continue;
+            if (sessionAccount == null && action != "disconnect") {
+                await SendMessageEndCloseAsync(webSocket, JsonSerializer.Serialize(new { action = "error", message = "Nejsi přihlášen"}, JSON_OPTIONS), WebSocketCloseStatus.NormalClosure);
+                continue;
+            }
+            
 
             switch (action) {
                 case "reserve": {
                     if (!AppSettings.AreReservationsEnabledRightNow) break;
+                    
+                    if (sessionAccount?.EnableReservation == false)
+                    {
+                        var msg = new {
+                            action = "error",
+                            message = "Tvůj účet nemá povolené rezervace.",
+                        };
+                        await client.BroadcastAsync(msg.ToJsonString());
+                        break;
+                    }
 
                     string? room = messageJson?["room"]?.ToString();
                     string? computer = messageJson?["computer"]?.ToString();

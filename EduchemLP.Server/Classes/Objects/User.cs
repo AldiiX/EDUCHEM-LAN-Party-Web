@@ -13,20 +13,23 @@ namespace EduchemLP.Server.Classes.Objects;
 
 
 public partial class User {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum UserGender { MALE, FEMALE, OTHER}
+    
+    public int ID { get; private set; }
+    public string DisplayName { get; private set; }
+    public string Email { get; private set; }
+    public string Password { get; private set; }
+    public string? Class { get; private set; }
+    public string? Avatar { get; private set; }
+    public string? Banner { get; private set; }
+    public UserAccountType AccountType { get; private set; }
+    public DateTime LastUpdated { get; private set; }
+    public UserGender? Gender { get; private set; }
+    public List<UserAccessToken> AccessTokens { get; private set; } = [];
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum UserAccountType {
-        STUDENT,
-        TEACHER,
-        ADMIN,
-        SUPERADMIN,
-    }
-
+    public bool EnableReservation { get; private set; }
 
     [JsonConstructor]
-    private User(int id, string displayName, string email, string password, string? @class, UserAccountType accountType, DateTime lastUpdated, UserGender? gender, string? avatar, string? banner, List<UserAccessToken>? accessTokens) {
+    private User(int id, string displayName, string email, string password, string? @class, UserAccountType accountType, DateTime lastUpdated, UserGender? gender, string? avatar, string? banner, List<UserAccessToken>? accessTokens, bool enableReservation = false) {
         ID = id;
         DisplayName = displayName;
         Class = @class;
@@ -38,6 +41,7 @@ public partial class User {
         Banner = banner;
         Gender = gender;
         AccessTokens = accessTokens ?? [];
+        EnableReservation = enableReservation;
     }
 
     private User(MySqlDataReader reader) : this(
@@ -51,23 +55,14 @@ public partial class User {
         Enum.TryParse<UserGender>(reader.GetStringOrNull("gender"), out var _g ) ? _g : null,
         reader.GetStringOrNull("avatar"),
         reader.GetStringOrNull("banner"),
-        JsonSerializer.Deserialize<List<UserAccessToken>>(reader.GetStringOrNull("access_tokens") ?? "[]", JsonSerializerOptions.Web) ?? []
+        JsonSerializer.Deserialize<List<UserAccessToken>>(reader.GetStringOrNull("access_tokens") ?? "[]", JsonSerializerOptions.Web) ?? [],
+        reader.GetBoolean("enable_reservation")
     ){}
 
 
 
-    public int ID { get; private set; }
-    public string DisplayName { get; private set; }
-    public string Email { get; private set; }
-    public string Password { get; private set; }
-    public string? Class { get; private set; }
-    public string? Avatar { get; private set; }
-    public string? Banner { get; private set; }
-    public UserAccountType AccountType { get; private set; }
-    public DateTime LastUpdated { get; private set; }
-    public UserGender? Gender { get; private set; }
-    public List<UserAccessToken> AccessTokens { get; private set; } = [];
-
+    
+    
 
 
     public static User? GetById(in int id) => GetByIdAsync(id).Result;
@@ -325,7 +320,28 @@ public partial class User {
     }
 
     public override string ToString() {
-        return JsonSerializer.Serialize(this, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        return JsonSerializer.Serialize(this, JsonSerializerOptions.Web);
+    }
+
+    /// <summary>
+    /// Metoda, která vrací JSON reprezentaci uživatele s veřejnými údaji.
+    /// </summary>
+    /// <returns><see cref="JsonNode"/> s veřejnými údaji o accountu (tj. bez hesel, klíčů atd.)</returns>
+    public JsonNode ToPublicJsonNode() {
+        var obj = this.ToJsonNode(JsonSerializerOptions.Web);
+
+        // přidání connections
+        var arr = new JsonArray();
+
+        foreach (var token in AccessTokens) {
+            arr.Add(token.Platform.ToString().ToUpper());
+        }
+
+        obj["connections"] = arr;
+        obj.AsObject().Remove("password");
+        obj.AsObject().Remove("accessTokens");
+
+        return obj;
     }
 
 
@@ -518,5 +534,19 @@ public partial class User {
         // Jiná chyba při ověřování access tokenu
         //Console.WriteLine("Unexpected status code when checking Google token: " + testResponse.StatusCode);
         return null;
+    }
+}
+
+public partial class User
+{
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum UserGender { MALE, FEMALE, OTHER}
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum UserAccountType {
+        STUDENT,
+        TEACHER,
+        ADMIN,
+        SUPERADMIN,
     }
 }
