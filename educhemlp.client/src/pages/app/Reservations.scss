@@ -54,7 +54,7 @@
         top: 50%;
         right: 24px;
         //max-height: 50vh;
-        min-width: 260px;
+        width: 274px;
         transform: translate(0, -50%);
         background-color: var(--element-bg);
         display: flex;
@@ -158,6 +158,13 @@
                     display: flex;
                     gap: 8px;
                     align-items: center;
+
+                    >p {
+                        max-width: 158px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
                 }
             }
 
@@ -202,6 +209,13 @@
                             display: flex;
                             gap: 8px;
                             align-items: center;
+
+                            >p {
+                                max-width: 158px;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                white-space: nowrap;
+                            }
 
                             >span {
                                 font-size: 12px;

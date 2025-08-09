@@ -26,32 +26,8 @@ public class APIv1 : Controller {
         var acc = Utilities.GetLoggedAccountFromContextOrNull();
         if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Nejsi přihlášený" });
 
-        var obj = new JsonObject {
-            ["id"] = acc.ID,
-            ["displayName"] = acc.DisplayName,
-            ["email"] = acc.Email,
-            ["class"] = acc.Class,
-            ["accountType"] = acc.AccountType.ToString().ToUpper(),
-            ["lastUpdated"] = acc.LastUpdated,
-            ["avatar"] = acc.Avatar,
-            ["banner"] = acc.Banner,
-            ["gender"] = acc.Gender?.ToString().ToUpper(),
-            ["enableReservation"] = acc.EnableReservation,
-        };
-
-        // přidání connections
-        var arr = new JsonArray();
-
-        foreach (var token in acc.AccessTokens) {
-            arr.Add(token.Platform.ToString().ToUpper());
-        }
-
-        obj["connections"] = arr;
-
-
-
         // vraceni json objektu
-        return new JsonResult(obj);
+        return new JsonResult(acc.ToPublicJsonNode());
     }
 
     [HttpPut("loggeduser")]
@@ -196,20 +172,7 @@ public class APIv1 : Controller {
         var acc = Auth.AuthUser(email, password, true);
         if(acc == null) return new UnauthorizedObjectResult(new { success = false, message = "Neplatný email nebo heslo" });
 
-        var obj = new JsonObject {
-            ["id"] = acc.ID,
-            ["displayName"] = acc.DisplayName,
-            ["email"] = acc.Email,
-            ["class"] = acc.Class,
-            ["accountType"] = acc.AccountType.ToString().ToUpper(),
-            ["lastUpdated"] = acc.LastUpdated,
-            ["avatar"] = acc.Avatar,
-            ["banner"] = acc.Banner,
-            ["gender"] = acc.Gender?.ToString().ToUpper(),
-        };
-
-
-        return new JsonResult(new { success = true, account = obj});
+        return new JsonResult(new { success = true, account = acc.ToPublicJsonNode() });
     }
 
     [HttpDelete("loggeduser")]

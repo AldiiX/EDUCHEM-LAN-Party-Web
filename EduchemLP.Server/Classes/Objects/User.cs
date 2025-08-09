@@ -320,7 +320,28 @@ public partial class User {
     }
 
     public override string ToString() {
-        return JsonSerializer.Serialize(this, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        return JsonSerializer.Serialize(this, JsonSerializerOptions.Web);
+    }
+
+    /// <summary>
+    /// Metoda, která vrací JSON reprezentaci uživatele s veřejnými údaji.
+    /// </summary>
+    /// <returns><see cref="JsonNode"/> s veřejnými údaji o accountu (tj. bez hesel, klíčů atd.)</returns>
+    public JsonNode ToPublicJsonNode() {
+        var obj = this.ToJsonNode(JsonSerializerOptions.Web);
+
+        // přidání connections
+        var arr = new JsonArray();
+
+        foreach (var token in AccessTokens) {
+            arr.Add(token.Platform.ToString().ToUpper());
+        }
+
+        obj["connections"] = arr;
+        obj.AsObject().Remove("password");
+        obj.AsObject().Remove("accessTokens");
+
+        return obj;
     }
 
 

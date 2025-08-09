@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Services;
 using MySql.Data.MySqlClient;
@@ -143,5 +144,9 @@ public static class Utilities {
 
     public static string ToJsonString(this object obj) {
         return JsonSerializer.Serialize(obj);
+    }
+
+    public static JsonNode ToJsonNode(this object obj, in JsonSerializerOptions? options = null) {
+        return JsonSerializer.SerializeToNode(obj, options ?? JsonSerializerOptions.Web) ?? new JsonObject();
     }
 }

@@ -13,7 +13,7 @@ import {toast} from "react-toastify";
 import {create} from "zustand";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
-import {AppSettings, LoggedUser} from "../../interfaces.ts";
+import {AccountGender, AppSettings, LoggedUser} from "../../interfaces.ts";
 import {formatTime, getAppSettings} from "../../utils.ts";
 
 
@@ -116,43 +116,211 @@ const SelectedReservation = () => {
         socket.current.send(JSON.stringify({ action: "deleteReservation" }));
     }
 
-    function renderButton() {
-        // v pripade ze jsou vyple rezervace
-        if(!appSettings.reservationsEnabledRightNow) return null;
-        
-        // v pripade ze uzivatel NENI prihlasen
-        if(loggedUser === null) {
-            
-        }
-        
-        // v pripade ze uzivatel je prihlasen
-        if(loggedUser !== null) {
-            // pokud je to pc rezervace
-            if(selectedReservation?.type === "computer") {
-                // pokud je to moje rezervace
-                if(selectedReservation?.reservations?.[0]?.user !== "unknown" && selectedReservation?.reservations?.[0]?.user?.id === loggedUser?.id) return (
-                    <>
-                        <div className="divider"></div>
-                        <div className="buttons">
-                            <Button type={ButtonType.SECONDARY} text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation()} />
-                        </div>
-                    </>
-                );
-                
-                // pokud neni moje rezervace
-                else if(selectedReservation?.reservations.length === 0) return (
-                    <>
-                        <div className="divider"></div>
-                        <div className="buttons">
-                            <Button type={ButtonType.PRIMARY} text="Rezervovat" icon="/images/icons/computer.svg" onClick={() => reserve(null, selectedReservation?.id) } />
-                        </div>
-                    </>
-                )
+
+
+    // region render button + pomocne komponenty
+    const Divider = () => <div className="divider"></div>;
+
+    const UserNotLoggedInfo = () => (
+        <>
+            <Divider />
+            <p>
+                Pro rezervování{" "}
+                <Link to="/login" style={{ color: "var(--accent-color)" }}>
+                    se přihlaš
+                </Link>.
+            </p>
+        </>
+    );
+
+    const NoPermissionText = (gender: any) => (
+        <>
+            <Divider />
+            <div className="buttons">
+                <p style={{ width: 205, color: "var(--accent-color)", textAlign: "justify" }}>
+                    Nejsi oprávněn{gender === "FEMALE" ? "a" : ""} k rezervaci. Důvodem může být to, že nemáš zaplacený vstup.
+                </p>
+            </div>
+        </>
+    );
+
+    const ReservationButton = (text: string, icon: string, onClick: () => void, type: ButtonType) => (
+        <>
+            <Divider />
+            <div className="buttons">
+                <Button type={type} text={text} icon={icon} onClick={onClick} />
+            </div>
+        </>
+    );
+
+    function renderButton(): React.JSX.Element | null {
+        if (!appSettings.reservationsEnabledRightNow) return null;
+        if (!selectedReservation) return null;
+
+        const isLoggedIn = loggedUser !== null;
+        const isComputer = selectedReservation.type === "computer";
+        const isRoom = selectedReservation.type === "room";
+        const isMyReservation = selectedReservation.reservations.some(r => r.user !== "unknown" && r.user?.id === loggedUser?.id);
+        const hasPermission = loggedUser?.enableReservation;
+        const hasFreeSeats = isComputer
+            ? selectedReservation.reservations.length === 0
+            : selectedReservation.reservations.length < (selectedReservation.limitOfSeats || 0);
+
+        // nepřihlášený a místo je volné
+        if (!isLoggedIn && hasFreeSeats) return <UserNotLoggedInfo />;
+
+        // přihlášený
+        if (isLoggedIn) {
+            if (!hasPermission && hasFreeSeats) return NoPermissionText(loggedUser?.gender);
+
+            if (isMyReservation) {
+                return ReservationButton("Zrušit rezervaci", "/images/icons/cancel.svg", deleteReservation, ButtonType.SECONDARY);
+            }
+
+            if (hasFreeSeats) {
+                if (isComputer) {
+                    return ReservationButton("Rezervovat", "/images/icons/computer.svg", () => reserve(null, selectedReservation.id), ButtonType.PRIMARY);
+                }
+                if (isRoom) {
+                    return ReservationButton("Rezervovat", "/images/icons/door.svg", () => reserve(selectedReservation.id, null), ButtonType.PRIMARY);
+                }
             }
         }
-        
-        
+
+        return null;
     }
+
+    // endregion
+
+
+
+    // region render middle info + komponenty
+    const Status = ({ taken, limit }: { taken: number; limit?: number }) => (
+        <div className="status">
+            <h2>Rezervace</h2>
+            <p>
+                {taken} / {limit ?? 0}
+            </p>
+        </div>
+    );
+
+    const ReservationsList = ({reservations, currentUserId}: { reservations: any[]; currentUserId?: string | number | null; }) => (
+        <div className="reservations-parent">
+            {reservations.map((reservation: any, index: number) => {
+                const you = reservation?.user?.id === currentUserId;
+                return (
+                    <div
+                        key={index}
+                        className={"reservation" + (you ? " you" : "")}
+                    >
+                        <Avatar
+                            size="24px"
+                            src={reservation?.user?.avatar}
+                            name={reservation?.user?.displayName}
+                        />
+                        <div className="texts">
+                            <div className="name">
+                                <p title={reservation?.user?.displayName}>
+                                    {reservation?.user?.displayName}{" "}
+                                </p>
+                                <span>{reservation?.user?.class}</span>
+                            </div>
+                            {/* poznamka: pokud budes chtit cas, odkomentuj a dopln createdAt
+                        <p className="date">
+                            {new Date(reservation.createdAt).toLocaleString("cs-CZ")}
+                        </p>
+                        */}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+
+    const ComputerReservedBy = ({ user }: { user: any }) => (
+        <div className="reservedby">
+            <div className="nameandavatar">
+                <Avatar
+                    size="24px"
+                    src={user?.avatar}
+                    name={user?.displayName}
+                />
+                <p title={user?.displayName}>{user?.displayName}</p>
+            </div>
+            <p className="class">{user?.class}</p>
+        </div>
+    );
+
+    function renderMiddleInfo(): React.JSX.Element {
+        // guard – bez vybrane rezervace se nic nezobrazi
+        if (!selectedReservation) return <></>;
+
+        // predvypocet stavu
+        const isLoggedIn = loggedUser !== null;
+        const isComputer = selectedReservation.type === "computer";
+        const isRoom = selectedReservation.type === "room";
+        const reservations = selectedReservation.reservations ?? [];
+        const hasReservations = reservations.length > 0;
+        const limitOfSeats = selectedReservation.limitOfSeats ?? 0;
+        const hasFreeSeats = reservations.length < limitOfSeats;
+
+        // pc rezervace
+        if (isComputer) {
+            // pokud je obsazeno
+            if (hasReservations) {
+                const first = reservations[0];
+                const knownUser = first?.user !== "unknown" && !!first?.user;
+
+                // prihlaseny + znamy uzivatel -> detail "kym je rezervovano"
+                if (isLoggedIn && knownUser) {
+                    return <ComputerReservedBy user={first.user} />;
+                }
+
+                // neprihlaseny nebo neznamy uzivatel -> jen "obsazeno"
+                return (
+                    <div className="reservedby">
+                        <p>Obsazeno</p>
+                    </div>
+                );
+            }
+
+            // neni obsazeno -> nic se nezobrazuje
+            return <></>;
+        }
+
+        // mistnost
+        if (isRoom) {
+            // prihlaseny uzivatel -> status + seznam rezervaci
+            if (isLoggedIn) {
+                return (
+                    <>
+                        <Status taken={reservations.length} limit={limitOfSeats} />
+                        <ReservationsList
+                            reservations={reservations}
+                            currentUserId={loggedUser?.id}
+                        />
+                    </>
+                );
+            }
+
+            // neprihlaseny a stale je misto -> status (prihlaseni je v buttons componente)
+            if (!isLoggedIn && hasFreeSeats) {
+                return (
+                    <>
+                        <Status taken={reservations.length} limit={limitOfSeats} />
+                    </>
+                );
+            }
+
+            // neprihlaseny a neni misto -> jen status
+            return <Status taken={reservations.length} limit={limitOfSeats} />;
+        }
+
+        // fallback – pokud by pribyl jiny typ, ukaz jen status (pokud existuje koncept kapacity)
+        return <Status taken={reservations.length} limit={limitOfSeats} />;
+    }
+
+    // endregion
 
 
 
@@ -179,116 +347,15 @@ const SelectedReservation = () => {
                     <p className="status"></p>
                 </div>
 
-                {/* prostřední info */}
-                {selectedReservation?.type === "computer" ? (
-                    selectedReservation?.reservations.length !== 0 ? (
-                        loggedUser !== null && selectedReservation?.reservations?.[0]?.user !== "unknown" ? (
-                            <div className="reservedby">
-                                <div className="nameandavatar">
-                                    <Avatar size="24px" src={selectedReservation?.reservations?.[0]?.user?.avatar} name={selectedReservation?.reservations?.[0]?.user?.displayName}/>
-                                    <p>{selectedReservation.reservations[0]?.user?.displayName}</p>
-                                </div>
-                                <p className="class">{selectedReservation.reservations[0]?.user?.class}</p>
-                            </div>
-                        ) : (
-                            <div className="reservedby">
-                                <p>Obsazeno</p>
-                            </div>
-                        )
-                    ) : null
-                ) : (
-                    <>
-                        <div className="status">
-                            <h2>Rezervace</h2>
-                            <p>
-                                {selectedReservation.reservations.length} /{" "}
-                                {selectedReservation.limitOfSeats}
-                            </p>
-                        </div>
-
-                        {loggedUser !== null ? (
-                            <div className="reservations-parent">
-                                {selectedReservation.reservations.map((reservation: any, index: number) => {
-                                    return (
-                                        <div
-                                            key={index}
-                                            className={
-                                                "reservation" +
-                                                (reservation.user.id === loggedUser?.id ? " you" : "")
-                                            }
-                                        >
-                                            <Avatar
-                                                size="24px"
-                                                src={reservation.user?.avatar}
-                                                name={reservation?.user?.displayName}
-                                            />
-                                            <div className="texts">
-                                                <p className="name">
-                                                    {reservation.user.displayName}{" "}
-                                                    <span>{reservation.user.class}</span>
-                                                </p>
-                                                {/* <p className="date">
-                                                                      {new Date(reservation.createdAt).toLocaleString("cs-CZ")}
-                                                                    </p> */}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            selectedReservation.reservations.length < selectedReservation.limitOfSeats ? (
-                                <>
-                                    <div className="divider"></div>
-                                    <p>Pro rezervování <Link to="/login" style={{ color: "var(--accent-color)"}}>se přihlaš</Link>.</p>
-                                </>
-                            ) : null
-                        )}
-                    </>
-                )}
-
-                {/* Tlačítka */}
                 {
-                    
-                    appSettings.reservationsEnabledRightNow ? (
-                        loggedUser !== null ? (
-                            selectedReservation?.type === "computer" ? (
-                                selectedReservation?.reservations?.[0]?.user !== "unknown" && selectedReservation?.reservations?.[0]?.user?.id === loggedUser?.id ? (
-                                <>
-                                    <div className="divider"></div>
-                                    <div className="buttons">
-                                        <Button type={ButtonType.SECONDARY} text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation()} />
-                                    </div>
-                                </>
-                            ) : selectedReservation?.reservations.length === 0 ? (
-                                <>
-                                    <div className="divider"></div>
-                                    <div className="buttons">
-                                        <Button type={ButtonType.PRIMARY} text="Rezervovat" icon="/images/icons/computer.svg" onClick={() => reserve(null, selectedReservation?.id) } />
-                                    </div>
-                                </>
-                            ) : null
-                        ) : selectedReservation?.reservations.find((r: any) => r.user?.id === loggedUser?.id) ? (
-                            <>
-                                <div className="divider"></div>
-                                <div className="buttons">
-                                    <Button type={ButtonType.SECONDARY} text="Zrušit rezervaci" icon="/images/icons/cancel.svg" onClick={() => deleteReservation() } />
-                                </div>
-                            </>
-                        ) : selectedReservation?.reservations.length < selectedReservation?.limitOfSeats ? (
-                            <>
-                                <div className="divider"></div>
-                                <div className="buttons">
-                                    <Button type={ButtonType.PRIMARY} text="Rezervovat" icon="/images/icons/door.svg" onClick={() => reserve(selectedReservation?.id, null) } />
-                                </div>
-                            </>
-                        ) : null
-                        ) : selectedReservation?.reservations.length === 0 ? (
-                            <>
-                                <div className="divider"></div>
-                                <p>Pro rezervování <Link to="/login" style={{ color: "var(--accent-color)"}}>se přihlaš</Link>.</p>
-                            </>
-                        ) : null
-                    ) : null
+                    /* prostřední info */
+                    renderMiddleInfo()
+                }
+
+
+                {
+                    /* Tlačítka */
+                    renderButton()
                 }
             </div>
         </div>
