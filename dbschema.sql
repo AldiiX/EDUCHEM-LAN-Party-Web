@@ -153,8 +153,8 @@ CREATE TRIGGER `check_double_values_res` BEFORE UPDATE ON `reservations` FOR EAC
     IF (NEW.room_id IS NOT NULL AND NEW.computer_id IS NOT NULL) OR
        (NEW.room_id IS NULL AND NEW.computer_id IS NULL) THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Musí být vyplněn buď "room_id", nebo "computer_id", ale ne oba.';
-    END IF;
+        SET MESSAGE_TEXT = 'Musí být vyplněn buď "room_id", nebo "computer_id", ale ne oba.';
+END IF;
 END
 $$
 DELIMITER ;
@@ -164,8 +164,8 @@ CREATE TRIGGER `check_double_values_res2` BEFORE INSERT ON `reservations` FOR EA
     IF (NEW.room_id IS NOT NULL AND NEW.computer_id IS NOT NULL) OR
        (NEW.room_id IS NULL AND NEW.computer_id IS NULL) THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Musí být vyplněn buď "room_id", nebo "computer_id", ale ne oba.';
-    END IF;
+        SET MESSAGE_TEXT = 'Musí být vyplněn buď "room_id", nebo "computer_id", ale ne oba.';
+END IF;
 END
 $$
 DELIMITER ;
@@ -179,23 +179,23 @@ CREATE TRIGGER `check_room_capacity` BEFORE INSERT ON `reservations` FOR EACH RO
     -- Kontrola, zda je room_id vyplněno
     IF NEW.room_id IS NOT NULL THEN
         -- Získání počtu již rezervovaných míst pro danou místnost
-        SELECT COUNT(*)
-        INTO current_occupancy
-        FROM reservations
-        WHERE room_id = NEW.room_id;
+    SELECT COUNT(*)
+    INTO current_occupancy
+    FROM reservations
+    WHERE room_id = NEW.room_id;
 
-        -- Získání kapacity místnosti
-        SELECT limit_of_seats
-        INTO room_capacity
-        FROM rooms
-        WHERE id = NEW.room_id;
+    -- Získání kapacity místnosti
+    SELECT limit_of_seats
+    INTO room_capacity
+    FROM rooms
+    WHERE id = NEW.room_id;
 
-        -- Porovnání kapacity a aktuálního počtu lidí
-        IF (current_occupancy + 1) > room_capacity THEN
+    -- Porovnání kapacity a aktuálního počtu lidí
+    IF (current_occupancy + 1) > room_capacity THEN
             SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Kapacita místnosti je překročena. Rezervace není možná.';
-        END IF;
-    END IF;
+            SET MESSAGE_TEXT = 'Kapacita místnosti je překročena. Rezervace není možná.';
+END IF;
+END IF;
 END
 $$
 DELIMITER ;
@@ -209,23 +209,23 @@ CREATE TRIGGER `check_room_capacity2` BEFORE UPDATE ON `reservations` FOR EACH R
     -- Kontrola, zda je `room_id` změněno
     IF NEW.room_id IS NOT NULL AND NEW.room_id != OLD.room_id THEN
         -- Získání počtu již rezervovaných míst pro novou místnost
-        SELECT COUNT(*)
-        INTO current_occupancy
-        FROM reservations
-        WHERE room_id = NEW.room_id;
+    SELECT COUNT(*)
+    INTO current_occupancy
+    FROM reservations
+    WHERE room_id = NEW.room_id;
 
-        -- Získání kapacity nové místnosti
-        SELECT limit_of_seats
-        INTO room_capacity
-        FROM rooms
-        WHERE id = NEW.room_id;
+    -- Získání kapacity nové místnosti
+    SELECT limit_of_seats
+    INTO room_capacity
+    FROM rooms
+    WHERE id = NEW.room_id;
 
-        -- Porovnání kapacity a aktuálního počtu lidí
-        IF (current_occupancy + 1) > room_capacity THEN
+    -- Porovnání kapacity a aktuálního počtu lidí
+    IF (current_occupancy + 1) > room_capacity THEN
             SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Kapacita místnosti je překročena. Rezervace není možná.';
-        END IF;
-    END IF;
+            SET MESSAGE_TEXT = 'Kapacita místnosti je překročena. Rezervace není možná.';
+END IF;
+END IF;
 END
 $$
 DELIMITER ;
@@ -274,8 +274,8 @@ CREATE TABLE `settings` (
 
 INSERT INTO `settings` (`property`, `value`) VALUES
                                                  ('chat_enabled', 'True'),
-                                                 ('reservations_enabled_from', '2025-05-19 08:56:00'),
-                                                 ('reservations_enabled_to', '2025-05-19 11:05:00'),
+                                                 ('reservations_enabled_from', '2025-08-08 06:56:00'),
+                                                 ('reservations_enabled_to', '2025-08-15 09:05:00'),
                                                  ('reservations_status', 'OPEN');
 
 -- --------------------------------------------------------
@@ -296,7 +296,8 @@ CREATE TABLE `users` (
                          `last_logged_in` datetime DEFAULT NULL,
                          `account_type` enum('STUDENT','TEACHER','ADMIN','SUPERADMIN') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'STUDENT',
                          `avatar` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-                         `banner` varchar(1024) DEFAULT NULL
+                         `banner` varchar(1024) DEFAULT NULL,
+                         `enable_reservation` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -324,14 +325,14 @@ CREATE TABLE `users_access_tokens` (
 --
 ALTER TABLE `announcements`
     ADD PRIMARY KEY (`id`),
-    ADD KEY `announcements_fk1` (`author_id`);
+  ADD KEY `announcements_fk1` (`author_id`);
 
 --
 -- Indexy pro tabulku `chat`
 --
 ALTER TABLE `chat`
     ADD PRIMARY KEY (`uuid`),
-    ADD KEY `chat_user_id` (`user_id`);
+  ADD KEY `chat_user_id` (`user_id`);
 
 --
 -- Indexy pro tabulku `computers`
@@ -350,8 +351,8 @@ ALTER TABLE `logs`
 --
 ALTER TABLE `reservations`
     ADD PRIMARY KEY (`user_id`),
-    ADD UNIQUE KEY `computer_id` (`computer_id`),
-    ADD KEY `rooms_fk` (`room_id`);
+  ADD UNIQUE KEY `computer_id` (`computer_id`),
+  ADD KEY `rooms_fk` (`room_id`);
 
 --
 -- Indexy pro tabulku `rooms`
@@ -370,14 +371,14 @@ ALTER TABLE `settings`
 --
 ALTER TABLE `users`
     ADD PRIMARY KEY (`id`),
-    ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`);
 
 --
 -- Indexy pro tabulku `users_access_tokens`
 --
 ALTER TABLE `users_access_tokens`
     ADD PRIMARY KEY (`platform`,`user_id`),
-    ADD KEY `users_access_tokens_fk1` (`user_id`);
+  ADD KEY `users_access_tokens_fk1` (`user_id`);
 
 --
 -- AUTO_INCREMENT pro tabulky
@@ -422,8 +423,8 @@ ALTER TABLE `chat`
 --
 ALTER TABLE `reservations`
     ADD CONSTRAINT `computers_fk` FOREIGN KEY (`computer_id`) REFERENCES `computers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-    ADD CONSTRAINT `rooms_fk` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-    ADD CONSTRAINT `users_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `rooms_fk` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `users_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Omezení pro tabulku `users_access_tokens`
