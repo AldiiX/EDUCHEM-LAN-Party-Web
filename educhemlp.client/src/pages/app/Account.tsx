@@ -520,8 +520,8 @@ const OverviewTab = () => {
             <h1>{loggedUser.displayName}</h1>
             <p className="email">{loggedUser.email}</p>
             {
-                loggedUser.accountType !== "STUDENT" ? (
-                    <p className="type">{loggedUser.accountType}</p>
+                loggedUser.type !== "STUDENT" ? (
+                    <p className="type">{loggedUser.type}</p>
                 ) : null
             }
             <div className="buttons">

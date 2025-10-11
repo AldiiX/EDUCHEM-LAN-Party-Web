@@ -1,9 +1,12 @@
 using dotenv.net;
 using EduchemLP.Server.Middlewares;
+using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;
+using EduchemLP.Server.WebSockets;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
+using MySqlConnector;
 using StackExchange.Redis;
 
 namespace EduchemLP.Server;
@@ -90,6 +93,34 @@ public static class Program {
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
+
+
+        // databaze source service
+        builder.Services.AddSingleton(sp => {
+            string cs = $"server={ENV["DATABASE_IP"]};userid={ENV["DATABASE_USERNAME"]};password={ENV["DATABASE_PASSWORD"]};database={ENV["DATABASE_DBNAME"]};pooling=true;Max Pool Size=300;";
+            var dsb = new MySqlDataSourceBuilder(cs);
+            return dsb.Build();
+        });
+
+
+
+        // repozitare a service
+        builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+        builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+        builder.Services.AddScoped<IComputerRepository, ComputerRepository>();
+        builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
+        builder.Services.AddScoped<IAuthService, AuthService>();
+        builder.Services.AddScoped<IAppSettingsService, AppSettingsService>();
+        builder.Services.AddSingleton<IDbLoggerService, DbLoggerService>();
+
+
+
+        // websocket endpointy
+        builder.Services.AddSingleton<IWebSocketEndpoint, ChatWebSocketEndpoint>();
+        builder.Services.AddSingleton<IWebSocketEndpoint, ReservationsWebSocketEndpoint>();
+
+
+
         #if DEBUG
             builder.Configuration.AddJsonFile("appsettings.Debug.json", optional: true, reloadOnChange: true);
         #elif RELEASE
@@ -116,10 +147,12 @@ public static class Program {
         //App.UseStaticFiles();
         App.UseSession();
         App.UseMiddleware<BeforeInitMiddleware>();
+
         App.UseWebSockets(new WebSocketOptions {
             KeepAliveInterval = TimeSpan.FromSeconds(30),
         });
         App.UseMiddleware<WebSocketMiddleware>();
+
         App.UseRouting();
         //App.UseAuthorization();
         //App.UseMiddleware<ErrorHandlingMiddleware>();

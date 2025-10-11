@@ -60,7 +60,7 @@ export const AppMenu = ({ onClick }: AppMenuProps) => {
                 <p>Turnaje</p>
             </Link>
 
-            { AccountType[loggedUser?.accountType as unknown as keyof typeof AccountType] >= AccountType.TEACHER ?
+            { AccountType[loggedUser?.type as unknown as keyof typeof AccountType] >= AccountType.TEACHER ?
                 <Link to={"/app/administration"} onClick={onClick}  className={currentPage === "/app/administration" ? "active" : ""}>
                     <div style={{ maskImage: 'url(/images/icons/user_with_shield.svg)' }}></div>
                     <p>Administrace</p>

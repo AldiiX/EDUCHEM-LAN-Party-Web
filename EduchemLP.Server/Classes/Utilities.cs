@@ -1,9 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Services;
-using MySql.Data.MySqlClient;
 
 namespace EduchemLP.Server.Classes;
 
@@ -63,40 +61,6 @@ public static class Utilities {
 
     public static bool IsNullOrEmpty(this string? str) => string.IsNullOrEmpty(str);
 
-    public static User GetLoggedAccountFromContext() {
-        if(HttpContextService.Current.Items["loggeduser"] is not User account) throw new Exception("Account not found in context");
-        return account;
-    }
-
-    public static T? GetValueOrNull<T>(this MySqlDataReader reader, string key) where T : struct {
-        int ordinal = reader.GetOrdinal(key);
-        if(reader.IsDBNull(ordinal)) return null;
-
-        object value = reader.GetValue(ordinal);
-        if(value is T result) return result;
-
-        try {
-            // Convert the value to the target type T
-            return (T)Convert.ChangeType(value, typeof(T));
-        }
-        catch (Exception) {
-            return null;
-        }
-    }
-
-    public static string? GetStringOrNull(this MySqlDataReader reader, string key) {
-        try {
-            int ordinal = reader.GetOrdinal(key);
-            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
-        } catch (Exception) {
-            return null;
-        }
-    }
-
-    public static User? GetLoggedAccountFromContextOrNull() {
-        return HttpContextService.Current.Items["loggeduser"] as User;
-    }
-
     public static string GenerateRandomPassword(int length = 24) {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ěščřž!@*";
         var random = new Random();
@@ -118,12 +82,6 @@ public static class Utilities {
         return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
     }
 
-    public static async Task<bool> AreReservationsEnabledAsync() {
-        bool r = bool.TryParse(await Database.GetDataAsync("enableReservations") as string, out bool result) && result;
-
-        return r;
-    }
-
     public static bool IsPasswordValid(in string password) {
         if (string.IsNullOrEmpty(password)) return false;
 
@@ -140,10 +98,8 @@ public static class Utilities {
         return true;
     }
 
-    public static bool AreReservationsEnabled() => AreReservationsEnabledAsync().Result;
-
     public static string ToJsonString(this object obj) {
-        return JsonSerializer.Serialize(obj);
+        return JsonSerializer.Serialize(obj, JsonSerializerOptions.Web);
     }
 
     public static JsonNode ToJsonNode(this object obj, in JsonSerializerOptions? options = null) {

@@ -33,7 +33,7 @@ interface User {
     email: string,
     avatar: string,
     class: string,
-    accountType: AccountType,
+    type: AccountType,
     gender: AccountGender | null,
     lastUpdated: string,
     lastLoggedIn: string,
@@ -224,7 +224,7 @@ const UsersTab = () => {
                 email: email,
                 displayName: name,
                 class: cls,
-                accountType: accountType,
+                type: accountType,
                 gender: gender,
             })
         }).then(async res => {
@@ -273,7 +273,7 @@ const UsersTab = () => {
                 email: email,
                 displayName: name,
                 class: cls,
-                accountType: accountType,
+                type: accountType,
                 gender: gender,
                 sendToEmail: sendToEmail,
             })
@@ -398,7 +398,7 @@ const UsersTab = () => {
                                         }}>Zrušit
                                         </button>
                                     </div>
-                                ) : compareEnumValues(AccountType, selectedUser.accountType?.toString(), loggedUser.accountType?.toString()) === -1 || enumEquals(loggedUser?.accountType?.toString().toUpperCase(), AccountType, AccountType.SUPERADMIN) ? (
+                                ) : compareEnumValues(AccountType, selectedUser.type?.toString(), loggedUser.type?.toString()) === -1 || enumEquals(loggedUser?.type?.toString().toUpperCase(), AccountType, AccountType.SUPERADMIN) ? (
                                     !userModalEditMode ? (
                                         <div className="edit-delete-buttons-div">
                                             <button className="button-tertiary" style={{flexGrow: 1}} type="button"
@@ -464,25 +464,25 @@ const UsersTab = () => {
                                     <div className="icon" style={{maskImage: `url(/images/icons/account.svg)`}}></div>
                                     {
                                         !userModalEditMode ? (
-                                            <p>{selectedUser?.accountType}</p>
+                                            <p>{selectedUser?.type}</p>
                                         ) : (
-                                            <select name="accountType" defaultValue={selectedUser?.accountType}>
+                                            <select name="accountType" defaultValue={selectedUser?.type}>
                                                 <option value="STUDENT">Student</option>
 
                                                 {
-                                                    enumIsGreater(loggedUser?.accountType?.toString(), AccountType, AccountType.TEACHER) ? (
+                                                    enumIsGreater(loggedUser?.type?.toString(), AccountType, AccountType.TEACHER) ? (
                                                         <option value="TEACHER">Učitel</option>
                                                     ) : null
                                                 }
 
                                                 {
-                                                    enumIsGreater(loggedUser?.accountType?.toString(), AccountType, AccountType.ADMIN) ? (
+                                                    enumIsGreater(loggedUser?.type?.toString(), AccountType, AccountType.ADMIN) ? (
                                                         <option value="ADMIN">Admin</option>
                                                     ) : null
                                                 }
 
                                                 {
-                                                    enumIsGreaterOrEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.SUPERADMIN) ? (
+                                                    enumIsGreaterOrEquals(loggedUser?.type?.toString(), AccountType, AccountType.SUPERADMIN) ? (
                                                         <option value="SUPERADMIN">Superadmin</option>
                                                     ) : null
                                                 }
@@ -520,15 +520,15 @@ const UsersTab = () => {
                                             />
                                         </div>
                                     </>
-                                ) : (compareEnumValues(AccountType, selectedUser.accountType?.toString(), loggedUser.accountType?.toString()) === -1 ||
-                                    enumEquals(loggedUser?.accountType.toString(), AccountType, AccountType.SUPERADMIN)) ? (
+                                ) : (compareEnumValues(AccountType, selectedUser.type?.toString(), loggedUser.type?.toString()) === -1 ||
+                                    enumEquals(loggedUser?.type.toString(), AccountType, AccountType.SUPERADMIN)) ? (
                                     !userModalEditMode ? (
                                         <>
                                             <div className="separator"></div>
 
                                             <div className="buttons">
                                                 {
-                                                    enumEquals(loggedUser?.accountType?.toString(), AccountType, AccountType.SUPERADMIN) && loggedUser?.id !== selectedUser?.id ? (
+                                                    enumEquals(loggedUser?.type?.toString(), AccountType, AccountType.SUPERADMIN) && loggedUser?.id !== selectedUser?.id ? (
                                                         <TextWithIcon text="Přihlásit se" iconSrc="/images/icons/login.svg" onClick={() => {}}/>
                                                     ) : null
                                                 }
@@ -638,7 +638,7 @@ const UsersTab = () => {
                                 <td>{user.email}</td>
                                 <td>{translateGender(user.gender?.toString())}</td>
                                 <td>{user.class}</td>
-                                <td>{user.accountType}</td>
+                                <td>{user.type}</td>
                                 <td>{new Date(user.lastUpdated).toLocaleString()}</td>
                                 <td>{user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : null}</td>
                             </tr>
@@ -915,12 +915,12 @@ export const Administration = () => {
             return;
         }
 
-        if (loggedUser && enumIsSmaller(loggedUser?.accountType, AccountType, AccountType.TEACHER)) {
+        if (loggedUser && enumIsSmaller(loggedUser?.type, AccountType, AccountType.TEACHER)) {
             navigate("/app");
         }
     }, [userAuthed, loggedUser, navigate]);
 
-    if (!userAuthed || !loggedUser || !enumIsGreaterOrEquals(loggedUser?.accountType, AccountType, AccountType.TEACHER)) {
+    if (!userAuthed || !loggedUser || !enumIsGreaterOrEquals(loggedUser?.type, AccountType, AccountType.TEACHER)) {
         return null;
     }
 

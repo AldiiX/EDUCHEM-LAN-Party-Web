@@ -441,8 +441,8 @@ export const Chat = () => {
                                                                         )}
     
                                                                         {
-                                                                            enumIsGreater(message.author.accountType, AccountType, AccountType.STUDENT) && (
-                                                                                <span className="role">&lt;{ accountTypeTranslate(message.author.accountType) }&gt;</span>
+                                                                            enumIsGreater(message.author.type, AccountType, AccountType.STUDENT) && (
+                                                                                <span className="role">&lt;{ accountTypeTranslate(message.author.type) }&gt;</span>
                                                                             )
                                                                         }
                                                                     </h1>
@@ -487,7 +487,7 @@ export const Chat = () => {
                                                             />
 
                                                             {
-                                                               isOwn || enumIsGreaterOrEquals(loggedUser.accountType, AccountType, AccountType.TEACHER) ? (
+                                                               isOwn || enumIsGreaterOrEquals(loggedUser.type, AccountType, AccountType.TEACHER) ? (
                                                                     <TextWithIcon
                                                                         onClick={() => handleDeleteMessage(message.uuid) }
                                                                         color={"var(--error-color)"}

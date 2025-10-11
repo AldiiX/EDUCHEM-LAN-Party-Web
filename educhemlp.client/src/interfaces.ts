@@ -6,7 +6,7 @@ export type LoggedUser = {
     displayName: string,
     class: string | null,
     email: string,
-    accountType: AccountType,
+    type: AccountType,
     gender: "MALE" | "FEMALE" | "OTHER" | null,
     avatar: string | null,
     connections: string[] | null,
