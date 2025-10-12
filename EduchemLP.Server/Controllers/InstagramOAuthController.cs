@@ -1,13 +1,18 @@
 using System.Text.Json.Nodes;
-using EduchemLP.Server.Classes;
+using EduchemLP.Server.Repositories;
+using EduchemLP.Server.Services;
 using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 
 namespace EduchemLP.Server.Controllers;
 
 
 [Route("/_be/instagram/oauth")]
-public class InstagramOAuthController : Controller {
+public class InstagramOAuthController(
+    IAuthService auth,
+    IDatabaseService db,
+    IAccountRepository accounts
+) : Controller {
 
     #if DEBUG
         public const string REDIRECT_URI = "http://localhost:3154/_be/instagram/oauth";
@@ -16,8 +21,8 @@ public class InstagramOAuthController : Controller {
     #endif
 
     [HttpGet]
-    public async Task<IActionResult> Index([FromQuery] string code) {
-        var account = Utilities.GetLoggedAccountFromContextOrNull();
+    public async Task<IActionResult> Index([FromQuery] string code, CancellationToken ct = default) {
+        var account = await auth.ReAuthFromContextOrNullAsync(ct);
         if (account == null) return RedirectPermanent("/login");
 
 
@@ -30,8 +35,8 @@ public class InstagramOAuthController : Controller {
             { "code", code }
         });
 
-        var response = await client.PostAsync("https://api.instagram.com/oauth/access_token", content);
-        var body = JsonNode.Parse(await response.Content.ReadAsStringAsync());
+        var response = await client.PostAsync("https://api.instagram.com/oauth/access_token", content, ct);
+        var body = JsonNode.Parse(await response.Content.ReadAsStringAsync(ct));
 
         //Console.WriteLine("Instagram OAuth Response: " + body?.ToJsonString());
 
@@ -39,10 +44,10 @@ public class InstagramOAuthController : Controller {
         var userId = body?["user_id"]?.ToString();
 
         // zapsani do db
-        await using var conn = await Database.GetConnectionAsync();
+        await using var conn = await db.GetOpenConnectionAsync(ct);
         if (conn == null) return RedirectPermanent("/app/account");
 
-        using var cmd = new MySqlCommand(
+        await using var cmd = new MySqlCommand(
             """
             DELETE FROM users_access_tokens WHERE platform = 'INSTAGRAM' AND user_id = @userId;
 
@@ -52,16 +57,16 @@ public class InstagramOAuthController : Controller {
             """,
             conn);
 
-        cmd.Parameters.AddWithValue("@userId", account.ID );
+        cmd.Parameters.AddWithValue("@userId", account.Id );
         cmd.Parameters.AddWithValue("@accessToken", body?["access_token"]?.ToString());
-        cmd.ExecuteNonQuery();
+        await cmd.ExecuteNonQueryAsync(ct);
 
         // znovu reauth
-        account = await Auth.ReAuthUserAsync();
+        account = await auth.ReAuthAsync(ct);
         if(account is null) return RedirectPermanent("/app/account?tab=settings");
 
 
-        await account.UpdateAvatarByConnectedPlatformAsync();
+        await accounts.UpdateAvatarByConnectedPlatformAsync(account, ct);
         return Redirect("/app/account");
     }
 }

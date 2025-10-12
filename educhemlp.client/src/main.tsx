@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, lazy, CSSProperties } from 'react';
+import {StrictMode, useEffect, lazy, CSSProperties, useRef} from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import "./assets/pure.css";
@@ -155,6 +155,7 @@ const AppInner = () => {
     const setUserAuthed = useStore(state => state.setUserAuthed);
     const setAppSettings = useStore(state => state.setAppSettings);
     const location = useLocation();
+    const syncSocket = useRef<WebSocket | null>(null);
 
     const isElectronApp = useStore(state => state.isElectronApp);
     const setIsElectronApp = useStore(state => state.setIsElectronApp);
@@ -170,6 +171,35 @@ const AppInner = () => {
             getAppSettings(setAppSettings);
         }
     }, [loggedUser, location]);
+
+    // useEffect s pripojenim na sync socket
+    useEffect(() => {
+        if(syncSocket.current) {
+            syncSocket.current.close();
+            syncSocket.current = null;
+        }
+
+        syncSocket.current = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/sync`);
+
+        syncSocket.current.onopen = () => {
+            //console.log('WebSocket connected');
+        }
+
+        syncSocket.current.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const action = data.action;
+
+            switch (action) {
+                case 'updateAppSettings': {
+                    getAppSettings(setAppSettings);
+                } break;
+            }
+        }
+
+        return () => {
+            syncSocket.current?.close();
+        }
+    }, [location])
 
 
     return (
@@ -272,16 +302,18 @@ const App = () => {
         authUser(setLoggedUser, setUserAuthed);
         getAppSettings(setAppSettings);
 
-        const int1 = setInterval(() => getAppSettings(setAppSettings), 60 * 1000);
+        //const int1 = setInterval(() => getAppSettings(setAppSettings), 60 * 1000);
         const int2 = setInterval(() => authUser(setLoggedUser, setUserAuthed), 10 * 60 * 1000);
 
         return () => {
             document.getElementById("dd71fa08-d440-4d64-8bc3-9dc1ccb65452")?.remove();
             (window as any).minecraft = null;
-            clearInterval(int1);
+            //clearInterval(int1);
             clearInterval(int2);
         };
     }, []);
+
+
 
     return (
         <>

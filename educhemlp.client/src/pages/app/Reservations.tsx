@@ -690,7 +690,9 @@ export const Reservations = () => {
             }
 
             // v pripade ze se odpocet odpocita, tak se znovu nacte appsettings
-            if(now > to || now < from) getAppSettings(setAppSettings);
+            let dateDiff = Math.min(Math.abs(now - from), Math.abs(now - to));
+
+            if(dateDiff < 1000) getAppSettings(setAppSettings);
         }
 
         updateCountdown();

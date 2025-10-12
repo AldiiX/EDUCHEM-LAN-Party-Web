@@ -1,28 +1,27 @@
-﻿using System.Net.WebSockets;
-using EduchemLP.Server.WebSocketServices;
+﻿using EduchemLP.Server.WebSockets;
 
 namespace EduchemLP.Server.Middlewares;
 
-public class WebSocketMiddleware(RequestDelegate next) {
+public sealed class WebSocketMiddleware {
+    private readonly RequestDelegate _next;
+    private readonly IReadOnlyDictionary<PathString, IWebSocketEndpoint> _endpoints;
+
+    public WebSocketMiddleware(RequestDelegate next, IEnumerable<IWebSocketEndpoint> endpoints) {
+        _next = next;
+        _endpoints = endpoints.ToDictionary(e => e.Path);
+    }
+
     public async Task InvokeAsync(HttpContext context) {
-        // reservations websocket
-        if (context.Request.Path == "/ws/reservations") {
-            if (context.WebSockets.IsWebSocketRequest) {
-                WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                await WSReservations.HandleQueueAsync(webSocket);
-            } else {
-                context.Response.StatusCode = 400;
-            }
-        }
-        else if (context.Request.Path == "/ws/chat") {
-            if (context.WebSockets.IsWebSocketRequest) {
-                WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                await WSChat.HandleQueueAsync(webSocket);
-            } else {
-                context.Response.StatusCode = 400;
-            }
+        var path = context.Request.Path;
+
+        if (context.WebSockets.IsWebSocketRequest && _endpoints.TryGetValue(path, out var endpoint)) {
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
+
+            using var socket = await context.WebSockets.AcceptWebSocketAsync();
+            await endpoint.HandleAsync(context, socket, linkedCts.Token);
+            return;
         }
 
-        else await next(context);
+        await _next(context);
     }
 }

@@ -26,28 +26,28 @@ export const AppLayoutLoggedUserSection = ({ style }: { style?: CSSProperties}) 
     if (!userAuthed) return <></>;
 
     function setRoleText(account: LoggedUser) {
-        if(enumEquals(loggedUser.accountType.toString(), AccountType, AccountType.STUDENT)) {
+        if(enumEquals(loggedUser.type.toString(), AccountType, AccountType.STUDENT)) {
             if(enumEquals(account.gender?.toString(), AccountGender, AccountGender.FEMALE))
                 return "Přihlášena jako"
 
             return "Přihlášen jako"
         }
 
-        else if(enumEquals(loggedUser.accountType.toString(), AccountType, AccountType.TEACHER)) {
+        else if(enumEquals(loggedUser.type.toString(), AccountType, AccountType.TEACHER)) {
             if(enumEquals(account.gender?.toString(), AccountGender, AccountGender.FEMALE))
                 return "Učitelka"
 
             return "Učitel"
         }
 
-        else if(enumEquals(loggedUser.accountType.toString(), AccountType, AccountType.ADMIN)) {
+        else if(enumEquals(loggedUser.type.toString(), AccountType, AccountType.ADMIN)) {
             if(enumEquals(account.gender?.toString(), AccountGender, AccountGender.FEMALE))
                 return "Administrátorka"
 
             return "Administrátor"
         }
 
-        else if(enumEquals(loggedUser.accountType.toString(), AccountType, AccountType.SUPERADMIN)) {
+        else if(enumEquals(loggedUser.type.toString(), AccountType, AccountType.SUPERADMIN)) {
             if(enumEquals(account.gender?.toString(), AccountGender, AccountGender.FEMALE))
                 return "Administrátorka (SU)"
 

@@ -21,7 +21,7 @@ export const Login = () => {
             return;
         }
 
-        const res = await fetch("/api/v1/loggeduser", {
+        const res = await fetch("/api/v1/me", {
             method: "POST",
             body: JSON.stringify({ email, password }),
             headers: {

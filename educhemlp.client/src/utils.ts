@@ -1,5 +1,5 @@
 export function authUser(setLoggedUser: Function, setUserAuthed: Function) {
-    fetch("/api/v1/loggeduser", {
+    fetch("/api/v1/me", {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
@@ -59,7 +59,7 @@ export const toggleWebTheme = () => {
 }
 
 export const logout = (setLoggedUser: Function) => {
-    fetch("/api/v1/loggeduser", {
+    fetch("/api/v1/me", {
         method: "DELETE",
         headers: {
             "Content-Type": "application/json",

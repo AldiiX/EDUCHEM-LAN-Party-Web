@@ -137,7 +137,7 @@ const SettingsTab = () => {
 
 
     function removePlatformFromAccount(platform: string) {
-        fetch(`/api/v1/loggeduser/connections/`, {
+        fetch(`/api/v1/me/connections/`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
@@ -158,7 +158,7 @@ const SettingsTab = () => {
             setModalSelectedPlatform("");
 
             // aktualizace uživatelského účtu
-            const updatedUser: LoggedUser = await fetch("/api/v1/loggeduser").then(res => res.json());
+            const updatedUser: LoggedUser = await fetch("/api/v1/me").then(res => res.json());
             setLoggedUser(updatedUser);
         })
     }
@@ -188,7 +188,7 @@ const SettingsTab = () => {
             return;
         }
 
-        fetch("/api/v1/loggeduser/password", {
+        fetch("/api/v1/me/password", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -227,7 +227,7 @@ const SettingsTab = () => {
         const avatar = userAvatar;
         const banner = userBanner;
 
-        fetch("/api/v1/loggeduser/", {
+        fetch("/api/v1/me/", {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -520,8 +520,8 @@ const OverviewTab = () => {
             <h1>{loggedUser.displayName}</h1>
             <p className="email">{loggedUser.email}</p>
             {
-                loggedUser.accountType !== "STUDENT" ? (
-                    <p className="type">{loggedUser.accountType}</p>
+                loggedUser.type !== "STUDENT" ? (
+                    <p className="type">{loggedUser.type}</p>
                 ) : null
             }
             <div className="buttons">

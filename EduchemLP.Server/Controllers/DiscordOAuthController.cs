@@ -1,13 +1,14 @@
 using System.Text.Json.Nodes;
-using EduchemLP.Server.Classes;
+using EduchemLP.Server.Repositories;
+using EduchemLP.Server.Services;
 using Microsoft.AspNetCore.Mvc;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 
 namespace EduchemLP.Server.Controllers;
 
 
 [Route("/_be/discord/oauth")]
-public class DiscordOAuthController : Controller {
+public class DiscordOAuthController(IAuthService auth, IDatabaseService db, IAccountRepository accounts) : Controller {
 
     #if DEBUG
         public const string REDIRECT_URI = "http://localhost:3154/_be/discord/oauth";
@@ -17,8 +18,8 @@ public class DiscordOAuthController : Controller {
 
 
     [HttpGet]
-    public IActionResult Index([FromQuery] string code) {
-        var account = Utilities.GetLoggedAccountFromContextOrNull();
+    public async Task<IActionResult> Index([FromQuery] string code, CancellationToken ct = default) {
+        var account = await auth.ReAuthFromContextOrNullAsync(ct);
         if (account == null) return RedirectPermanent("/login");
 
 
@@ -40,7 +41,7 @@ public class DiscordOAuthController : Controller {
 
 
         // zapsani do db
-        using var conn = Database.GetConnection();
+        await using var conn = await db.GetOpenConnectionAsync(ct);
         if (conn == null) return RedirectPermanent("/app/account");
 
         using var cmd = new MySqlCommand(
@@ -53,17 +54,17 @@ public class DiscordOAuthController : Controller {
                     """,
         conn);
 
-        cmd.Parameters.AddWithValue("@userId", account.ID );
+        cmd.Parameters.AddWithValue("@userId", account.Id );
         cmd.Parameters.AddWithValue("@accessToken", body?["access_token"]?.ToString());
         cmd.Parameters.AddWithValue("@refreshToken", body?["refresh_token"]?.ToString());
-        cmd.ExecuteNonQuery();
+        await cmd.ExecuteNonQueryAsync(ct);
 
         // znovu reauth
-        account = Auth.ReAuthUser();
+        account = await auth.ReAuthAsync(ct);
         if(account is null) return RedirectPermanent("/app/account?tab=settings");
 
 
-        account.UpdateAvatarByConnectedPlatformAsync().Wait();
+        await accounts.UpdateAvatarByConnectedPlatformAsync(account, ct);
         return RedirectPermanent("/app/account?tab=settings");
     }
 }

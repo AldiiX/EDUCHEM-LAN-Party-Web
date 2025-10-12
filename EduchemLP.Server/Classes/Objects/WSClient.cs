@@ -1,33 +1,29 @@
-﻿using System.Net.WebSockets;
+using System.Net.WebSockets;
+using System.Text;
 
 namespace EduchemLP.Server.Classes.Objects;
 
-public class WSClient(WebSocket webSocket) {
-    public string UUID { get; private set; } = Guid.NewGuid().ToString();
-    public WebSocket WebSocket { get; private set; } = webSocket;
+public abstract class WSClient {
+    private readonly WebSocket _socket;
 
+    public uint Id { get; set; }
+    public WebSocketState State => _socket.State;
 
-
-    public async Task DisconnectAsync(string reason = "Closed by server") => await CloseWebSocketAsync(reason);
-
-    public void Disconnect(string reason = "Closed by server") => CloseWebSocketAsync(reason).Wait();
-
-    public async Task CloseWebSocketAsync(string reason = "Closed by server") {
-        try {
-            await WebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, reason, CancellationToken.None);
-            WebSocket.Dispose();
-        } catch (Exception _) {/**/}
+    public WSClient(WebSocket socket, uint? id = null) {
+        _socket = socket;
+        Id = id ?? (uint) new Random().NextInt64(1, uint.MaxValue);
     }
 
-    public void CloseWebSocket(string reason = "Closed by server") => CloseWebSocketAsync(reason).Wait();
-
-    public async Task BroadcastAsync(string message) {
-        if (WebSocket.State == WebSocketState.Open) {
-            try {
-                await WebSocket.SendAsync(new ArraySegment<byte>(System.Text.Encoding.UTF8.GetBytes(message)), WebSocketMessageType.Text, true, CancellationToken.None);
-            } catch (Exception _) { /**/ }
-        }
+    public async Task SendAsync(string json, CancellationToken ct) {
+        var bytes = Encoding.UTF8.GetBytes(json);
+        await _socket.SendAsync(bytes, WebSocketMessageType.Text, endOfMessage: true, cancellationToken: ct);
     }
 
-    public void Broadcast(in string message) => BroadcastAsync(message).Wait();
+
+    public Task CloseAsync(WebSocketCloseStatus status, string reason, CancellationToken ct)
+        => _socket.CloseAsync(status, reason, ct);
+
+    public void Abort() {
+        try { _socket.Abort(); } catch { /* ignore */ }
+    }
 }
