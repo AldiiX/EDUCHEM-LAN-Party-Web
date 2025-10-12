@@ -620,7 +620,7 @@ const UsersTab = () => {
                             <th onClick={() => handleSort("email")}>Email</th>
                             <th onClick={() => handleSort("gender")}>Pohlaví</th>
                             <th onClick={() => handleSort("class")}>Třída</th>
-                            <th onClick={() => handleSort("accountType")}>Typ účtu</th>
+                            <th onClick={() => handleSort("type")}>Typ účtu</th>
                             <th onClick={() => handleSort("lastUpdated")}>Naposledy upraven</th>
                             <th onClick={() => handleSort("lastLoggedIn")}>Naposledy přihlášen</th>
                         </tr>

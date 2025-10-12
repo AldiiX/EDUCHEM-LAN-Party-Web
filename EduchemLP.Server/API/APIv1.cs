@@ -297,7 +297,7 @@ public class APIv1(
                 ["name"] = reader.GetString("display_name"),
                 ["class"] = reader.GetStringOrNull("class"),
                 ["gender"] = reader.GetStringOrNull("gender"),
-                ["accountType"] = reader.GetString("account_type"),
+                ["type"] = reader.GetString("account_type"),
                 ["lastUpdated"] = reader.GetDateTime("last_updated"),
                 ["lastLoggedIn"] = reader.GetStringOrNull("last_logged_in") != null ? (DateTime)reader.GetValue("last_logged_in") : null,
                 ["avatar"] = reader.GetStringOrNull("avatar"),
@@ -318,11 +318,11 @@ public class APIv1(
         string? email = body.TryGetValue("email", out var _email) ? _email?.ToString() : null;
         string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
-        string? accountType = body.TryGetValue("accountType", out var _accountType) ? _accountType?.ToString() : null;
+        string? accountType = body.TryGetValue("type", out var _accountType) ? _accountType?.ToString() : null;
         string? gender = body.TryGetValue("gender", out var _gender) ? _gender?.ToString() : null;
         bool sendToEmail = body.TryGetValue("sendToEmail", out var _sendToEmail) && bool.TryParse(_sendToEmail?.ToString(), out var _sendToEmail2) && _sendToEmail2;
 
-        if(email == null || displayName == null || accountType == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'email', 'displayName' nebo 'accountType'" });
+        if(email == null || displayName == null || accountType == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'email', 'displayName' nebo 'type'" });
         var accountTypeParsed = Enum.TryParse(accountType, out Account.AccountType _ac) ? _ac : Account.AccountType.STUDENT;
 
         if(loggedUser.Type < accountTypeParsed && loggedUser.Type != Account.AccountType.SUPERADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš vytvořit uživatele s vyššími právy." });
@@ -446,7 +446,7 @@ public class APIv1(
         string? email = body.TryGetValue("email", out var _email) ? _email?.ToString() : null;
         string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
-        Account.AccountType? accountType = body.TryGetValue("accountType", out var _accountType) ? Enum.TryParse(_accountType?.ToString(), out Account.AccountType _ac) ? _ac : null : null;
+        Account.AccountType? accountType = body.TryGetValue("type", out var _accountType) ? Enum.TryParse(_accountType?.ToString(), out Account.AccountType _ac) ? _ac : null : null;
         Account.AccountGender? gender = body.TryGetValue("gender", out var _gender) ? Enum.TryParse(_gender?.ToString(), out Account.AccountGender _g) ? _g : null : null;
         email = email == "" ? null : email?.Trim();
         displayName = displayName == "" ? null : displayName?.Trim();
@@ -454,10 +454,10 @@ public class APIv1(
 
 
         // pokud accounttype neni parsovany
-        if(accountType == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'accountType'" });
+        if(accountType == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'type'" });
 
         // pokud je gender neco mimo enum
-        if(gender == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'accountType'" });
+        if(gender == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'gender'" });
 
         // zjisteni zda loggeduser nedava uzivateli vyssi accountType
         if(loggedAccount.Type <= accountType && loggedAccount.Type != Account.AccountType.SUPERADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš dát uživateli vyšší roli než máš ty." });
