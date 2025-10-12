@@ -1,4 +1,5 @@
 using dotenv.net;
+using EduchemLP.Server.Classes;
 using EduchemLP.Server.Middlewares;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;
@@ -41,27 +42,16 @@ public static class Program {
 
 
         // pripojeni k redisu
-        string? rhost, rport, rpassword;
-        /*if (!DEVELOPMENT_MODE) { // TODO: opravit, aby to na productionu jelo na localhost:6379
-            rhost = ENV["DATABASE_IP"];
-            rport = "6379";
-            rpassword = null;
-        } else {*/
-            rhost = ENV["DATABASE_IP"];
-            rport = ENV["REDIS_PORT"];
-            rpassword = ENV["REDIS_PASSWORD"];
-        //}
+        var rhost = ENV.GetValueOrNull("REDIS_IP") ?? ENV["DATABASE_IP"];
+        var rport = ENV["REDIS_PORT"];
+        var rpassword = ENV.GetValueOrNull("REDIS_PASSWORD");
 
-        var config = new ConfigurationOptions {
+        var redis = ConnectionMultiplexer.Connect(new ConfigurationOptions {
             EndPoints = { $"{rhost}:{rport}" },
-            AbortOnConnectFail = false
-        };
+            AbortOnConnectFail = false,
+            Password = string.IsNullOrWhiteSpace(rpassword) ? null : rpassword,
+        });
 
-        if (rpassword != null! && rpassword.Length > 0) {
-            config.Password = rpassword;
-        }
-
-        var redis = ConnectionMultiplexer.Connect(config);
         builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
 
         builder.Services.AddControllersWithViews();

@@ -59,7 +59,9 @@ public static class Utilities {
         return value == null ? (T?)null : JsonSerializer.Deserialize<T>(value);
     }
 
-    public static bool IsNullOrEmpty(this string? str) => string.IsNullOrEmpty(str);
+    public static V? GetValueOrNull<K, V>(this IDictionary<K, V> dictionary, K key) {
+        return dictionary.TryGetValue(key, out var value) ? value : default;
+    }
 
     public static string GenerateRandomPassword(int length = 24) {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ěščřž!@*";
