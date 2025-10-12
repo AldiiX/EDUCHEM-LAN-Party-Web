@@ -1,0 +1,97 @@
+.map-reservation-area-main {
+    position: absolute;
+    transition-duration: 0.3s;
+    top: 0;
+    left: 0;
+    //width: 100%;
+    height: 100%;
+    z-index: 1;
+    touch-action: none;
+
+    /*.scaleTransition {
+        transition-duration: 0.3s;
+    }*/
+
+    >g {
+        touch-action: none;
+
+        >g {
+            touch-action: none;
+        }
+    }
+
+
+    .pc {
+        fill: transparent;
+        pointer-events: none;
+        z-index: 3;
+
+        &:is(.unavailable) {
+            fill: var(--pc-unavailable);
+            pointer-events: all;
+        }
+
+        &:is(.taken-by-you) {
+            pointer-events: all;
+            fill: var(--pc-taken-by-you);
+        }
+
+        &:is(.available) {
+            pointer-events: all;
+            fill: var(--pc-available);
+        }
+    }
+
+    .room {
+        fill: transparent;
+        pointer-events: none;
+
+        &:is(.unavailable) {
+            fill: var(--pc-unavailable);
+            pointer-events: all;
+        }
+
+        &:is(.taken-by-you) {
+            pointer-events: all;
+            fill: var(--pc-taken-by-you);
+        }
+
+        &:is(.available) {
+            pointer-events: all;
+            fill: var(--room-available);
+        }
+    }
+
+    line {
+        stroke: var(--line-color);
+    }
+
+    rect, polygon, polyline {
+        fill: var(--shapes-color);
+        stroke: none;
+        z-index: 0;
+    }
+
+    .table {
+        fill: var(--table-color);
+    }
+
+    .text {
+        fill: var(--text-color);
+    }
+
+    .lighttext {
+        fill: var(--shapes-color);
+    }
+
+
+    circle {
+        transition-duration: 0.3s;
+        cursor: pointer;
+
+        &:hover {
+            filter: brightness(0.7);
+            transition-duration: 0.3s;
+        }
+    }
+}

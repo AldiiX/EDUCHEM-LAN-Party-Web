@@ -15,11 +15,11 @@ export const MoveableMap: React.FC<MapProps> = ({ children = null, displayContro
     const containerRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<SVGSVGElement>(null);
 
-    const SVG_WIDTH = 1850;
-    const SVG_HEIGHT = 1216;
+    const SVG_WIDTH = 2560;
+    const SVG_HEIGHT = 1440;
 
     // scale – aktuální měřítko (zoom)
-    const [scale, setScale] = useState<number>(1);
+    const [scale, setScale] = useState<number>(0.35);
     // containerCenter – střed rodičovského divu
     const [containerCenter, setContainerCenter] = useState<Translate>({ x: 0, y: 0 });
     // dragOffset – posun udaný uživatelem
@@ -59,7 +59,7 @@ export const MoveableMap: React.FC<MapProps> = ({ children = null, displayContro
         const wheelHandler = (e: WheelEvent) => {
             e.preventDefault();
             const scaleFactor = 0.07;
-            const newScale = e.deltaY < 0 ? Math.min(1.2, scale + scaleFactor) : Math.max(0.4, scale - scaleFactor);
+            const newScale = e.deltaY < 0 ? Math.min(1.2, scale + scaleFactor) : Math.max(0.3, scale - scaleFactor);
 
             const rect = svgEl.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
