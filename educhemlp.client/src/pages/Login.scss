@@ -127,6 +127,18 @@
                     }
                 }
             }
+
+            .error-message {
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                color: var(--text-color-secondary);
+                font-size: 16px;
+                width: 100%;
+                padding: 0 16px;
+                text-align: center;
+            }
         }
     }
     >.right-side {

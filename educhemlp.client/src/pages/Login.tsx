@@ -69,7 +69,7 @@ export const Login = () => {
                         <button className={"submit-button"} type="submit" disabled={isLoading}>
                             {isLoading ? <div className="loader"></div> : "Login"}
                         </button>
-                        <p>{error}</p>
+                        <p className="error-message">{error}</p>
                     </Box>
                 </div>
             </div>
