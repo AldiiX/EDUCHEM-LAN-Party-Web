@@ -3,6 +3,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Infrastructure;
 using EduchemLP.Server.Services;
@@ -11,22 +12,22 @@ namespace EduchemLP.Server.WebSockets;
 
 
 
-public sealed class ChatClient(WebSocket socket, Account account) {
-    public int Id { get; } = account.Id;
-    public string DisplayName { get; } = account.DisplayName;
-    public Account.AccountType AccountType { get; } = account.Type;
-    public string? Class { get; } = account.Class;
-    public string? Avatar { get; } = account.Avatar;
-    public string? Banner { get; } = account.Banner;
+public sealed class ChatClient : WSClient {
 
-    public async Task SendAsync(string json, CancellationToken ct) {
-        var bytes = Encoding.UTF8.GetBytes(json);
-        await socket.SendAsync(bytes, WebSocketMessageType.Text, endOfMessage: true, cancellationToken: ct);
+    public ChatClient(WebSocket socket, Account account) : base(socket) {
+        Id = (uint) account.Id;
+        DisplayName = account.DisplayName;
+        AccountType = account.Type;
+        Class = account.Class;
+        Avatar = account.Avatar;
+        Banner = account.Banner;
     }
 
-    public void Disconnect() {
-        try { socket.Abort(); } catch { /* ignore */ }
-    }
+    public string DisplayName { get; }
+    public Account.AccountType AccountType { get; }
+    public string? Class { get; }
+    public string? Avatar { get; }
+    public string? Banner { get; }
 }
 
 
@@ -34,13 +35,15 @@ public sealed class ChatClient(WebSocket socket, Account account) {
 public sealed class ChatWebSocketEndpoint(
     IDatabaseService db,
     IServiceScopeFactory scopeFactory,
-    ILogger<ChatWebSocketEndpoint> logger
+    ILogger<ChatWebSocketEndpoint> logger,
+    IWebSocketHub hub
 ) : IWebSocketEndpoint {
 
     public PathString Path => "/ws/chat";
 
-    // sprava pripojenych klientu
-    private readonly ConcurrentDictionary<int, ChatClient> _clients = new();
+    // jednoduchy guard, at heartbeat nezaregistrujeme vicekrat
+    private static int heartbeatRegistered = 0;
+
 
     public async Task HandleAsync(HttpContext context, WebSocket socket, CancellationToken ct) {
         // auth
@@ -55,17 +58,30 @@ public sealed class ChatWebSocketEndpoint(
 
         if (!await EnsureChatEnabled(socket, ct)) return;
 
+
+
         // registrace klienta (vypne duplicitni spojeni se stejnym id)
         var client = new ChatClient(socket, sessionUser);
-        if (_clients.TryGetValue(client.Id, out var duplicate)) {
-            duplicate.Disconnect();
-            _clients.TryRemove(client.Id, out _);
+        var clients = hub.GetClients("chat").ToDictionary(c => c.Id, c => c);
+        if (clients.TryGetValue(client.Id, out var existing)) {
+            await existing.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Nové připojení z jiného zařízení.", ct);
+            hub.RemoveClient("chat", client.Id);
         }
-        _clients[client.Id] = client;
+
+        hub.AddClient("chat", client);
+
+
 
         // posli inicialni zpravy + stav online uzivatelu
         await SendInitialChatAsync(client, ct);
         await BroadcastConnectedUsersAsync(ct);
+
+
+
+        // spustit heartbeat (vyhazuje neaktivni klienty a posila stav online uzivatelu)
+        await RegisterHeartbeatAsync();
+
+
 
         // hlavni receive loop
         var buffer = new byte[4 * 1024];
@@ -110,7 +126,7 @@ public sealed class ChatWebSocketEndpoint(
                         break;
                     }
 
-                    await BroadcastAsync(saved.ToJsonString(JsonSerializerOptions.Web), ct);
+                    await hub.BroadcastAsync("chat", saved.ToJsonString(JsonSerializerOptions.Web), ct);
                 } break;
 
                 case "deleteMessage": {
@@ -130,8 +146,10 @@ public sealed class ChatWebSocketEndpoint(
         }
 
         // odhlaseni klienta
-        _clients.TryRemove(client.Id, out _);
-        await BroadcastConnectedUsersAsync(ct);
+        hub.RemoveClient("chat", client.Id);
+
+        // poslat okamzity status po odhlaseni
+        await BroadcastConnectedUsersAsync(CancellationToken.None);
     }
 
     // logistika
@@ -143,8 +161,11 @@ public sealed class ChatWebSocketEndpoint(
         if (await appSettings.GetChatEnabledAsync(ct)) return true;
 
         // odpojit vsechny a vycistit
-        foreach (var kv in _clients) kv.Value.Disconnect();
-        _clients.Clear();
+        var clients = hub.GetClients("chat").ToDictionary(c => c.Id, c => c);
+        foreach (var c in clients.Values) {
+            await SafeCloseAsync(socket, WebSocketCloseStatus.NormalClosure, "Chat je vypnutý.", CancellationToken.None);
+            hub.RemoveClient("chat", c.Id);
+        }
 
         _ = SafeCloseAsync(socket, WebSocketCloseStatus.NormalClosure, "Chat je vypnutý.", ct);
         return false;
@@ -291,7 +312,7 @@ public sealed class ChatWebSocketEndpoint(
                 ["uuid"] = messageUuid
             }.ToJsonString(JsonSerializerOptions.Web);
 
-            await BroadcastAsync(payload, ct);
+            await hub.BroadcastAsync("chat", payload, ct);
         }
     }
 
@@ -364,10 +385,12 @@ public sealed class ChatWebSocketEndpoint(
     }
 
     private async Task BroadcastConnectedUsersAsync(CancellationToken ct) {
-        var users = _clients.Values.Select(c => new {
+        var clients = hub.GetClients("chat");
+
+        var users = clients.Select(c => new {
             id = c.Id,
-            name = c.DisplayName,
-            avatar = c.Avatar
+            name = (c as ChatClient)?.DisplayName,
+            avatar = (c as ChatClient)?.Avatar
         }).ToList();
 
         var json = JsonSerializer.Serialize(new {
@@ -375,16 +398,8 @@ public sealed class ChatWebSocketEndpoint(
             users
         }, JsonSerializerOptions.Web);
 
-        await BroadcastAsync(json, ct);
-    }
-
-    private async Task BroadcastAsync(string json, CancellationToken ct) {
-        var tasks = _clients.Values.Select(c => c.SendAsync(json, ct));
-        try {
-            await Task.WhenAll(tasks);
-        } catch (Exception ex) {
-            logger.LogDebug(ex, "Broadcast narazil na chybu u jednoho z klientů.");
-        }
+        //Program.Logger.LogInformation("Broadcasting connected users: {x}", users);
+        await hub.BroadcastAsync("chat", json, ct);
     }
 
     private static JsonObject CreateMessageObject(
@@ -426,5 +441,13 @@ public sealed class ChatWebSocketEndpoint(
 
     private static async Task SafeCloseAsync(WebSocket socket, WebSocketCloseStatus status, string reason, CancellationToken ct) {
         try { await socket.CloseAsync(status, reason, ct); } catch { /* ignore */ }
+    }
+
+    private async Task RegisterHeartbeatAsync() {
+        if (Interlocked.CompareExchange(ref heartbeatRegistered, 1, 0) == 0) {
+            hub.RegisterHeartbeat("chat", async (hub2, token) => {
+                await BroadcastConnectedUsersAsync(token);
+            });
+        }
     }
 }

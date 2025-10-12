@@ -772,7 +772,6 @@ const AppSettingsTab = () => {
                 return;
             }
 
-            getAppSettings(setAppSettings);
             toast.success("Nastavení aplikace úspěšně uloženo.");
         });
     }
@@ -803,7 +802,6 @@ const AppSettingsTab = () => {
                 return;
             }
 
-            getAppSettings(setAppSettings);
             toast.success("Nastavení aplikace úspěšně uloženo.");
         });
     }
@@ -936,7 +934,7 @@ export const Administration = () => {
                 <p onClick={() => setSelectedTab(Tab.LOGS)} className={selectedTab === Tab.LOGS ? "active" : ""}>Bezpečnostní logy</p>
 
                 {
-                    enumIsGreaterOrEquals(loggedUser?.accountType, AccountType, AccountType.ADMIN) ? (
+                    enumIsGreaterOrEquals(loggedUser?.type, AccountType, AccountType.ADMIN) ? (
                         <p onClick={() => setSelectedTab(Tab.APP_SETTINGS)} className={selectedTab === Tab.APP_SETTINGS ? "active" : ""}>Nastavení aplikace</p>
                     ) : null
                 }

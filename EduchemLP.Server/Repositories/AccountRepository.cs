@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
@@ -13,7 +14,10 @@ namespace EduchemLP.Server.Repositories;
 
 
 
-public class AccountRepository(IDatabaseService db) : IAccountRepository {
+public class AccountRepository(
+    IDatabaseService db,
+    IHttpContextAccessor http
+) : IAccountRepository {
 
     public async Task<Account?> GetByIdAsync(int id, CancellationToken ct = default) {
         await using var conn = await db.GetOpenConnectionAsync(ct);
@@ -162,8 +166,14 @@ public class AccountRepository(IDatabaseService db) : IAccountRepository {
         cmd.Parameters.AddWithValue("@avatar", newAvatarLink);
         await cmd.ExecuteNonQueryAsync(ct);
 
+
+
         // aktualizace avataru v session
-        //await auth.ReAuthAsync(ct); // TODO: opravit bez toho, abych zde musel injectovat IAuthService, který vytvoří nekonečný loop
+        var sessionAcc = JsonNode.Parse(http.HttpContext!.Session.GetString("loggedaccount") ?? "");
+        if (sessionAcc == null) return;
+
+        sessionAcc.AsObject()["avatar"] = newAvatarLink;
+        http.HttpContext.Session.SetString("loggedaccount", sessionAcc.ToJsonString());
     }
 
     public async Task<Account?> CreateAsync(string email, string displayName, string? @class, Account.AccountGender gender, Account.AccountType accountType, bool sendToEmail = false, CancellationToken ct = default) {

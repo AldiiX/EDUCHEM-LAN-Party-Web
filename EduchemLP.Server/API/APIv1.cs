@@ -20,7 +20,8 @@ public class APIv1(
     IAuthService auth,
     IDbLoggerService dbLogger,
     IAppSettingsService appSettings,
-    IAccountRepository accounts
+    IAccountRepository accounts,
+    IWebSocketHub webSocketHub
 ) : Controller {
 
 
@@ -255,6 +256,11 @@ public class APIv1(
             if(chatEnabled == null) return;
             appSettings.SetChatEnabledAsync((bool) chatEnabled, ct);
         }, ct);
+
+
+        // oznameni do sync socketu
+        var json = new { action = "updateAppSettings"}.ToJsonString();
+        await webSocketHub.BroadcastAsync("sync", json, ct);
 
 
         Task.WaitAll(t1, t2, t3, t4);

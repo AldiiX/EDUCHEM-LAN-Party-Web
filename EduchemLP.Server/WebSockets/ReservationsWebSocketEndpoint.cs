@@ -11,10 +11,7 @@ using EduchemLP.Server.Services;
 
 namespace EduchemLP.Server.WebSockets;
 
-public sealed class ReservationsClient {
-    private readonly WebSocket _socket;
-
-    public int Id { get; }
+public sealed class ReservationsClient : WSClient {
     public string DisplayName { get; }
     public Account.AccountType? AccountType { get; }
     public string? Class { get; }
@@ -22,17 +19,16 @@ public sealed class ReservationsClient {
     public string? Banner { get; }
     public bool IsGuest { get; }
 
-    public ReservationsClient(WebSocket socket, Account? account) {
-        _socket = socket;
+    public ReservationsClient(WebSocket socket, Account? account) : base(socket) {
         if (account is null) {
             // host nebo neprihlaseny – drzej se puvodni logiky s nahodnym id a "Guest"
-            var rnd = Random.Shared.Next(10_000, 999_999);
+            var rnd = (uint) Random.Shared.Next(10_000, 999_999);
             Id = rnd;
             DisplayName = "Guest";
             AccountType = null;
             IsGuest = true;
         } else {
-            Id = account.Id;
+            Id = (uint) account.Id;
             DisplayName = account.DisplayName;
             AccountType = account.Type;
             Class = account.Class;
@@ -40,20 +36,6 @@ public sealed class ReservationsClient {
             Banner = account.Banner;
             IsGuest = false;
         }
-    }
-
-    public async Task SendAsync(string json, CancellationToken ct) {
-        var bytes = Encoding.UTF8.GetBytes(json);
-        await _socket.SendAsync(bytes, WebSocketMessageType.Text, endOfMessage: true, cancellationToken: ct);
-    }
-
-    public WebSocketState State => _socket.State;
-
-    public Task CloseAsync(WebSocketCloseStatus status, string reason, CancellationToken ct)
-        => _socket.CloseAsync(status, reason, ct);
-
-    public void Abort() {
-        try { _socket.Abort(); } catch { /* ignore */ }
     }
 }
 
@@ -65,13 +47,14 @@ public sealed class ReservationsWebSocketEndpoint(
     IDatabaseService db,
     IServiceScopeFactory scopeFactory,
     ILogger<ReservationsWebSocketEndpoint> logger,
-    IDbLoggerService dbLogger
+    IDbLoggerService dbLogger,
+    IWebSocketHub hub
 ) : IWebSocketEndpoint {
 
     public PathString Path => "/ws/reservations";
 
-    // sprava klientu (dle endpointu)
-    private readonly ConcurrentDictionary<int, ReservationsClient> clients = new();
+    // jednoduchy guard, at heartbeat nezaregistrujeme vicekrat
+    private static int heartbeatRegistered = 0;
 
     public async Task HandleAsync(HttpContext context, WebSocket socket, CancellationToken ct) {
         // auth je nepovinny, muze vratit null (anonymni klient)
@@ -82,11 +65,19 @@ public sealed class ReservationsWebSocketEndpoint(
         var sessionAccount = await auth.ReAuthAsync(ct);
         var client = new ReservationsClient(socket, sessionAccount);
 
-        clients[client.Id] = client;
 
-        // po pripojeni: poslani kompletniho prehledu a statusu
+
+        // registrace klienta do kanalu "reservations" a poslat vsem okamzity status
+        hub.AddClient("reservations", client);
+        await hub.BroadcastAsync("reservations", await BuildStatusPayloadAsync(hub, ct), ct);
         await SendFullReservationInfoAsync(client, ct);
-        await BroadcastStatusAsync(ct);
+
+
+
+        // heartbeat - posilani statusu kazdych 15s
+        await RegisterHeartbeatAsync();
+
+
 
         // hlavni receive loop
         var buffer = new byte[4 * 1024];
@@ -186,45 +177,18 @@ public sealed class ReservationsWebSocketEndpoint(
             }
         }
 
-        // odhlaseni klienta + status
-        clients.TryRemove(client.Id, out _);
-        await BroadcastStatusAsync(ct);
+        // odhlaseni klienta
+        hub.RemoveClient("reservations", client.Id);
+
+        // poslat okamzity status po odhlaseni
+        await hub.BroadcastAsync("reservations", await BuildStatusPayloadAsync(hub, CancellationToken.None), CancellationToken.None);
     }
+
+
 
     // ===== logistika =====
-
-    private async Task BroadcastStatusAsync(CancellationToken ct) {
-        // pro kazdeho prijemce je obsah trochu jiny (schovani class pro nektere)
-        var list = clients.Values.ToList();
-        foreach (var receiver in list) {
-            if (receiver.State != WebSocketState.Open) continue;
-
-            var connectedUsers = new JsonArray();
-            foreach (var c in list.DistinctBy(x => x.Id)) {
-                // pokud c nebo prijemce je anonym, posle se "unknown"
-                if (c.AccountType is null || receiver.AccountType is null) {
-                    connectedUsers.Add("unknown");
-                    continue;
-                }
-
-                connectedUsers.Add(new JsonObject {
-                    ["id"] = c.Id,
-                    ["displayName"] = c.DisplayName,
-                    ["class"] = c.AccountType > Account.AccountType.STUDENT ? c.Class : null
-                });
-            }
-
-            var json = new {
-                action = "status",
-                connectedUsers
-            }.ToJsonString();
-
-            await SafeSendAsync(receiver, json, ct);
-        }
-    }
-
     private async Task BroadcastFullReservationInfoAsync(CancellationToken ct) {
-        var clients = this.clients.Values.ToList();
+        var clients = hub.GetClients("reservations").ToList().Cast<ReservationsClient>();
         foreach (var c in clients) {
             if (c.State != WebSocketState.Open) continue;
             await SendFullReservationInfoAsync(c, ct);
@@ -330,5 +294,45 @@ public sealed class ReservationsWebSocketEndpoint(
         } catch {
             //
         }
+    }
+
+    private async Task RegisterHeartbeatAsync() {
+        if (Interlocked.CompareExchange(ref heartbeatRegistered, 1, 0) == 0) {
+            hub.RegisterHeartbeat("reservations", async (hub2, token) => {
+                // posli aktualni status kazdemu prijemci zvlast (muze byt personalizovany)
+                var payload = await BuildStatusPayloadAsync(hub2, token);
+
+                foreach (var r in hub2.GetClients("reservations").ToList()) {
+                    await hub2.SendAsync("reservations", r.Id, payload, token);
+                }
+            });
+        }
+    }
+
+    private async Task<string> BuildStatusPayloadAsync(IWebSocketHub hub0, CancellationToken ct) {
+        var list = hub0.GetClients("reservations").ToList();
+        var connectedUsers = new JsonArray();
+        foreach (var client in list.DistinctBy(x => x.Id)) {
+            var c = (ReservationsClient)client;
+
+            // pokud c nebo prijemce je anonym, posle se "unknown"
+            if (c.AccountType is null) {
+                connectedUsers.Add("unknown");
+                continue;
+            }
+
+            connectedUsers.Add(new JsonObject {
+                ["id"] = c.Id,
+                ["displayName"] = c.DisplayName,
+                ["class"] = c.AccountType > Account.AccountType.STUDENT ? c.Class : null
+            });
+        }
+
+        var json = new {
+            action = "status",
+            connectedUsers
+        }.ToJsonString();
+
+        return json;
     }
 }

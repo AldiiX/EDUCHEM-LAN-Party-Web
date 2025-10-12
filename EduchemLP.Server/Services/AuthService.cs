@@ -6,6 +6,10 @@ using MySqlConnector;
 
 namespace EduchemLP.Server.Services;
 
+
+
+
+
 public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccountRepository accounts) : IAuthService {
 
 

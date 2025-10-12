@@ -116,8 +116,11 @@ public static class Program {
 
 
         // websocket endpointy
+        builder.Services.AddSingleton<IWebSocketHub, WebSocketHub>();
+        builder.Services.AddHostedService<WebSocketHeartbeatService>();
         builder.Services.AddSingleton<IWebSocketEndpoint, ChatWebSocketEndpoint>();
         builder.Services.AddSingleton<IWebSocketEndpoint, ReservationsWebSocketEndpoint>();
+        builder.Services.AddSingleton<IWebSocketEndpoint, SyncWebSocketEndpoint>();
 
 
 
@@ -149,7 +152,7 @@ public static class Program {
         App.UseMiddleware<BeforeInitMiddleware>();
 
         App.UseWebSockets(new WebSocketOptions {
-            KeepAliveInterval = TimeSpan.FromSeconds(30),
+            KeepAliveInterval = TimeSpan.FromSeconds(15),
         });
         App.UseMiddleware<WebSocketMiddleware>();
 
