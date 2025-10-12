@@ -2,7 +2,6 @@ import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
 import React, {CSSProperties, MutableRefObject, useEffect, useRef, useState} from "react";
 import "./Reservations.scss";
 import {SpiralUpper} from "../../components/reservation_areas/SpiralUpper.tsx";
-import {SpiralLower} from "../../components/reservation_areas/SpiralLower.tsx";
 import {useStore} from "../../store.tsx";
 import {PieChart} from "../../components/PieChart.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
@@ -15,6 +14,8 @@ import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
 import {AccountGender, AppSettings, LoggedUser} from "../../interfaces.ts";
 import {formatTime, getAppSettings} from "../../utils.ts";
+import {ITHub} from "../../components/reservation_areas/ITHub.tsx";
+import {areas, RoomMap} from "./Map.tsx";
 
 
 // global store
@@ -375,14 +376,9 @@ const SelectedReservation = () => {
 
 
 
+
 // main
 export const Reservations = () => {
-    const areas = [
-        // { id: "havran-kulturni-dum", name: "Kulturní dům Havraň" },
-        { id: "spiral-upper", name: "Spirála - Horní patro" },
-        { id: "spiral-lower", name: "Spirála - Dolní patro" },
-    ];
-
     const [selectedArea, setSelectedArea] = useState<string>(areas[0].id);
     const [computers, setComputers] = useState<Computer[]>([]);
     const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -790,11 +786,7 @@ export const Reservations = () => {
 
                     { /* mapka */ }
                     <MoveableMap displayControls={true}>
-                        {selectedArea === "spiral-upper" ? (
-                            <SpiralUpper onHoverReservation={(element: HTMLElement) => { selectReservation(element) }} />
-                        ) : selectedArea === "spiral-lower" ? (
-                            <SpiralLower />
-                        ) : null}
+                        <RoomMap selectedArea={selectedArea} selectReservation={(element: HTMLElement) => { selectReservation(element) }} />
                     </MoveableMap>
                 </div>
 

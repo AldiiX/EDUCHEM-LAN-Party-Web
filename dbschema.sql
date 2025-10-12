@@ -28,6 +28,8 @@ USE `educhem_lan_party_dev`;
 
 
 
+-- --------------------------------------------------------
+
 --
 -- Struktura tabulky `announcements`
 --
@@ -75,6 +77,33 @@ CREATE TABLE `computers` (
 --
 
 INSERT INTO `computers` (`id`, `room_id`, `is_teachers_pc`, `available`) VALUES
+                                                                             ('ITH2_PC01', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC02', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC03', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC04', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC05', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC06', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC07', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC08', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC09', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC10', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC11', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC12', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC13', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC14', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC15', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC16', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC17', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC18', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC19', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC20', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC21', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC22', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC23', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC24', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC25', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC26', 'ITH2', 0, 1),
+                                                                             ('ITH2_PC27', 'ITH2', 0, 1),
                                                                              ('VRR_PC01', 'VRR', 0, 1),
                                                                              ('VRR_PC02', 'VRR', 0, 1),
                                                                              ('VRR_PC03', 'VRR', 0, 1),
@@ -84,35 +113,35 @@ INSERT INTO `computers` (`id`, `room_id`, `is_teachers_pc`, `available`) VALUES
                                                                              ('VRR_PC07', 'VRR', 0, 1),
                                                                              ('VRR_PC08', 'VRR', 0, 1),
                                                                              ('VRR_PC09', 'VRR', 1, 1),
-                                                                             ('VT3_PC01', 'VT3', 0, 1),
-                                                                             ('VT3_PC02', 'VT3', 0, 1),
-                                                                             ('VT3_PC03', 'VT3', 0, 1),
-                                                                             ('VT3_PC04', 'VT3', 0, 1),
-                                                                             ('VT3_PC05', 'VT3', 0, 1),
-                                                                             ('VT3_PC06', 'VT3', 0, 1),
-                                                                             ('VT3_PC07', 'VT3', 0, 1),
-                                                                             ('VT3_PC08', 'VT3', 0, 1),
-                                                                             ('VT3_PC09', 'VT3', 0, 1),
-                                                                             ('VT3_PC10', 'VT3', 0, 1),
-                                                                             ('VT3_PC11', 'VT3', 0, 1),
-                                                                             ('VT3_PC12', 'VT3', 0, 1),
-                                                                             ('VT3_PC13', 'VT3', 0, 1),
-                                                                             ('VT3_PC14', 'VT3', 0, 1),
-                                                                             ('VT3_PC15', 'VT3', 0, 1),
-                                                                             ('VT3_PC16', 'VT3', 0, 1),
-                                                                             ('VT3_PC17', 'VT3', 0, 1),
-                                                                             ('VT3_PC18', 'VT3', 0, 1),
-                                                                             ('VT3_PC19', 'VT3', 0, 1),
-                                                                             ('VT3_PC20', 'VT3', 0, 1),
-                                                                             ('VT3_PC21', 'VT3', 0, 1),
-                                                                             ('VT3_PC22', 'VT3', 0, 1),
-                                                                             ('VT3_PC23', 'VT3', 0, 1),
-                                                                             ('VT3_PC24', 'VT3', 0, 1),
-                                                                             ('VT3_PC25', 'VT3', 1, 1),
-                                                                             ('VT3_PC26', 'VT3', 0, 1),
-                                                                             ('VT3_PC27', 'VT3', 0, 1),
-                                                                             ('VT3_PC28', 'VT3', 0, 1),
-                                                                             ('VT3_PC29', 'VT3', 0, 1);
+                                                                             ('VT2_PC01', 'VT2', 0, 0),
+                                                                             ('VT2_PC02', 'VT2', 0, 0),
+                                                                             ('VT2_PC03', 'VT2', 0, 0),
+                                                                             ('VT2_PC04', 'VT2', 0, 0),
+                                                                             ('VT2_PC05', 'VT2', 0, 0),
+                                                                             ('VT2_PC06', 'VT2', 0, 0),
+                                                                             ('VT2_PC07', 'VT2', 0, 0),
+                                                                             ('VT2_PC08', 'VT2', 0, 0),
+                                                                             ('VT2_PC09', 'VT2', 0, 0),
+                                                                             ('VT2_PC10', 'VT2', 0, 0),
+                                                                             ('VT2_PC11', 'VT2', 0, 0),
+                                                                             ('VT2_PC12', 'VT2', 0, 0),
+                                                                             ('VT2_PC13', 'VT2', 0, 0),
+                                                                             ('VT2_PC14', 'VT2', 0, 0),
+                                                                             ('VT2_PC15', 'VT2', 0, 0),
+                                                                             ('VT2_PC16', 'VT2', 0, 0),
+                                                                             ('VT2_PC17', 'VT2', 0, 0),
+                                                                             ('VT2_PC18', 'VT2', 0, 0),
+                                                                             ('VT2_PC19', 'VT2', 0, 0),
+                                                                             ('VT2_PC20', 'VT2', 0, 0),
+                                                                             ('VT2_PC21', 'VT2', 0, 0),
+                                                                             ('VT2_PC22', 'VT2', 0, 0),
+                                                                             ('VT2_PC23', 'VT2', 0, 0),
+                                                                             ('VT2_PC24', 'VT2', 0, 0),
+                                                                             ('VT2_PC25', 'VT2', 0, 0),
+                                                                             ('VT2_PC26', 'VT2', 0, 0),
+                                                                             ('VT2_PC27', 'VT2', 0, 0),
+                                                                             ('VT2_PC28', 'VT2', 0, 0),
+                                                                             ('VT2_PC29', 'VT2', 1, 0);
 
 -- --------------------------------------------------------
 
@@ -153,8 +182,8 @@ CREATE TRIGGER `check_double_values_res` BEFORE UPDATE ON `reservations` FOR EAC
     IF (NEW.room_id IS NOT NULL AND NEW.computer_id IS NOT NULL) OR
        (NEW.room_id IS NULL AND NEW.computer_id IS NULL) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Musí být vyplněn buď "room_id", nebo "computer_id", ale ne oba.';
-END IF;
+            SET MESSAGE_TEXT = 'Musí být vyplněn buď "room_id", nebo "computer_id", ale ne oba.';
+    END IF;
 END
 $$
 DELIMITER ;
@@ -164,8 +193,8 @@ CREATE TRIGGER `check_double_values_res2` BEFORE INSERT ON `reservations` FOR EA
     IF (NEW.room_id IS NOT NULL AND NEW.computer_id IS NOT NULL) OR
        (NEW.room_id IS NULL AND NEW.computer_id IS NULL) THEN
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Musí být vyplněn buď "room_id", nebo "computer_id", ale ne oba.';
-END IF;
+            SET MESSAGE_TEXT = 'Musí být vyplněn buď "room_id", nebo "computer_id", ale ne oba.';
+    END IF;
 END
 $$
 DELIMITER ;
@@ -179,23 +208,23 @@ CREATE TRIGGER `check_room_capacity` BEFORE INSERT ON `reservations` FOR EACH RO
     -- Kontrola, zda je room_id vyplněno
     IF NEW.room_id IS NOT NULL THEN
         -- Získání počtu již rezervovaných míst pro danou místnost
-    SELECT COUNT(*)
-    INTO current_occupancy
-    FROM reservations
-    WHERE room_id = NEW.room_id;
+        SELECT COUNT(*)
+        INTO current_occupancy
+        FROM reservations
+        WHERE room_id = NEW.room_id;
 
-    -- Získání kapacity místnosti
-    SELECT limit_of_seats
-    INTO room_capacity
-    FROM rooms
-    WHERE id = NEW.room_id;
+        -- Získání kapacity místnosti
+        SELECT limit_of_seats
+        INTO room_capacity
+        FROM rooms
+        WHERE id = NEW.room_id;
 
-    -- Porovnání kapacity a aktuálního počtu lidí
-    IF (current_occupancy + 1) > room_capacity THEN
+        -- Porovnání kapacity a aktuálního počtu lidí
+        IF (current_occupancy + 1) > room_capacity THEN
             SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Kapacita místnosti je překročena. Rezervace není možná.';
-END IF;
-END IF;
+                SET MESSAGE_TEXT = 'Kapacita místnosti je překročena. Rezervace není možná.';
+        END IF;
+    END IF;
 END
 $$
 DELIMITER ;
@@ -209,23 +238,23 @@ CREATE TRIGGER `check_room_capacity2` BEFORE UPDATE ON `reservations` FOR EACH R
     -- Kontrola, zda je `room_id` změněno
     IF NEW.room_id IS NOT NULL AND NEW.room_id != OLD.room_id THEN
         -- Získání počtu již rezervovaných míst pro novou místnost
-    SELECT COUNT(*)
-    INTO current_occupancy
-    FROM reservations
-    WHERE room_id = NEW.room_id;
+        SELECT COUNT(*)
+        INTO current_occupancy
+        FROM reservations
+        WHERE room_id = NEW.room_id;
 
-    -- Získání kapacity nové místnosti
-    SELECT limit_of_seats
-    INTO room_capacity
-    FROM rooms
-    WHERE id = NEW.room_id;
+        -- Získání kapacity nové místnosti
+        SELECT limit_of_seats
+        INTO room_capacity
+        FROM rooms
+        WHERE id = NEW.room_id;
 
-    -- Porovnání kapacity a aktuálního počtu lidí
-    IF (current_occupancy + 1) > room_capacity THEN
+        -- Porovnání kapacity a aktuálního počtu lidí
+        IF (current_occupancy + 1) > room_capacity THEN
             SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Kapacita místnosti je překročena. Rezervace není možná.';
-END IF;
-END IF;
+                SET MESSAGE_TEXT = 'Kapacita místnosti je překročena. Rezervace není možná.';
+        END IF;
+    END IF;
 END
 $$
 DELIMITER ;
@@ -253,8 +282,11 @@ INSERT INTO `rooms` (`id`, `label`, `image`, `limit_of_seats`, `available`) VALU
                                                                                 ('07', 'Učebna 07', '07.jpg', 10, 1),
                                                                                 ('08', 'Učebna 08', '08.jpg', 16, 1),
                                                                                 ('DELICKA', 'Dělička', 'delicka.jpg', 8, 1),
+                                                                                ('ITH1', 'Učebna ITH1', 'vt3_2.jpg', 16, 1),
+                                                                                ('ITH2', 'Učebna ITH2', 'vt3_2.jpg', 0, 1),
+                                                                                ('ITH3', 'Učebna ITH3', 'vt3_2.jpg', 16, 1),
                                                                                 ('VRR', 'Učebna VRR+R', 'vrr.jpg', 5, 1),
-                                                                                ('VT3', 'VT3', 'vt3_2.jpg', 0, 1);
+                                                                                ('VT2', 'VT2', 'vt3_2.jpg', 0, 1);
 
 -- --------------------------------------------------------
 
@@ -274,8 +306,8 @@ CREATE TABLE `settings` (
 
 INSERT INTO `settings` (`property`, `value`) VALUES
                                                  ('chat_enabled', 'True'),
-                                                 ('reservations_enabled_from', '2025-08-08 06:56:00'),
-                                                 ('reservations_enabled_to', '2025-08-15 09:05:00'),
+                                                 ('reservations_enabled_from', '2025-11-25 20:00:00'),
+                                                 ('reservations_enabled_to', '2025-12-05 08:00:00'),
                                                  ('reservations_status', 'OPEN');
 
 -- --------------------------------------------------------
@@ -325,14 +357,14 @@ CREATE TABLE `users_access_tokens` (
 --
 ALTER TABLE `announcements`
     ADD PRIMARY KEY (`id`),
-  ADD KEY `announcements_fk1` (`author_id`);
+    ADD KEY `announcements_fk1` (`author_id`);
 
 --
 -- Indexy pro tabulku `chat`
 --
 ALTER TABLE `chat`
     ADD PRIMARY KEY (`uuid`),
-  ADD KEY `chat_user_id` (`user_id`);
+    ADD KEY `chat_user_id` (`user_id`);
 
 --
 -- Indexy pro tabulku `computers`
@@ -351,8 +383,8 @@ ALTER TABLE `logs`
 --
 ALTER TABLE `reservations`
     ADD PRIMARY KEY (`user_id`),
-  ADD UNIQUE KEY `computer_id` (`computer_id`),
-  ADD KEY `rooms_fk` (`room_id`);
+    ADD UNIQUE KEY `computer_id` (`computer_id`),
+    ADD KEY `rooms_fk` (`room_id`);
 
 --
 -- Indexy pro tabulku `rooms`
@@ -371,14 +403,14 @@ ALTER TABLE `settings`
 --
 ALTER TABLE `users`
     ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
+    ADD UNIQUE KEY `email` (`email`);
 
 --
 -- Indexy pro tabulku `users_access_tokens`
 --
 ALTER TABLE `users_access_tokens`
     ADD PRIMARY KEY (`platform`,`user_id`),
-  ADD KEY `users_access_tokens_fk1` (`user_id`);
+    ADD KEY `users_access_tokens_fk1` (`user_id`);
 
 --
 -- AUTO_INCREMENT pro tabulky
@@ -423,8 +455,8 @@ ALTER TABLE `chat`
 --
 ALTER TABLE `reservations`
     ADD CONSTRAINT `computers_fk` FOREIGN KEY (`computer_id`) REFERENCES `computers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `rooms_fk` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `users_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+    ADD CONSTRAINT `rooms_fk` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    ADD CONSTRAINT `users_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Omezení pro tabulku `users_access_tokens`
@@ -507,11 +539,11 @@ INSERT INTO `users` (`id`, `display_name`, `email`, `password`, `class`, `gender
 (25, 'Alena Sedláčková', 'alena.sedlackova@example.com', '_', '1.C', 'FEMALE', '2025-06-14 14:59:34', NULL, 'STUDENT', NULL, NULL);
 
 INSERT INTO `reservations` (`user_id`, `room_id`, `computer_id`, `note`, `created_at`) VALUES
-(3, NULL, 'VT3_PC15', NULL, '2025-06-14 14:57:51'),
+(3, NULL, 'ITH2_PC15', NULL, '2025-06-14 14:57:51'),
 (5, 'DELICKA', NULL, NULL, '2025-06-14 14:57:51'),
-(7, NULL, 'VT3_PC10', NULL, '2025-06-14 15:07:53'),
+(7, NULL, 'ITH2_PC10', NULL, '2025-06-14 15:07:53'),
 (8, 'DELICKA', NULL, NULL, '2025-06-14 15:12:52'),
 (9, NULL, 'VRR_PC06', NULL, '2025-06-14 15:12:52'),
 (13, NULL, 'VRR_PC07', NULL, '2025-06-14 15:12:52'),
-(23, NULL, 'VT3_PC06', NULL, '2025-06-14 15:07:53'),
+(23, NULL, 'ITH2_PC06', NULL, '2025-06-14 15:07:53'),
 (24, 'VRR', NULL, NULL, '2025-06-14 15:13:33');

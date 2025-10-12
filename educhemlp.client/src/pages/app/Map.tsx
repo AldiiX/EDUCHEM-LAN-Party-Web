@@ -1,19 +1,35 @@
 import {AppLayout} from "./AppLayout.tsx";
-import {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import "./Map.scss";
 import {PieChart} from "../../components/PieChart.tsx";
 import {Avatar} from "../../components/Avatar.tsx";
 import {Link} from "react-router-dom";
 import {SpiralUpper} from "../../components/reservation_areas/SpiralUpper.tsx";
-import {SpiralLower} from "../../components/reservation_areas/SpiralLower.tsx";
 import MoveableMap from "../../components/MoveableMap.tsx";
+import {ITHub} from "../../components/reservation_areas/ITHub.tsx";
+
+
+export const areas = [
+    // { id: "havran-kulturni-dum", name: "Kulturní dům Havraň" },
+    { id: "ithub", name: "IT Hub (Spodní patro)", component: ITHub },
+    { id: "spiral-upper", name: "Spirála (Horní patro)", component: SpiralUpper },
+];
+
+export function RoomMap({ selectedArea, selectReservation }: {
+    selectedArea: string;
+    selectReservation: (element: HTMLElement) => void;
+}) {
+    // nalezeni komponenty dle vybrane oblasti
+    const AreaComponent = areas.find(a => a.id === selectedArea)?.component;
+
+    // vykresleni s predanim props
+    return AreaComponent ? (
+        <AreaComponent onHoverReservation={selectReservation} />
+    ) : null;
+}
 
 export const Map = () => {
-    const areas = [
-        //{ id: "havran-kulturni-dum", name: "Kulturní dům Havraň" },
-        { id: "spiral-upper", name: "Spirála - Horní patro" },
-        { id: "spiral-lower", name: "Spirála - Dolní patro" },
-    ];
+
 
     const [selectedArea, setSelectedArea] = useState<string>(areas[0].id);
     const [scale, setScale] = useState<number>(1);
@@ -115,14 +131,7 @@ export const Map = () => {
 
             <div className="map">
                 <MoveableMap displayControls={true}>
-                    { 
-                        selectedArea === "spiral-upper" ? (
-                            <SpiralUpper />
-                        ) : selectedArea === "spiral-lower" ? (
-                            // <SpiralLower />
-                            null
-                        ) : null
-                    }
+                    <RoomMap selectedArea={selectedArea} selectReservation={() => {}} />
                 </MoveableMap>
             </div>
 
