@@ -11,6 +11,7 @@ export const Login = () => {
     const [password, setPassword] = useState("");
     const [email, setEmail] = useState("");
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const login = async (event: React.FormEvent) => {
@@ -20,6 +21,9 @@ export const Login = () => {
             setError("Vyplňte všechna pole.");
             return;
         }
+
+        setIsLoading(true);
+        setError("");
 
         const res = await fetch("/api/v1/me", {
             method: "POST",
@@ -32,6 +36,7 @@ export const Login = () => {
         if (!res.ok) {
             setPassword("");
             setError("Účet s tímto uživatelským jménem a heslem neexistuje.");
+            setIsLoading(false);
             return;
         }
 
@@ -59,9 +64,11 @@ export const Login = () => {
                         autoComplete="off"
                         onSubmit={login}
                     >
-                        <TextField autoComplete={"educhemlp_email"}    className={"email"} id="email" value={email} label="E-mail" variant="outlined" type="text" name={"email"} onChange={(event) => { setEmail((event.target as HTMLInputElement).value) }} />
-                        <TextField autoComplete={"educhemlp_password"} className={"password"} id="password" value={password} label="Heslo" variant="outlined" type="password" name={"password"} onChange={(event) => { setPassword((event.target as HTMLInputElement).value) }} />
-                        <button className={"submit-button"} type="submit">Login</button>
+                        <TextField autoComplete={"educhemlp_email"}    className={"email"} id="email" value={email} label="E-mail" variant="outlined" type="text" name={"email"} onChange={(event) => { setEmail((event.target as HTMLInputElement).value) }} disabled={isLoading} />
+                        <TextField autoComplete={"educhemlp_password"} className={"password"} id="password" value={password} label="Heslo" variant="outlined" type="password" name={"password"} onChange={(event) => { setPassword((event.target as HTMLInputElement).value) }} disabled={isLoading} />
+                        <button className={"submit-button"} type="submit" disabled={isLoading}>
+                            {isLoading ? <div className="loader"></div> : "Login"}
+                        </button>
                         <p>{error}</p>
                     </Box>
                 </div>
