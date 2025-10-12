@@ -85,71 +85,82 @@ public sealed class ChatWebSocketEndpoint(
 
         // hlavni receive loop
         var buffer = new byte[4 * 1024];
-        while (!ct.IsCancellationRequested && socket.State == WebSocketState.Open) {
-            WebSocketReceiveResult result;
-            try {
-                result = await socket.ReceiveAsync(buffer, ct);
-            } catch (OperationCanceledException) {
-                break;
-            } catch (WebSocketException) {
-                break;
-            }
+        try {
+            while (!ct.IsCancellationRequested && socket.State == WebSocketState.Open) {
+                WebSocketReceiveResult result;
+                try {
+                    result = await socket.ReceiveAsync(buffer, ct);
+                } catch (OperationCanceledException) {
+                    break;
+                } catch (WebSocketException) {
+                    break;
+                }
 
-            if (result.MessageType == WebSocketMessageType.Close) break;
+                if (result.MessageType == WebSocketMessageType.Close) break;
 
-            var messageString = Encoding.UTF8.GetString(buffer, 0, result.Count);
-            if (string.IsNullOrWhiteSpace(messageString)) continue;
+                var messageString = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                if (string.IsNullOrWhiteSpace(messageString)) continue;
 
-            if (!await EnsureChatEnabled(socket, ct)) break;
+                if (!await EnsureChatEnabled(socket, ct)) break;
 
-            JsonNode? messageJson;
-            try {
-                messageJson = JsonNode.Parse(messageString);
-            } catch (JsonException) {
-                continue;
-            }
+                JsonNode? messageJson;
+                try {
+                    messageJson = JsonNode.Parse(messageString);
+                } catch (JsonException) {
+                    continue;
+                }
 
-            var action = messageJson?["action"]?.ToString();
-            if (action is null) continue;
+                var action = messageJson?["action"]?.ToString();
+                if (action is null) continue;
 
-            switch (action) {
-                case "sendMessage": {
-                    var text = messageJson?["message"]?.ToString();
-                    if (string.IsNullOrWhiteSpace(text)) break;
+                switch (action) {
+                    case "sendMessage": {
+                        var text = messageJson?["message"]?.ToString();
+                        if (string.IsNullOrWhiteSpace(text)) break;
 
-                    var saved = await SaveMessageToDbAsync(client, text, ct);
-                    if (saved is null) {
-                        await client.SendAsync(new JsonObject {
-                            ["action"] = "error",
-                            ["message"] = "Chyba při ukládání zprávy do databáze."
-                        }.ToJsonString(JsonSerializerOptions.Web), ct);
+                        var saved = await SaveMessageToDbAsync(client, text, ct);
+                        if (saved is null) {
+                            await client.SendAsync(new JsonObject {
+                                    ["action"] = "error",
+                                    ["message"] = "Chyba při ukládání zprávy do databáze."
+                                }.ToJsonString(JsonSerializerOptions.Web), ct
+                            );
+                            break;
+                        }
+
+                        await hub.BroadcastAsync("chat", saved.ToJsonString(JsonSerializerOptions.Web), ct);
+                    }
                         break;
-                    }
 
-                    await hub.BroadcastAsync("chat", saved.ToJsonString(JsonSerializerOptions.Web), ct);
-                } break;
-
-                case "deleteMessage": {
-                    var uuid = messageJson?["uuid"]?.ToString();
-                    if (!string.IsNullOrWhiteSpace(uuid)) {
-                        await DeleteMessageAsync(client, uuid!, ct);
+                    case "deleteMessage": {
+                        var uuid = messageJson?["uuid"]?.ToString();
+                        if (!string.IsNullOrWhiteSpace(uuid)) {
+                            await DeleteMessageAsync(client, uuid!, ct);
+                        }
                     }
-                } break;
+                        break;
 
-                case "loadOlderMessages": {
-                    var beforeUuid = messageJson?["beforeUuid"]?.ToString();
-                    if (!string.IsNullOrWhiteSpace(beforeUuid)) {
-                        await SendOlderMessagesAsync(client, beforeUuid!, ct);
+                    case "loadOlderMessages": {
+                        var beforeUuid = messageJson?["beforeUuid"]?.ToString();
+                        if (!string.IsNullOrWhiteSpace(beforeUuid)) {
+                            await SendOlderMessagesAsync(client, beforeUuid!, ct);
+                        }
                     }
-                } break;
+                        break;
+                }
             }
         }
 
-        // odhlaseni klienta
-        hub.RemoveClient("chat", client.Id);
+        // po skonceni receivu
+        finally {
+            // odhlaseni klienta
+            hub.RemoveClient("chat", client.Id);
 
-        // poslat okamzity status po odhlaseni
-        await BroadcastConnectedUsersAsync(CancellationToken.None);
+            try { await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None); } catch { /* ignore */ }
+
+            // poslat okamzity status po odhlaseni
+            await BroadcastConnectedUsersAsync(CancellationToken.None);
+        }
     }
 
     // logistika
@@ -163,7 +174,7 @@ public sealed class ChatWebSocketEndpoint(
         // odpojit vsechny a vycistit
         var clients = hub.GetClients("chat").ToDictionary(c => c.Id, c => c);
         foreach (var c in clients.Values) {
-            await SafeCloseAsync(socket, WebSocketCloseStatus.NormalClosure, "Chat je vypnutý.", CancellationToken.None);
+            await c.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Chat je vypnutý.", CancellationToken.None);
             hub.RemoveClient("chat", c.Id);
         }
 

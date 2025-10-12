@@ -57,7 +57,7 @@ public static class Program {
             AbortOnConnectFail = false
         };
 
-        if (rpassword != null!) {
+        if (rpassword != null! && rpassword.Length > 0) {
             config.Password = rpassword;
         }
 

@@ -21,6 +21,8 @@ public sealed class WebSocketHub : IWebSocketHub {
 
     public void RemoveClient(string channel, uint clientId) {
         if (channels.TryGetValue(channel, out var dict)) {
+            var client = dict.GetValueOrDefault(clientId);
+            client?.Abort();
             dict.TryRemove(clientId, out _);
         }
     }
@@ -35,17 +37,36 @@ public sealed class WebSocketHub : IWebSocketHub {
     public async Task BroadcastAsync(string channel, string json, CancellationToken ct) {
         if (!channels.TryGetValue(channel, out var dict)) return;
         var list = dict.Values.ToList();
+        var clientsToRemove = new List<WSClient>();
+
         foreach (var c in list) {
             if (c.State != WebSocketState.Open) continue;
-            try { await c.SendAsync(json, ct); } catch { /* ignore */ }
+            try {
+                await c.SendAsync(json, ct);
+            } catch {
+                 clientsToRemove.Add(c);
+            }
+        }
+
+        // odebrani lidi, kteri uz nejsou pripojeni
+        foreach (var c in clientsToRemove) {
+            RemoveClient(channel, c.Id);
         }
     }
 
-    public async Task SendAsync(string channel, uint clientId, string json, CancellationToken ct) {
+    public async Task SendAsync(string channel, uint clientId, string payload, CancellationToken ct) {
         if (!channels.TryGetValue(channel, out var dict)) return;
         if (!dict.TryGetValue(clientId, out var c)) return;
-        if (c.State != WebSocketState.Open) return;
-        try { await c.SendAsync(json, ct); } catch { /* ignore */ }
+        if (c.State != WebSocketState.Open) {
+            RemoveClient(channel, clientId);
+            return;
+        }
+
+        try {
+            await c.SendAsync(payload, ct);
+        } catch {
+            RemoveClient(channel, clientId);
+        }
     }
 
     public void RegisterHeartbeat(string channel, Func<IWebSocketHub, CancellationToken, Task> provider) {

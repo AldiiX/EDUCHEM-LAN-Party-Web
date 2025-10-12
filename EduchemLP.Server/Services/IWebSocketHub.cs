@@ -16,7 +16,7 @@ public interface IWebSocketHub {
     Task BroadcastAsync(string channel, string json, CancellationToken ct);
 
     // odeslani zpravy konkretnimu klientovi v kanalu
-    Task SendAsync(string channel, uint clientId, string json, CancellationToken ct);
+    Task SendAsync(string channel, uint clientId, string payload, CancellationToken ct);
 
     // registrace status provideru pro heartbeat (callback se spusti kazdy tick)
     void RegisterHeartbeat(string channel, Func<IWebSocketHub, CancellationToken, Task> heartbeat);

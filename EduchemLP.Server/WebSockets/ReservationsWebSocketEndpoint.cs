@@ -81,107 +81,123 @@ public sealed class ReservationsWebSocketEndpoint(
 
         // hlavni receive loop
         var buffer = new byte[4 * 1024];
-        while (!ct.IsCancellationRequested && socket.State == WebSocketState.Open) {
-            WebSocketReceiveResult result;
-            try {
-                result = await socket.ReceiveAsync(buffer, ct);
-            } catch (OperationCanceledException) {
-                break;
-            } catch (WebSocketException) {
-                break;
-            }
+        try {
+            while (!ct.IsCancellationRequested && socket.State == WebSocketState.Open) {
+                WebSocketReceiveResult result;
+                try {
+                    result = await socket.ReceiveAsync(buffer, ct);
+                } catch (OperationCanceledException) {
+                    break;
+                } catch (WebSocketException) {
+                    break;
+                }
 
-            if (result.MessageType == WebSocketMessageType.Close) break;
+                if (result.MessageType == WebSocketMessageType.Close) break;
 
-            var messageString = Encoding.UTF8.GetString(buffer, 0, result.Count);
-            if (string.IsNullOrWhiteSpace(messageString)) continue;
+                var messageString = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                if (string.IsNullOrWhiteSpace(messageString)) continue;
 
-            JsonNode? messageJson;
-            try {
-                messageJson = JsonNode.Parse(messageString);
-            } catch (JsonException) {
-                continue;
-            }
+                JsonNode? messageJson;
+                try {
+                    messageJson = JsonNode.Parse(messageString);
+                } catch (JsonException) {
+                    continue;
+                }
 
-            var action = messageJson?["action"]?.ToString();
-            if (action is null) continue;
+                var action = messageJson?["action"]?.ToString();
+                if (action is null) continue;
 
-            // anonym muze posilat jen "disconnect"; ostatni akce vyzaduji login
-            if (sessionAccount is null && action != "disconnect") {
-                await client.SendAsync(new {
-                    action = "error",
-                    message = "Nejsi přihlášen."
-                }.ToJsonString(), ct);
-                continue;
-            }
-
-            switch (action) {
-                case "reserve": {
-                    if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
-
-                    // kontrola opravneni rezervovat
-                    if (sessionAccount is { EnableReservation: false }) {
-                        await client.SendAsync(new {
+                // anonym muze posilat jen "disconnect"; ostatni akce vyzaduji login
+                if (sessionAccount is null && action != "disconnect") {
+                    await client.SendAsync(new {
                             action = "error",
-                            message = "Tvůj účet nemá povolené rezervace."
-                        }.ToJsonString(), ct);
+                            message = "Nejsi přihlášen."
+                        }.ToJsonString(), ct
+                    );
+                    continue;
+                }
+
+                switch (action) {
+                    case "reserve": {
+                        if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
+
+                        // kontrola opravneni rezervovat
+                        if (sessionAccount is { EnableReservation: false }) {
+                            await client.SendAsync(new {
+                                    action = "error",
+                                    message = "Tvůj účet nemá povolené rezervace."
+                                }.ToJsonString(), ct
+                            );
+                            break;
+                        }
+
+                        var room = messageJson?["room"]?.ToString();
+                        var computer = messageJson?["computer"]?.ToString();
+                        if (string.IsNullOrWhiteSpace(room) && string.IsNullOrWhiteSpace(computer)) break;
+
+                        await using var conn = await db.GetOpenConnectionAsync(ct);
+                        if (conn is null) break;
+
+                        await using (var cmd = conn.CreateCommand()) {
+                            cmd.CommandText =
+                                """
+                                    DELETE FROM reservations WHERE user_id = @user_id;
+                                    INSERT INTO reservations (user_id, room_id, computer_id) VALUES (@user_id, @room_id, @computer_id);
+                                """;
+                            cmd.Parameters.AddWithValue("@user_id", sessionAccount!.Id);
+                            cmd.Parameters.AddWithValue("@room_id", (object?)room ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@computer_id", (object?)computer ?? DBNull.Value);
+                            await cmd.ExecuteNonQueryAsync(ct);
+                        }
+
+                        // posli novy stav vsem
+                        await BroadcastFullReservationInfoAsync(ct);
+
+                        // log
+                        _ = dbLogger.LogAsync(IDbLoggerService.LogType.INFO,
+                            $"Uživatel {sessionAccount.DisplayName} ({sessionAccount.Email}) rezervoval {room ?? computer}.",
+                            "reservation", ct
+                        );
+                    }
                         break;
+
+                    case "deleteReservation": {
+                        if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
+
+                        await using var conn = await db.GetOpenConnectionAsync(ct);
+                        if (conn is null) break;
+
+                        await using (var cmd = conn.CreateCommand()) {
+                            cmd.CommandText = "DELETE FROM reservations WHERE user_id = @user_id;";
+                            cmd.Parameters.AddWithValue("@user_id", sessionAccount!.Id);
+                            await cmd.ExecuteNonQueryAsync(ct);
+                        }
+
+                        await BroadcastFullReservationInfoAsync(ct);
+
+                        _ = dbLogger.LogAsync(IDbLoggerService.LogType.INFO,
+                            $"Uživatel {sessionAccount!.DisplayName} ({sessionAccount!.Email}) zrušil rezervaci.",
+                            "reservation", ct
+                        );
                     }
+                        break;
 
-                    var room = messageJson?["room"]?.ToString();
-                    var computer = messageJson?["computer"]?.ToString();
-                    if (string.IsNullOrWhiteSpace(room) && string.IsNullOrWhiteSpace(computer)) break;
-
-                    await using var conn = await db.GetOpenConnectionAsync(ct);
-                    if (conn is null) break;
-
-                    await using (var cmd = conn.CreateCommand()) {
-                        cmd.CommandText =
-                        """
-                            DELETE FROM reservations WHERE user_id = @user_id;
-                            INSERT INTO reservations (user_id, room_id, computer_id) VALUES (@user_id, @room_id, @computer_id);
-                        """;
-                        cmd.Parameters.AddWithValue("@user_id", sessionAccount!.Id);
-                        cmd.Parameters.AddWithValue("@room_id", (object?)room ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@computer_id", (object?)computer ?? DBNull.Value);
-                        await cmd.ExecuteNonQueryAsync(ct);
+                    case "disconnect": {
+                        await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by user", ct);
                     }
-
-                    // posli novy stav vsem
-                    await BroadcastFullReservationInfoAsync(ct);
-
-                    // log
-                    _ = dbLogger.LogAsync(IDbLoggerService.LogType.INFO, $"Uživatel {sessionAccount.DisplayName} ({sessionAccount.Email}) rezervoval {room ?? computer}.", "reservation", ct);
-                } break;
-
-                case "deleteReservation": {
-                    if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
-
-                    await using var conn = await db.GetOpenConnectionAsync(ct);
-                    if (conn is null) break;
-
-                    await using (var cmd = conn.CreateCommand()) {
-                        cmd.CommandText = "DELETE FROM reservations WHERE user_id = @user_id;";
-                        cmd.Parameters.AddWithValue("@user_id", sessionAccount!.Id);
-                        await cmd.ExecuteNonQueryAsync(ct);
-                    }
-
-                    await BroadcastFullReservationInfoAsync(ct);
-
-                    _ = dbLogger.LogAsync(IDbLoggerService.LogType.INFO, $"Uživatel {sessionAccount!.DisplayName} ({sessionAccount!.Email}) zrušil rezervaci.", "reservation", ct);
-                } break;
-
-                case "disconnect": {
-                    await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by user", ct);
-                } break;
+                        break;
+                }
             }
         }
 
-        // odhlaseni klienta
-        hub.RemoveClient("reservations", client.Id);
+        // pri konci receive loopu
+        finally {
+            // odhlaseni klienta
+            hub.RemoveClient("reservations", client.Id);
 
-        // poslat okamzity status po odhlaseni
-        await hub.BroadcastAsync("reservations", await BuildStatusPayloadAsync(hub, CancellationToken.None), CancellationToken.None);
+            // poslat okamzity status po odhlaseni
+            await hub.BroadcastAsync("reservations", await BuildStatusPayloadAsync(hub, CancellationToken.None), CancellationToken.None);
+        }
     }
 
 
@@ -284,16 +300,7 @@ public sealed class ReservationsWebSocketEndpoint(
             rooms = roomsLocal
         }.ToJsonString();
 
-        await SafeSendAsync(client, payload, ct);
-    }
-
-    private static async Task SafeSendAsync(ReservationsClient client, string json, CancellationToken ct) {
-        if (client.State != WebSocketState.Open) return;
-        try {
-            await client.SendAsync(json, ct);
-        } catch {
-            //
-        }
+        await hub.SendAsync("reservations", client.Id, payload, ct);
     }
 
     private async Task RegisterHeartbeatAsync() {
