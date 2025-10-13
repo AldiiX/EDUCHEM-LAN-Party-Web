@@ -34,6 +34,7 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
         if (acc == null || acc.Password != sessionAcc.Password) return null;
 
         http.HttpContext!.Items["loggedaccount"] = acc;
+        http.HttpContext!.Session.SetString("loggedaccount", JsonSerializer.Serialize(acc, JsonSerializerOptions.Web));
         return acc;
     }
 
