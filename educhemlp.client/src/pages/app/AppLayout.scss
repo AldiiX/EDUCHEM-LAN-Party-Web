@@ -404,9 +404,10 @@ a {
             }
 
             >.loggeduser {
-                right: 24px;
+                right: 5vw !important;
+                top: 24px !important;
 
-                *:not(.button-primary) {
+                *:not(.button-primary):not(a) {
                     display: none;
                 }
             }
