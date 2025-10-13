@@ -121,6 +121,17 @@ public sealed class ReservationsWebSocketEndpoint(
                     case "reserve": {
                         if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
 
+                        // re-fetch account data to get latest enable_reservation status
+                        sessionAccount = await auth.ReAuthAsync(ct);
+                        if (sessionAccount is null) {
+                            await client.SendAsync(new {
+                                    action = "error",
+                                    message = "Nejsi přihlášen."
+                                }.ToJsonString(), ct
+                            );
+                            break;
+                        }
+
                         // kontrola opravneni rezervovat
                         if (sessionAccount is { EnableReservation: false }) {
                             await client.SendAsync(new {
@@ -163,6 +174,17 @@ public sealed class ReservationsWebSocketEndpoint(
 
                     case "deleteReservation": {
                         if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
+
+                        // re-fetch account data to ensure user is still authenticated
+                        sessionAccount = await auth.ReAuthAsync(ct);
+                        if (sessionAccount is null) {
+                            await client.SendAsync(new {
+                                    action = "error",
+                                    message = "Nejsi přihlášen."
+                                }.ToJsonString(), ct
+                            );
+                            break;
+                        }
 
                         await using var conn = await db.GetOpenConnectionAsync(ct);
                         if (conn is null) break;
