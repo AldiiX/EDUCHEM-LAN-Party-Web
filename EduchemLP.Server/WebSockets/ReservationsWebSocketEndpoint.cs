@@ -69,7 +69,7 @@ public sealed class ReservationsWebSocketEndpoint(
 
         // registrace klienta do kanalu "reservations" a poslat vsem okamzity status
         hub.AddClient("reservations", client);
-        await hub.BroadcastAsync("reservations", await BuildStatusPayloadAsync(hub, ct), ct);
+        await BroadcastStatusAsync(ct);
         await SendFullReservationInfoAsync(client, ct);
 
 
@@ -196,13 +196,26 @@ public sealed class ReservationsWebSocketEndpoint(
             hub.RemoveClient("reservations", client.Id);
 
             // poslat okamzity status po odhlaseni
-            await hub.BroadcastAsync("reservations", await BuildStatusPayloadAsync(hub, CancellationToken.None), CancellationToken.None);
+            await BroadcastStatusAsync(CancellationToken.None);
         }
     }
 
 
 
     // ===== logistika =====
+    private async Task BroadcastStatusAsync(CancellationToken ct) {
+        // pro kazdeho prijemce je obsah trochu jiny (schovani informaci pro anonymni)
+        var list = hub.GetClients("reservations").ToList();
+
+        foreach (var r in list) {
+            if (r.State != WebSocketState.Open) continue;
+
+            var receiver = (ReservationsClient)r;
+            var payload = await BuildStatusPayloadAsync(receiver, ct);
+            await hub.SendAsync("reservations", receiver.Id, payload, ct);
+        }
+    }
+
     private async Task BroadcastFullReservationInfoAsync(CancellationToken ct) {
         var clients = hub.GetClients("reservations").ToList().Cast<ReservationsClient>();
         foreach (var c in clients) {
@@ -307,23 +320,27 @@ public sealed class ReservationsWebSocketEndpoint(
         if (Interlocked.CompareExchange(ref heartbeatRegistered, 1, 0) == 0) {
             hub.RegisterHeartbeat("reservations", async (hub2, token) => {
                 // posli aktualni status kazdemu prijemci zvlast (muze byt personalizovany)
-                var payload = await BuildStatusPayloadAsync(hub2, token);
+                var list = hub2.GetClients("reservations").ToList();
+                
+                foreach (var r in list) {
+                    if (r.State != WebSocketState.Open) continue;
 
-                foreach (var r in hub2.GetClients("reservations").ToList()) {
-                    await hub2.SendAsync("reservations", r.Id, payload, token);
+                    var receiver = (ReservationsClient)r;
+                    var payload = await BuildStatusPayloadAsync(receiver, token);
+                    await hub2.SendAsync("reservations", receiver.Id, payload, token);
                 }
             });
         }
     }
 
-    private async Task<string> BuildStatusPayloadAsync(IWebSocketHub hub0, CancellationToken ct) {
-        var list = hub0.GetClients("reservations").ToList();
+    private async Task<string> BuildStatusPayloadAsync(ReservationsClient receiver, CancellationToken ct) {
+        var list = hub.GetClients("reservations").ToList();
         var connectedUsers = new JsonArray();
         foreach (var client in list.DistinctBy(x => x.Id)) {
             var c = (ReservationsClient)client;
 
             // pokud c nebo prijemce je anonym, posle se "unknown"
-            if (c.AccountType is null) {
+            if (c.AccountType is null || receiver.AccountType is null) {
                 connectedUsers.Add("unknown");
                 continue;
             }
