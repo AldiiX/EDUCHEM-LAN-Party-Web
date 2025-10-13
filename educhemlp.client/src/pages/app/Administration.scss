@@ -228,4 +228,13 @@
             }
         }
     }
+
+    .appsettings-tab {
+        flex-direction: column;
+        gap: 48px;
+
+        .appsettings {
+            max-width: 100%;
+        }
+    }
 }
