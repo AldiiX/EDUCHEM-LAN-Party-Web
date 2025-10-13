@@ -186,7 +186,7 @@ export const MoveableMap: React.FC<MapProps> = ({ children = null, displayContro
                     <div
                         className={styles.zoomOut}
                         onClick={() => {
-                            const newScale = Math.max(0.4, scale - 0.1);
+                            const newScale = Math.max(0.3, scale - 0.1);
                             setScale(newScale);
                         }}
                     ></div>
