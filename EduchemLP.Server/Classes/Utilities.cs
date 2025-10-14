@@ -81,17 +81,11 @@ public static class Utilities {
     public static bool VerifyPassword(in string password, in string hashedPassword) {
         if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(hashedPassword)) return false;
 
-        // Check if the hashed password is in a valid BCrypt format
-        // BCrypt hashes start with $2a$, $2b$, or $2y$ followed by cost and salt
-        if (!hashedPassword.StartsWith("$2a$") && !hashedPassword.StartsWith("$2b$") && !hashedPassword.StartsWith("$2y$")) {
-            return false;
-        }
-
         try {
             return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         }
         catch (BCrypt.Net.SaltParseException) {
-            // If we still get a salt parse exception, return false instead of throwing
+            // If we get a salt parse exception, return false instead of throwing
             return false;
         }
     }
