@@ -9,3 +9,5 @@ EduchemLP.sln.DotSettings.user
 /educhemlp.desktop/node_modules
 /educhemlp.desktop/dist
 **/.npm
+obj
+bin
