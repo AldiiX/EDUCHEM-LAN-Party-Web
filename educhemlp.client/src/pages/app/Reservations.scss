@@ -576,6 +576,26 @@
                 }
             }
 
+            >.reservationsaccountblocked {
+                background-color: var(--accent-color);
+                display: grid;
+                gap: 8px;
+
+                ::selection {
+                    background-color: var(--accent-color-text);
+                    color: var(--text-color);
+                }
+
+                p,h1 {
+                    color: var(--accent-color-text) !important;
+                    width: fit-content;
+                }
+
+                p {
+                    opacity: calc(2/3);
+                }
+            }
+
             >.mainstats {
                 >p {
                     display: flex;

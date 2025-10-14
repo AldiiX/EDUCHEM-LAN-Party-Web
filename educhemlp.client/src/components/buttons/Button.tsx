@@ -1,9 +1,30 @@
 import {ButtonStyle, ButtonType} from "./ButtonProps.ts";
 import { type ButtonProps } from "./ButtonProps.ts";
 
-export const Button = ({ text = "Odeslat", icon = null, onClick = () => {}, style = ButtonStyle.NORMAL, type, className = "", form = null, buttonType = "button", name = null, disabled = false}: ButtonProps) => {
+export const Button = ({
+                           text = "Odeslat",
+                           icon = null,
+                           onClick = () => {},
+                           style = ButtonStyle.NORMAL,
+                           type,
+                           className = "",
+                           form = null,
+                           buttonType = "button",
+                           name = null,
+                           disabled = false,
+                           loading = false
+}: ButtonProps) => {
+    if(loading) {
+        return (
+            <button className={`components-buttons-buttontsx_button button-${type} style-${style} ${className} button-loading`} disabled>
+                <div className="loading-spinner"></div>
+                &nbsp;
+            </button>
+        );
+    }
+
     return (
-        <button className={`button-${type} style-${style} ${className}`} onClick={onClick} {...form ? { form: form } : {}} type={buttonType} { ...name ? { name: name } : {} } { ...disabled ? { disabled: disabled } : {} }>
+        <button className={`components-buttons-buttontsx_button button-${type} style-${style} ${className}`} onClick={onClick} {...form ? { form: form } : {}} type={buttonType} { ...name ? { name: name } : {} } { ...disabled ? { disabled: disabled } : {} }>
             {
                 icon ?
                     <div className={"icon"} style={{ maskImage: `url(${icon})`}}></div>

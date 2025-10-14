@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
@@ -291,20 +292,12 @@ public class APIv1(
 
         var array = new JsonArray();
         while(await reader.ReadAsync(ct)) {
-            var obj = new JsonObject {
-                ["id"] = reader.GetInt32("id"),
-                ["email"] = reader.GetString("email"),
-                ["name"] = reader.GetString("display_name"),
-                ["class"] = reader.GetStringOrNull("class"),
-                ["gender"] = reader.GetStringOrNull("gender"),
-                ["type"] = reader.GetString("account_type"),
-                ["lastUpdated"] = reader.GetDateTime("last_updated"),
-                ["lastLoggedIn"] = reader.GetStringOrNull("last_logged_in") != null ? (DateTime)reader.GetValue("last_logged_in") : null,
-                ["avatar"] = reader.GetStringOrNull("avatar"),
-                ["banner"] = reader.GetStringOrNull("banner"),
-            };
+            var u = JsonSerializer.SerializeToNode(new Account(reader), JsonSerializerOptions.Web);
+            if(u == null) continue;
 
-            array.Add(obj);
+            u.AsObject().Remove("password");
+
+            array.Add(u);
         }
 
         return new JsonResult(array);
@@ -448,6 +441,7 @@ public class APIv1(
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
         Account.AccountType? accountType = body.TryGetValue("type", out var _accountType) ? Enum.TryParse(_accountType?.ToString(), out Account.AccountType _ac) ? _ac : null : null;
         Account.AccountGender? gender = body.TryGetValue("gender", out var _gender) ? Enum.TryParse(_gender?.ToString(), out Account.AccountGender _g) ? _g : null : null;
+        bool? enableReservation = body.TryGetValue("enableReservation", out var _enableReservation) ? bool.TryParse(_enableReservation?.ToString(), out var _er) ? _er : null : null;
         email = email == "" ? null : email?.Trim();
         displayName = displayName == "" ? null : displayName?.Trim();
         @class = @class == "" ? null : @class?.Trim();
@@ -477,6 +471,7 @@ public class APIv1(
                 `class`=@class,
                 `account_type`=IF(@accountType IS NULL, account_type, @accountType),
                 `gender`=IF(@gender IS NULL, gender, @gender),
+                `enable_reservation`=IF(@enableReservation IS NULL, enable_reservation, @enableReservation),
                 `last_updated`=NOW()
             WHERE id=@id;
             """, conn
@@ -488,6 +483,7 @@ public class APIv1(
         command.Parameters.AddWithValue("@class", @class);
         command.Parameters.AddWithValue("@accountType", accountType.ToString()?.ToUpper());
         command.Parameters.AddWithValue("@gender", gender.ToString()?.ToUpper());
+        command.Parameters.AddWithValue("@enableReservation", enableReservation);
 
 
         // zapsani do logu

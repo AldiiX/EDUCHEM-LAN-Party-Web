@@ -9,6 +9,7 @@ export interface ButtonProps {
     buttonType?: "button" | "submit" | "reset";
     name?: string | null;
     disabled?: boolean;
+    loading?: boolean;
 }
 export enum ButtonType {
     PRIMARY = "primary",
