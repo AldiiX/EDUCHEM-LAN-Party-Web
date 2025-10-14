@@ -334,7 +334,7 @@ public class APIv1(
         // zapassani do logu
         await dbLogger.LogInfoAsync($"Uživatel {account.DisplayName} ({account.Email}) byl vytvořen uživatelem {loggedUser.DisplayName} ({loggedUser.Email}).", "user-create", ct);
 
-        return new NoContentResult();
+        return new JsonResult(new { success = true, message = "Uživatel byl vytvořen." });
     }
 
     [HttpDelete("adm/users")]
