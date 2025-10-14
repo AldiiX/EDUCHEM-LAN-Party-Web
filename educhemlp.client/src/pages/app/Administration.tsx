@@ -15,8 +15,7 @@ import {
     enumEquals,
     enumIsGreater,
     enumIsGreaterOrEquals,
-    enumIsSmaller,
-    getAppSettings
+    enumIsSmaller
 } from "../../utils.ts";
 import {create} from "zustand";
 import {ButtonStyle, ButtonType} from "../../components/buttons/ButtonProps.ts";
@@ -122,7 +121,7 @@ function translateGender(gender: string | null | undefined) {
     }
 }
 
-function translateAccountType(type: AccountType | null | undefined, gender: AccountGender | null | undefined) {
+function translateAccountType(type: AccountType | null | undefined, gender: AccountGender | null | undefined = null) {
     let g = String(gender).toLowerCase();
 
     switch (String(type).toUpperCase()) {
@@ -499,26 +498,26 @@ const UsersTab = () => {
                                     <div className="icon" style={{maskImage: `url(/images/icons/account.svg)`}}></div>
                                     {
                                         !userModalEditMode ? (
-                                            <p>{translateAccountType(selectedUser?.type)}</p>
+                                            <p>{translateAccountType(selectedUser?.type, selectedUser?.gender)}</p>
                                         ) : (
                                             <select name="accountType" defaultValue={selectedUser?.type}>
-                                                <option value="STUDENT">Student</option>
+                                                <option value="STUDENT">{translateAccountType("STUDENT" as any, selectedUser?.gender )}</option>
 
                                                 {
                                                     enumIsGreater(loggedUser?.type?.toString(), AccountType, AccountType.TEACHER) ? (
-                                                        <option value="TEACHER">Učitel</option>
+                                                        <option value="TEACHER">{translateAccountType("TEACHER" as any, selectedUser?.gender )}</option>
                                                     ) : null
                                                 }
 
                                                 {
                                                     enumIsGreater(loggedUser?.type?.toString(), AccountType, AccountType.ADMIN) ? (
-                                                        <option value="ADMIN">Admin</option>
+                                                        <option value="ADMIN">{translateAccountType("ADMIN" as any, selectedUser?.gender )}</option>
                                                     ) : null
                                                 }
 
                                                 {
                                                     enumIsGreaterOrEquals(loggedUser?.type?.toString(), AccountType, AccountType.SUPERADMIN) ? (
-                                                        <option value="SUPERADMIN">Superadmin</option>
+                                                        <option value="SUPERADMIN">{translateAccountType("SUPERADMIN" as any, selectedUser?.gender )}</option>
                                                     ) : null
                                                 }
                                             </select>
