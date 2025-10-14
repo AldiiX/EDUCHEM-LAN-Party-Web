@@ -9,6 +9,10 @@ namespace EduchemLP.Server.Classes.Objects;
 public partial class Account {
     public int Id { get; private set; }
     public string DisplayName { get; private set; }
+
+    [Obsolete("Use DisplayName")]
+    public string Name => DisplayName;
+
     public string Email { get; private set; }
     public string Password { get; private set; }
     public string? Class { get; private set; }
@@ -16,13 +20,16 @@ public partial class Account {
     public string? Banner { get; private set; }
     public AccountType Type { get; private set; }
     public DateTime LastUpdated { get; private set; }
+    public DateTime? LastLoggedIn { get; private set; }
     public AccountGender? Gender { get; private set; }
     public List<AccountAccessToken> AccessTokens { get; private set; }
 
     public bool EnableReservation { get; private set; }
 
+
+
     [JsonConstructor]
-    public Account(int id, string displayName, string email, string password, string? @class, AccountType type, DateTime lastUpdated, AccountGender? gender, string? avatar, string? banner, List<AccountAccessToken>? accessTokens, bool enableReservation = false) {
+    public Account(int id, string displayName, string email, string password, string? @class, AccountType type, DateTime lastUpdated, DateTime? lastLoggedIn, AccountGender? gender, string? avatar, string? banner, List<AccountAccessToken>? accessTokens, bool enableReservation = false) {
         Id = id;
         DisplayName = displayName;
         Class = @class;
@@ -30,6 +37,7 @@ public partial class Account {
         Email = email;
         Type = type;
         LastUpdated = lastUpdated;
+        LastLoggedIn = lastLoggedIn;
         Avatar = avatar;
         Banner = banner;
         Gender = gender;
@@ -45,6 +53,7 @@ public partial class Account {
         reader.GetStringOrNull("class"),
         Enum.TryParse(reader.GetString("account_type"), out Account.AccountType _ac) ? _ac : Account.AccountType.STUDENT,
         reader.GetDateTime("last_updated"),
+        reader.GetValueOrNull<DateTime>("last_logged_in"),
         Enum.TryParse<Account.AccountGender>(reader.GetStringOrNull("gender"), out var _g ) ? _g : null,
         reader.GetStringOrNull("avatar"),
         reader.GetStringOrNull("banner"),

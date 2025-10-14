@@ -24,6 +24,9 @@ const useReservationsStore = create((set: any) => ({
     setSelectedReservation: (reservation: SelectedReservation | null) => set({ selectedReservation: reservation }),
 
     socket: { current: null } as MutableRefObject<WebSocket | null>,
+
+    selectedReservationLoadingButton: false as boolean,
+    setSelectedReservationLoadingButton: (loading: boolean) => set({ selectedReservationLoadingButton: loading }),
 }));
 
 
@@ -87,6 +90,8 @@ const SelectedReservation = () => {
     const setSelectedReservation = useReservationsStore((state) => state.setSelectedReservation);
     const socket = useReservationsStore((state) => state.socket);
     const appSettings: AppSettings = useStore((state) => state.appSettings);
+    const buttonLoading = useReservationsStore((state) => state.selectedReservationLoadingButton);
+    const setButtonLoading = useReservationsStore((state) => state.setSelectedReservationLoadingButton);
 
     const reserve = async (room: string | null, computer: string | null) => {
         if(!appSettings.reservationsEnabledRightNow) {
@@ -99,6 +104,7 @@ const SelectedReservation = () => {
             return;
         }
 
+        setButtonLoading(true);
         socket.current.send(JSON.stringify({
             action: "reserve",
             room: room,
@@ -114,6 +120,7 @@ const SelectedReservation = () => {
 
         if(!socket.current) return;
 
+        setButtonLoading(true);
         socket.current.send(JSON.stringify({ action: "deleteReservation" }));
     }
 
@@ -138,9 +145,7 @@ const SelectedReservation = () => {
         <>
             <Divider />
             <div className="buttons">
-                <p style={{ width: 205, color: "var(--accent-color)", textAlign: "justify" }}>
-                    Nejsi oprávněn{gender === "FEMALE" ? "a" : ""} k rezervaci. Důvodem může být to, že nemáš zaplacený vstup.
-                </p>
+                <p style={{ width: 205, color: "var(--accent-color)", textAlign: "justify" }}>Nejsi oprávněn{gender === "FEMALE" ? "a" : ""} k rezervaci.</p>
             </div>
         </>
     );
@@ -149,7 +154,7 @@ const SelectedReservation = () => {
         <>
             <Divider />
             <div className="buttons">
-                <Button type={type} text={text} icon={icon} onClick={onClick} />
+                <Button type={type} text={text} icon={icon} onClick={onClick} loading={buttonLoading} />
             </div>
         </>
     );
@@ -381,7 +386,7 @@ const SelectedReservation = () => {
 export const Reservations = () => {
     const [selectedArea, setSelectedArea] = useState<string>(areas[0].id);
     const [computers, setComputers] = useState<Computer[]>([]);
-    const [reservations, setReservations] = useState<Reservation[]>([]);
+    const [reservations, setReservations] = useState<Reservation[] | null>(null);
     const [rooms, setRooms] = useState<Room[]>([]);
     const [roomsCapacity, setRoomsCapacity] = useState<number>(0);
     const [occupiedPercent, setOccupiedPercent] = useState(0);
@@ -400,6 +405,7 @@ export const Reservations = () => {
     const setAppSettings = useStore((state) => state.setAppSettings);
     const [countdownText, setCountdownText] = useState<string | null>(null);
     const [countdownText2, setCountdownText2] = useState<string | null>(null);
+    const setSelectedReservationLoadingButton = useReservationsStore((state) => state.setSelectedReservationLoadingButton);
 
 
     // region ostatní funkce
@@ -418,6 +424,7 @@ export const Reservations = () => {
                     roomsCapac += room.limitOfSeats;
                 }
 
+                setSelectedReservationLoadingButton(false);
                 setRoomsCapacity(roomsCapac);
                 setSocketStatus(ReservationSocketStatus.CONNECTED);
             } break;
@@ -430,7 +437,6 @@ export const Reservations = () => {
             case"error": {
                 toast.error(object.message);
             } break;
-               
         }
     }
     
@@ -463,7 +469,7 @@ export const Reservations = () => {
         }
 
         // rezervace
-        for(let reservation of reservations) {
+        for(let reservation of (reservations ?? [])) {
             //reservation = reservation as unknown as Reservation[];
 
             // v pripade ze si uzivatel rezerovoval pc
@@ -495,7 +501,7 @@ export const Reservations = () => {
 
                 // prirazeni classy
                 element.classList.remove("available", "taken-by-you", "unavailable");
-                if (loggedUser?.id && reservations.filter(r => r.room?.id === room.id && r.user !== "unknown" && r.user.id === loggedUser?.id).length > 0) {
+                if (loggedUser?.id && (reservations?.filter(r => r.room?.id === room.id && r.user !== "unknown" && r.user.id === loggedUser?.id).length ?? 0) > 0) {
                     element.classList.add("taken-by-you");
                 }
 
@@ -602,7 +608,7 @@ export const Reservations = () => {
                 roomsAllSeats += room.limitOfSeats;
             }
 
-            setOccupiedPercent(Math.round(reservations.length / (computers.length + roomsAllSeats) * 100));
+            setOccupiedPercent(Math.round((reservations?.length ?? 0) / (computers.length + roomsAllSeats) * 100));
 
             if(selectedReservation !== null) {
                 selectReservation(selectedReservation.element);
@@ -612,7 +618,7 @@ export const Reservations = () => {
 
     // efekt co se zmeni kdyz se odloaduji rezervace
     useEffect(() => {
-        if(reservations.length === 0 && socketStatus === ReservationSocketStatus.DISCONNECTED) {
+        if(reservations?.length === 0 && socketStatus === ReservationSocketStatus.DISCONNECTED) {
             // compy
             for(let computer of computers) {
                 computer = computer as any;
@@ -795,11 +801,20 @@ export const Reservations = () => {
                     <div className={"stats" + (statsCollapsed ? " collapsed" : "")}>
                         <div className={"collapser" + (statsCollapsed ? " collapsed" : "" )} onClick={() => statsCollapsed ? setStatsCollapsed(false) : setStatsCollapsed(true) }></div>
 
+                        { // pokud uzivatel nema povolene rezervace, zobraz info (jinak se nezobrazi nic)
+                            loggedUser?.enableReservation === false && (
+                                <div className="block reservationsaccountblocked">
+                                    <h1>Tvůj účet nemá povolené rezervace!</h1>
+                                    <p>Důvodem může být to, že nemáš zaplacený vstup. Pokud si myslíš, že se jedná o chybu, kontaktuj administrátora.</p>
+                                </div>
+                            )
+                        }
+
                         <div className={"block mainstats"}>
                             <h1>Statistiky</h1>
-                            <p>Počet rezervovaných PC: <span>{reservations.filter(r => r.computer !== null).length}/{computers.length}</span></p>
-                            <p>Počet rezervovaných míst: <span>{reservations.filter(r => r.room !== null).length}/{roomsCapacity}</span></p>
-                            <p>Celkem rezervací: <span>{reservations.length}/{computers.length + roomsCapacity}</span></p>
+                            <p>Počet rezervovaných PC: <span>{reservations?.filter(r => r.computer !== null).length}/{computers.length}</span></p>
+                            <p>Počet rezervovaných míst: <span>{reservations?.filter(r => r.room !== null).length}/{roomsCapacity}</span></p>
+                            <p>Celkem rezervací: <span>{reservations?.length}/{computers.length + roomsCapacity}</span></p>
 
                             <div className="chart">
                                 <PieChart value={occupiedPercent} width={100} height={100} />
@@ -816,7 +831,7 @@ export const Reservations = () => {
 
                                 <div className={"reservations-parent"}>
                                     {
-                                        reservations.length === 0 ?
+                                        reservations === null! ? (
                                             [0,1,2,3,4].map((index) => {
                                                 return (
                                                     <div key={index} className={"reservation"}>
@@ -830,8 +845,12 @@ export const Reservations = () => {
                                                     </div>
                                                 );
                                             })
-                                            :
-                                            reservations.sort((a,b) => {
+                                        ) : reservations?.length === 0 ? (
+                                            <>
+                                                <p style={{ color: 'var(--text-color-3)' }}>Žádné rezervace ¯\_(ツ)_/¯</p>
+                                            </>
+                                        ) :
+                                            reservations?.sort((a,b) => {
                                                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                                             }).map((reservation, index) => {
                                                 reservation = reservation as any;

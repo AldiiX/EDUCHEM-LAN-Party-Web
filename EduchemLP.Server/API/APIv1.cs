@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
@@ -291,20 +292,12 @@ public class APIv1(
 
         var array = new JsonArray();
         while(await reader.ReadAsync(ct)) {
-            var obj = new JsonObject {
-                ["id"] = reader.GetInt32("id"),
-                ["email"] = reader.GetString("email"),
-                ["name"] = reader.GetString("display_name"),
-                ["class"] = reader.GetStringOrNull("class"),
-                ["gender"] = reader.GetStringOrNull("gender"),
-                ["type"] = reader.GetString("account_type"),
-                ["lastUpdated"] = reader.GetDateTime("last_updated"),
-                ["lastLoggedIn"] = reader.GetStringOrNull("last_logged_in") != null ? (DateTime)reader.GetValue("last_logged_in") : null,
-                ["avatar"] = reader.GetStringOrNull("avatar"),
-                ["banner"] = reader.GetStringOrNull("banner"),
-            };
+            var u = JsonSerializer.SerializeToNode(new Account(reader), JsonSerializerOptions.Web);
+            if(u == null) continue;
 
-            array.Add(obj);
+            u.AsObject().Remove("password");
+
+            array.Add(u);
         }
 
         return new JsonResult(array);

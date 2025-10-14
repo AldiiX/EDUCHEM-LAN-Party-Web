@@ -20,6 +20,7 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
         if (!Utilities.VerifyPassword(plainPassword, acc.Password)) return null;
         http.HttpContext!.Session.SetString("loggedaccount", JsonSerializer.Serialize(acc, JsonSerializerOptions.Web));
         http.HttpContext.Items["loggedaccount"] = acc;
+        _ = UpdateLastLoggedInAsync(acc, ct);
         return acc;
     }
 
@@ -33,6 +34,7 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
         var acc = await accounts.GetByIdAsync(sessionAcc.Id, ct);
         if (acc == null || acc.Password != sessionAcc.Password) return null;
 
+        _ = UpdateLastLoggedInAsync(acc, ct);
         http.HttpContext!.Items["loggedaccount"] = acc;
         http.HttpContext!.Session.SetString("loggedaccount", JsonSerializer.Serialize(acc, JsonSerializerOptions.Web));
         return acc;
@@ -99,5 +101,14 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
         }
 
         return await ReAuthAsync(ct);
+    }
+
+    public async Task<bool> UpdateLastLoggedInAsync(Account account, CancellationToken ct = default) {
+        await using var conn = await db.GetOpenConnectionAsync(ct);
+        const string sql = "update users set last_logged_in = now() where id = @id";
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("id", account.Id);
+        var affected = await cmd.ExecuteNonQueryAsync(ct);
+        return affected > 0;
     }
 }
