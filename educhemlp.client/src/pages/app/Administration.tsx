@@ -38,6 +38,7 @@ interface User {
     lastUpdated: string,
     lastLoggedIn: string,
     banner: string | null,
+    enableReservation: boolean,
 }
 
 interface AdminStore {
@@ -200,6 +201,7 @@ const UsersTab = () => {
         let cls: string | null = (userModal.querySelector("input[name='class']") as HTMLInputElement).value;
         const gender = (userModal.querySelector("select[name='gender']") as HTMLSelectElement).value;
         const accountType = (userModal.querySelector("select[name='accountType']") as HTMLSelectElement).value;
+        const enableReservation = (userModal.querySelector("input[name='enableReservation']") as HTMLInputElement)?.checked ?? false;
 
         if (name?.length < 3) {
             toast.error("Jméno musí mít alespoň 3 znaky.");
@@ -226,6 +228,7 @@ const UsersTab = () => {
                 class: cls,
                 type: accountType,
                 gender: gender,
+                enableReservation: enableReservation,
             })
         }).then(async res => {
             const data: BasicAPIResponse = await res.json();
@@ -491,6 +494,37 @@ const UsersTab = () => {
                                     }
                                 </div>
                             </div>
+
+                            {
+                                userModalEditMode && !userModalCreationMode ? (
+                                    <>
+                                        <div className="separator" style={{marginTop: 24}}></div>
+                                        <div className="switch-div">
+                                            <p>Povolit rezervace</p>
+
+                                            <Switch slotProps={{input: {role: 'switch', name: "enableReservation"}}}
+                                                    defaultChecked={selectedUser?.enableReservation ?? false} sx={{
+                                                '--Switch-thumbSize': '16px',
+                                                '--Switch-trackWidth': '40px',
+                                                '--Switch-trackHeight': '24px',
+                                                '--Switch-thumbBackground': 'var(--bg)',
+                                                '--Switch-trackBackground': 'var(--text-color-darker)',
+                                                '&:hover': {
+                                                    '--Switch-trackBackground': 'var(--text-color-3)',
+                                                },
+                                                [`&.${switchClasses.checked}`]: {
+                                                    '--Switch-trackBackground': 'var(--accent-color)',
+                                                    '--Switch-thumbBackground': 'var(--bg)',
+                                                    '&:hover': {
+                                                        '--Switch-trackBackground': 'var(--accent-color-darker)',
+                                                    },
+                                                },
+                                            }}
+                                            />
+                                        </div>
+                                    </>
+                                ) : null
+                            }
 
                             {
                                 userModalCreationMode ? (
