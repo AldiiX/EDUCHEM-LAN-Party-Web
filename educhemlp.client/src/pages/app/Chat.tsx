@@ -366,7 +366,7 @@ export const Chat = () => {
 
     if (!userAuthed || !loggedUser) {
         return null;
-    }
+    } 
 
 
 
