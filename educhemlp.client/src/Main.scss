@@ -136,6 +136,25 @@ p,a,div,span,button,input,textarea,select,label,li,ul {
 }
 
 
+.components-buttons-buttontsx_button:is(.button-loading) {
+    position: relative;
+
+    .loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        height: 100%;
+        aspect-ratio: 1/1;
+        mask-image: url('../public/images/icons/loading.svg');
+        mask-size: 80%;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        background-color: var(--accent-color-text);
+    }
+}
+
+
 .button-primary,
 .button-secondary {
     display: flex;

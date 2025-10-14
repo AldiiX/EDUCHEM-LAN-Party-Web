@@ -99,6 +99,7 @@ export const Chat = () => {
     const setConnectedUsers = useChatStore((state) => state.setConnectedUsers);
     const [forceCloseMenuPopover, setForceCloseMenuPopover] = useState<boolean>(false);
     const scrollToBottomButtonRef = useRef<HTMLDivElement | null>(null);
+    const isIntentionalCloseRef = useRef<boolean>(false);
 
 
     // datumy v cestine textem
@@ -167,6 +168,7 @@ export const Chat = () => {
     }
 
     function connectToWebSocket() {
+        isIntentionalCloseRef.current = false;
         const ws = new WebSocket(
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/chat`
         );
@@ -275,7 +277,11 @@ export const Chat = () => {
             }
         };
         
-        ws.onerror = () => toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
+        ws.onerror = () => {
+            if (!isIntentionalCloseRef.current) {
+                toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
+            }
+        };
 
         ws.onclose = () => {
             setSocketState(ChatSocketState.DISCONNECTED);
@@ -303,6 +309,7 @@ export const Chat = () => {
         checkAndAddScrollListener();
 
         return () => {
+            isIntentionalCloseRef.current = true;
             wsRef.current?.close();
 
             const scrollContainer = document.querySelector("body #app .right");

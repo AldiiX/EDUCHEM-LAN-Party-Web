@@ -1,1 +1,19 @@
-<svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="200px" width="200px" xmlns="http://www.w3.org/2000/svg"><path d="M11 7.06609V1H13V7.06609C16.6694 7.55498 19.5 10.6969 19.5 14.5C19.5 18.6421 16.1421 22 12 22C7.85786 22 4.5 18.6421 4.5 14.5C4.5 10.6969 7.33064 7.55498 11 7.06609Z"></path></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Vrstva_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 136.67 136.67">
+  <!-- Generator: Adobe Illustrator 29.5.0, SVG Export Plug-In . SVG Version: 2.1.0 Build 137)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: none;
+        stroke: #000;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 20px;
+      }
+    </style>
+  </defs>
+  <path class="st0" d="M10,85c0,23.01,18.65,41.67,41.67,41.67s41.67-18.65,41.67-41.67-18.65-41.67-41.67-41.67S10,61.99,10,85"/>
+  <path class="st0" d="M126.67,10l-45,45"/>
+  <path class="st0" d="M126.67,10h-41.67"/>
+  <path class="st0" d="M126.67,10v41.67"/>
+</svg>

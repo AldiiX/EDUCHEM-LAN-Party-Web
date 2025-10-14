@@ -81,7 +81,13 @@ public static class Utilities {
     public static bool VerifyPassword(in string password, in string hashedPassword) {
         if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(hashedPassword)) return false;
 
-        return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+        try {
+            return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+        }
+        catch (BCrypt.Net.SaltParseException) {
+            // If we get a salt parse exception, return false instead of throwing
+            return false;
+        }
     }
 
     public static bool IsPasswordValid(in string password) {

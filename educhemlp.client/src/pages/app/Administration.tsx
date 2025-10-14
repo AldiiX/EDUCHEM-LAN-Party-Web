@@ -10,12 +10,12 @@ import {toast} from "react-toastify";
 import Switch, {switchClasses} from '@mui/joy/Switch';
 import {AccountGender, AccountType, AppSettings, BasicAPIResponse, Log, LoggedUser} from "../../interfaces.ts";
 import {
+    authUser,
     compareEnumValues,
     enumEquals,
     enumIsGreater,
     enumIsGreaterOrEquals,
-    enumIsSmaller,
-    getAppSettings
+    enumIsSmaller
 } from "../../utils.ts";
 import {create} from "zustand";
 import {ButtonStyle, ButtonType} from "../../components/buttons/ButtonProps.ts";
@@ -38,6 +38,7 @@ interface User {
     lastUpdated: string,
     lastLoggedIn: string,
     banner: string | null,
+    enableReservation: boolean,
 }
 
 interface AdminStore {
@@ -120,6 +121,28 @@ function translateGender(gender: string | null | undefined) {
     }
 }
 
+function translateAccountType(type: AccountType | null | undefined, gender: AccountGender | null | undefined = null) {
+    let g = String(gender).toLowerCase();
+
+    switch (String(type).toUpperCase()) {
+        case "STUDENT":
+            if(g === "female") return "Studentka";
+            return "Student";
+        case "TEACHER" :
+            if(g === "female") return "Učitelka";
+            return "Učitel";
+        case "ADMIN" :
+            if(g === "female") return "Administrátorka";
+            return "Administrátor";
+        case "SUPERADMIN" :
+            if(g === "female") return "Administrátorka (SU)";
+            return "Administrátor (SU)";
+        default:
+            if(g === "female") return "Neznámá";
+            return "Neznámý";
+    }
+}
+
 // endregion
 
 
@@ -133,7 +156,11 @@ const UsersTab = () => {
     const [sortDirection, setSortDirection] = useState("asc");
 
     const closeModal = useAdminStore((state) => state.closeModal);
+
     const loggedUser: LoggedUser = useStore((state => state.loggedUser));
+    const setLoggedUser = useStore((state) => state.setLoggedUser);
+
+    const setUserAuthed = useStore((state) => state.setUserAuthed);
 
     const selectedUser: User | null = useAdminStore((state) => state.selectedUser);
     const setSelectedUser = useAdminStore((state) => state.setSelectedUser);
@@ -200,6 +227,7 @@ const UsersTab = () => {
         let cls: string | null = (userModal.querySelector("input[name='class']") as HTMLInputElement).value;
         const gender = (userModal.querySelector("select[name='gender']") as HTMLSelectElement).value;
         const accountType = (userModal.querySelector("select[name='accountType']") as HTMLSelectElement).value;
+        const enableReservation = (userModal.querySelector("input[name='enableReservation']") as HTMLInputElement)?.checked ?? false;
 
         if (name?.length < 3) {
             toast.error("Jméno musí mít alespoň 3 znaky.");
@@ -226,6 +254,7 @@ const UsersTab = () => {
                 class: cls,
                 type: accountType,
                 gender: gender,
+                enableReservation: enableReservation,
             })
         }).then(async res => {
             const data: BasicAPIResponse = await res.json();
@@ -233,6 +262,11 @@ const UsersTab = () => {
             if (!res.ok || !data.success) {
                 toast.error("Chyba při aktualizaci uživatele.");
                 return;
+            }
+
+            // pokud uzivatel upravi sam sebe, znovu se fetchne i @me
+            if (loggedUser.id === selectedUser?.id) {
+                authUser(setLoggedUser, setUserAuthed);
             }
 
             closeModal();
@@ -420,7 +454,7 @@ const UsersTab = () => {
                             }
 
                             <div className="info">
-                                <div className="child">
+                                <div className="child" title="Email">
                                     <div className="icon" style={{maskImage: `url(/images/icons/email.svg)`}}></div>
 
                                     {
@@ -433,7 +467,7 @@ const UsersTab = () => {
                                     }
                                 </div>
 
-                                <div className="child">
+                                <div className="child" title="Třída">
                                     <div className="icon" style={{maskImage: `url(/images/icons/class.svg)`}}></div>
                                     {
                                         !userModalEditMode ? (
@@ -445,7 +479,7 @@ const UsersTab = () => {
                                     }
                                 </div>
 
-                                <div className="child">
+                                <div className="child" title="Pohlaví">
                                     <div className="icon" style={{maskImage: `url(/images/icons/gender.svg)`}}></div>
                                     {
                                         !userModalEditMode ? (
@@ -460,30 +494,30 @@ const UsersTab = () => {
                                     }
                                 </div>
 
-                                <div className="child">
+                                <div className="child" title="Typ účtu">
                                     <div className="icon" style={{maskImage: `url(/images/icons/account.svg)`}}></div>
                                     {
                                         !userModalEditMode ? (
-                                            <p>{selectedUser?.type}</p>
+                                            <p>{translateAccountType(selectedUser?.type, selectedUser?.gender)}</p>
                                         ) : (
                                             <select name="accountType" defaultValue={selectedUser?.type}>
-                                                <option value="STUDENT">Student</option>
+                                                <option value="STUDENT">{translateAccountType("STUDENT" as any, selectedUser?.gender )}</option>
 
                                                 {
                                                     enumIsGreater(loggedUser?.type?.toString(), AccountType, AccountType.TEACHER) ? (
-                                                        <option value="TEACHER">Učitel</option>
+                                                        <option value="TEACHER">{translateAccountType("TEACHER" as any, selectedUser?.gender )}</option>
                                                     ) : null
                                                 }
 
                                                 {
                                                     enumIsGreater(loggedUser?.type?.toString(), AccountType, AccountType.ADMIN) ? (
-                                                        <option value="ADMIN">Admin</option>
+                                                        <option value="ADMIN">{translateAccountType("ADMIN" as any, selectedUser?.gender )}</option>
                                                     ) : null
                                                 }
 
                                                 {
                                                     enumIsGreaterOrEquals(loggedUser?.type?.toString(), AccountType, AccountType.SUPERADMIN) ? (
-                                                        <option value="SUPERADMIN">Superadmin</option>
+                                                        <option value="SUPERADMIN">{translateAccountType("SUPERADMIN" as any, selectedUser?.gender )}</option>
                                                     ) : null
                                                 }
                                             </select>
@@ -491,6 +525,37 @@ const UsersTab = () => {
                                     }
                                 </div>
                             </div>
+
+                            {
+                                userModalEditMode && !userModalCreationMode ? (
+                                    <>
+                                        <div className="separator" style={{marginTop: 24}}></div>
+                                        <div className="switch-div">
+                                            <p>Povolit rezervace</p>
+
+                                            <Switch slotProps={{input: {role: 'switch', name: "enableReservation"}}}
+                                                    defaultChecked={selectedUser?.enableReservation} sx={{
+                                                '--Switch-thumbSize': '16px',
+                                                '--Switch-trackWidth': '40px',
+                                                '--Switch-trackHeight': '24px',
+                                                '--Switch-thumbBackground': 'var(--bg)',
+                                                '--Switch-trackBackground': 'var(--text-color-darker)',
+                                                '&:hover': {
+                                                    '--Switch-trackBackground': 'var(--text-color-3)',
+                                                },
+                                                [`&.${switchClasses.checked}`]: {
+                                                    '--Switch-trackBackground': 'var(--accent-color)',
+                                                    '--Switch-thumbBackground': 'var(--bg)',
+                                                    '&:hover': {
+                                                        '--Switch-trackBackground': 'var(--accent-color-darker)',
+                                                    },
+                                                },
+                                            }}
+                                            />
+                                        </div>
+                                    </>
+                                ) : null
+                            }
 
                             {
                                 userModalCreationMode ? (
@@ -638,7 +703,7 @@ const UsersTab = () => {
                                 <td>{user.email}</td>
                                 <td>{translateGender(user.gender?.toString())}</td>
                                 <td>{user.class}</td>
-                                <td>{user.type}</td>
+                                <td>{translateAccountType(user.type, user.gender)}</td>
                                 <td>{new Date(user.lastUpdated).toLocaleString()}</td>
                                 <td>{user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : null}</td>
                             </tr>
