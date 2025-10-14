@@ -196,8 +196,8 @@ public class APIv1(
 
     [HttpDelete("loggeduser"), HttpDelete("me")]
     public IActionResult Logout() {
-        HttpContextService.Current.Items["loggeduser"] = null;
-        HttpContextService.Current.Session.Remove("loggeduser");
+        HttpContextService.Current.Items["loggedaccount"] = null;
+        HttpContextService.Current.Session.Remove("loggedaccount");
         Response.Cookies.Delete("educhemlp_session");
         return new NoContentResult();
     }
