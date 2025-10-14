@@ -200,6 +200,32 @@
             padding: 30px;
             box-sizing: border-box;
 
+            .namediv {
+                position: relative;
+                display: flex;
+                gap: 24px;
+                align-items: center;
+                justify-content: space-between;
+
+                .connected-platforms {
+                    display: flex;
+                    gap: 8px;
+
+                    div {
+                        width: 20px;
+                        aspect-ratio: 1/1;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        mask-size: contain;
+                        mask-repeat: no-repeat;
+                        mask-position: center;
+                        background-color: var(--text-color);
+                        opacity: 0.2;
+                    }
+                }
+            }
+
             h1 {
                 margin: 0;
                 font-family: gabarito, leaguespartan, sans-serif;

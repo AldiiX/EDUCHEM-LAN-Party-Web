@@ -63,7 +63,28 @@ public class AccountRepository(
         await using var conn = await db.GetOpenConnectionAsync(ct);
         if (conn == null) return [];
 
-        await using var cmd = new MySqlCommand(@"SELECT * FROM users", conn);
+        await using var cmd = new MySqlCommand(
+        """
+            SELECT 
+                u.*,
+                COALESCE(
+                   (
+                       SELECT JSON_ARRAYAGG(
+                           JSON_OBJECT(
+                               'userId', at.user_id,
+                               'platform', at.platform,
+                               'accessToken', at.access_token,
+                               'refreshToken', at.refresh_token,
+                               'type', at.token_type
+                           )
+                       )
+                       FROM users_access_tokens at
+                       WHERE at.user_id = u.id
+                   ),
+                   JSON_ARRAY()
+                ) AS access_tokens
+            FROM `users` u
+        """, conn);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
 

@@ -279,25 +279,11 @@ public class APIv1(
         var acc = await auth.ReAuthFromContextOrNullAsync(ct);
         if(acc?.Type < Account.AccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if(conn == null) return new StatusCodeResult(500);
-
-        var command = new MySqlCommand(
-            """
-            SELECT * FROM users WHERE id > 0 ORDER BY display_name;
-            """, conn
-        );
-
-        await using var reader = await command.ExecuteReaderAsync(ct);
-
+        var users = await accounts.GetAllAsync(ct);
         var array = new JsonArray();
-        while(await reader.ReadAsync(ct)) {
-            var u = JsonSerializer.SerializeToNode(new Account(reader), JsonSerializerOptions.Web);
-            if(u == null) continue;
 
-            u.AsObject().Remove("password");
-
-            array.Add(u);
+        foreach (var user in users.Where(user => user.Id >= 0)) {
+            array.Add(user.ToPublicJsonNode());
         }
 
         return new JsonResult(array);
@@ -523,5 +509,26 @@ public class APIv1(
         }
 
         return new JsonResult(array);
+    }
+
+    [HttpPost("adm/users/loginas")]
+    public async Task<IActionResult> LoginAsUser([FromBody] JsonNode body, CancellationToken ct = default) {
+        var acc = await auth.ReAuthFromContextOrNullAsync(ct);
+        if(acc == null || acc.Type < Account.AccountType.ADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+
+        int? userId = int.TryParse(body["uid"]?.GetValue<string>(), out var _id) ? _id : null;
+        if(userId == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'uid'" });
+
+        var targetUser = await accounts.GetByIdAsync(userId.Value, ct);
+        if(targetUser == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen." });
+
+        // pokud má target user vyšší nebo stejné práva jako přihlašující se user, nepovoli se to krom superadmina
+        if(targetUser.Type >= acc.Type && acc.Type != Account.AccountType.SUPERADMIN)
+            return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš se přihlásit jako uživatel s vyššími nebo stejnými právy." });
+
+        var success = await auth.ForceLoginAsync(targetUser.Email, ct) != null;
+        if(!success) return new ObjectResult(new { success = false, message = "Nepodařilo se přihlásit jako tento uživatel." }) { StatusCode = 500 };
+
+        return new JsonResult(new { success = true, message = "Přihlášení proběhlo úspěšně." });
     }
 }

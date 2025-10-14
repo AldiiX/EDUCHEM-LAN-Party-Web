@@ -156,6 +156,24 @@
                     display: flex;
                     gap: 12px;
                     align-items: center;
+
+                    .connected-platforms {
+                        display: flex;
+                        gap: 8px;
+
+                        div {
+                            width: 14px;
+                            aspect-ratio: 1/1;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            mask-size: contain;
+                            mask-repeat: no-repeat;
+                            mask-position: center;
+                            background-color: var(--accent-color);
+                            opacity: 0.5;
+                        }
+                    }
                 }
             }
         }

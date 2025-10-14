@@ -24,6 +24,18 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
         return acc;
     }
 
+    public async Task<Account?> ForceLoginAsync(string identifier, CancellationToken ct = default) {
+        var acc = await GetAccountByIdentifierAsync(identifier, ct);
+        if (acc == null) return null;
+
+        http.HttpContext!.Session.Clear();
+        await http.HttpContext.Session.CommitAsync(ct);
+        http.HttpContext.Session.SetString("loggedaccount", JsonSerializer.Serialize(acc, JsonSerializerOptions.Web));
+        http.HttpContext.Items["loggedaccount"] = acc;
+        await http.HttpContext.Session.CommitAsync(ct);
+        return acc;
+    }
+
     public async Task<Account?> ReAuthAsync(CancellationToken ct = default) {
         var json = http.HttpContext?.Session.GetString("loggedaccount");
         if (string.IsNullOrEmpty(json)) return null;
@@ -92,13 +104,13 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
 
     public async Task<Account?> ReAuthFromContextOrNullAsync(CancellationToken ct = default) {
         if (http.HttpContext == null) return null;
-        if (http.HttpContext.Items.ContainsKey("loggedaccount")) {
-            var str = http.HttpContext?.Session.GetString("loggedaccount");
-            if (string.IsNullOrEmpty(str)) return null;
+        if (!http.HttpContext.Items.ContainsKey("loggedaccount")) return await ReAuthAsync(ct);
 
-            var acc = JsonSerializer.Deserialize<Account>(str, JsonSerializerOptions.Web);
-            if (acc != null) return acc;
-        }
+        var str = http.HttpContext?.Session.GetString("loggedaccount");
+        if (string.IsNullOrEmpty(str)) return null;
+
+        var acc = JsonSerializer.Deserialize<Account>(str, JsonSerializerOptions.Web);
+        if (acc != null) return acc;
 
         return await ReAuthAsync(ct);
     }

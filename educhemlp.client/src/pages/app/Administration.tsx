@@ -20,6 +20,7 @@ import {
 import {create} from "zustand";
 import {ButtonStyle, ButtonType} from "../../components/buttons/ButtonProps.ts";
 import {Button} from "../../components/buttons/Button.tsx";
+import {platforms} from "./Account.tsx";
 
 
 // region shared veci
@@ -39,6 +40,7 @@ interface User {
     lastLoggedIn: string,
     banner: string | null,
     enableReservation: boolean,
+    connections: string[],
 }
 
 interface AdminStore {
@@ -161,6 +163,9 @@ const UsersTab = () => {
     const setLoggedUser = useStore((state) => state.setLoggedUser);
 
     const setUserAuthed = useStore((state) => state.setUserAuthed);
+
+    const syncSocket = useStore((state) => state.syncSocket);
+    const setSyncSocket = useStore((state) => state.setSyncSocket);
 
     const selectedUser: User | null = useAdminStore((state) => state.selectedUser);
     const setSelectedUser = useAdminStore((state) => state.setSelectedUser);
@@ -373,6 +378,37 @@ const UsersTab = () => {
         });
     }
 
+    async function loginAs(userId: number | undefined) {
+        if (! userId) return;
+
+        syncSocket?.close();
+        setSyncSocket(null);
+
+        const response = await fetch(`/api/v1/adm/users/loginas`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                uid: String(userId),
+            }),
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            toast.error("Chyba při přihlašování jako uživatel: " + data.message);
+            return;
+        }
+
+        toast.success("Úspěšně přihlášeno jako uživatel " + (selectedUser?.name ?? "") + ". Nyní probíhá přesměrování...", { autoClose: 1000 });
+
+        // přihlásit se jako uživatel
+        setTimeout(async () => {
+            window.location.href = "/app/account";
+        }, 1500);
+    }
+
+
 
 
     useEffect(() => { // fetchnout se useri pri nacteni komponenty
@@ -407,7 +443,21 @@ const UsersTab = () => {
                         <div className="bottom">
                             {
                                 !userModalEditMode ? (
-                                    <h1>{selectedUser?.name}</h1>
+                                    <div className="namediv">
+                                        <h1>{selectedUser?.name}</h1>
+                                        <div className="connected-platforms">
+                                            {
+                                                selectedUser.connections.map((conn) => {
+                                                    const platform = platforms.find((p) => p.name.toUpperCase() === conn.toUpperCase());
+                                                    if (!platform) return null;
+
+                                                    return (
+                                                        <div key={conn} className="platform" title={platform.name} style={{ maskImage: `url(${platform.icon})`}}></div>
+                                                    );
+                                                })
+                                            }
+                                        </div>
+                                    </div>
                                 ) : (
                                     <input name="name" style={{
                                         fontSize: 28,
@@ -592,10 +642,10 @@ const UsersTab = () => {
                                             <div className="separator"></div>
 
                                             <div className="buttons">
-                                                {
-                                                    enumEquals(loggedUser?.type?.toString(), AccountType, AccountType.SUPERADMIN) && loggedUser?.id !== selectedUser?.id ? (
-                                                        <TextWithIcon text="Přihlásit se" iconSrc="/images/icons/login.svg" onClick={() => {}}/>
-                                                    ) : null
+                                                { // TODO: doopravit, pravděpodobně chyba s tím, že je připojen sync socket,takže se to nestihne přepsat ty data v tom
+                                                    /*enumIsGreaterOrEquals(loggedUser?.type?.toString(), AccountType, AccountType.ADMIN) && loggedUser?.id !== selectedUser?.id ? (
+                                                        <TextWithIcon text="Přihlásit se" iconSrc="/images/icons/login.svg" onClick={() => loginAs(selectedUser?.id)}/>
+                                                    ) : null*/
                                                 }
 
                                                 <TextWithIcon text="Resetovat heslo"
@@ -698,6 +748,18 @@ const UsersTab = () => {
                                     <div className="name">
                                         <Avatar size={"28px"} name={user.name} src={user.avatar}/>
                                         <p>{user.name}</p>
+                                        <div className="connected-platforms">
+                                            {
+                                                user.connections.map((conn) => {
+                                                    const platform = platforms.find((p) => p.name.toUpperCase() === conn.toUpperCase());
+                                                    if (!platform) return null;
+
+                                                    return (
+                                                        <div key={conn} className="platform" title={platform.name} style={{ maskImage: `url(${platform.icon})`}}></div>
+                                                    );
+                                                })
+                                            }
+                                        </div>
                                     </div>
                                 </td>
                                 <td>{user.email}</td>

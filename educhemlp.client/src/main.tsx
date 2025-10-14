@@ -155,7 +155,9 @@ const AppInner = () => {
     const setUserAuthed = useStore(state => state.setUserAuthed);
     const setAppSettings = useStore(state => state.setAppSettings);
     const location = useLocation();
-    const syncSocket = useRef<WebSocket | null>(null);
+
+    const syncSocket = useStore(state => state.syncSocket) as WebSocket | null;
+    const setSyncSocket = useStore(state => state.setSyncSocket);
 
     const isElectronApp = useStore(state => state.isElectronApp);
     const setIsElectronApp = useStore(state => state.setIsElectronApp);
@@ -174,18 +176,18 @@ const AppInner = () => {
 
     // useEffect s pripojenim na sync socket
     useEffect(() => {
-        if(syncSocket.current) {
-            syncSocket.current.close();
-            syncSocket.current = null;
+        if(syncSocket) {
+            syncSocket.close();
+            setSyncSocket(null);
         }
 
-        syncSocket.current = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/sync`);
+        setSyncSocket(new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/sync`));
 
-        syncSocket.current.onopen = () => {
+        if(syncSocket) syncSocket.onopen = () => {
             //console.log('WebSocket connected');
         }
 
-        syncSocket.current.onmessage = (event) => {
+        if(syncSocket) syncSocket.onmessage = (event) => {
             const data = JSON.parse(event.data);
             const action = data.action;
 
@@ -197,7 +199,7 @@ const AppInner = () => {
         }
 
         return () => {
-            syncSocket.current?.close();
+            syncSocket?.close();
         }
     }, [location])
 

@@ -20,7 +20,7 @@ public class DiscordOAuthController(IAuthService auth, IDatabaseService db, IAcc
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] string code, CancellationToken ct = default) {
         var account = await auth.ReAuthFromContextOrNullAsync(ct);
-        if (account == null) return RedirectPermanent("/login");
+        if (account == null) return Redirect("/login");
 
 
 
@@ -36,15 +36,23 @@ public class DiscordOAuthController(IAuthService auth, IDatabaseService db, IAcc
             { "redirect_uri", REDIRECT_URI }
         });
 
-        using var response = client.SendAsync(request).Result;
-        var body = JsonNode.Parse(response.Content.ReadAsStringAsync().Result);
+        using var response = await client.SendAsync(request, ct);
+        var body = JsonNode.Parse(response.Content.ReadAsStringAsync(ct).Result);
+
+
+
+        // kontrola odpovedi (pokud request byl zrusen, tak se nic neposle do db)
+        if (body?["access_token"] == null || body["refresh_token"] == null) {
+            return Redirect("/app/account?tab=settings");
+        }
+
 
 
         // zapsani do db
         await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return RedirectPermanent("/app/account");
+        if (conn == null) return Redirect("/app/account");
 
-        using var cmd = new MySqlCommand(
+        await using var cmd = new MySqlCommand(
             """
                     DELETE FROM users_access_tokens WHERE platform = 'DISCORD' AND user_id = @userId;
 
@@ -61,10 +69,10 @@ public class DiscordOAuthController(IAuthService auth, IDatabaseService db, IAcc
 
         // znovu reauth
         account = await auth.ReAuthAsync(ct);
-        if(account is null) return RedirectPermanent("/app/account?tab=settings");
+        if(account is null) return Redirect("/app/account?tab=settings");
 
 
         await accounts.UpdateAvatarByConnectedPlatformAsync(account, ct);
-        return RedirectPermanent("/app/account?tab=settings");
+        return Redirect("/app/account?tab=settings");
     }
 }

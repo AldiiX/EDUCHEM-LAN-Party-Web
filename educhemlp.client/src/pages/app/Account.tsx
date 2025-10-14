@@ -37,6 +37,46 @@ enum Tab {
     SETTINGS = "Nastavení"
 }
 
+export interface Platform {
+    id: string;
+    name: string;
+    icon: string;
+    authLink?: string | null;
+    disabled?: boolean;
+}
+
+export const platforms: Platform[] = [
+    {
+        id: "ig",
+        name: "Instagram",
+        icon: "/images/icons/instagram.svg",
+        disabled: true,
+    },
+
+    {
+        id: "discord",
+        name: "Discord",
+        icon: "/images/icons/discord.svg",
+    },
+
+    {
+        id: "google",
+        name: "Google",
+        icon: "/images/icons/google.svg",
+    },
+
+    {
+        id: "github",
+        name: "GitHub",
+        icon: "/images/icons/github.svg",
+    }
+]
+
+
+
+
+
+
 
 
 const SettingsTab = () => {
@@ -71,38 +111,6 @@ const SettingsTab = () => {
     }, [loggedUser]);
 
 
-    interface Platform {
-        id: string;
-        name: string;
-        icon: string;
-        authLink?: string | null;
-    }
-
-    const platforms: Platform[] = [
-        {
-            id: "ig",
-            name: "Instagram",
-            icon: "/images/icons/instagram.svg",
-        },
-
-        {
-            id: "discord",
-            name: "Discord",
-            icon: "/images/icons/discord.svg",
-        },
-
-        {
-            id: "google",
-            name: "Google",
-            icon: "/images/icons/google.svg",
-        },
-
-        {
-            id: "github",
-            name: "GitHub",
-            icon: "/images/icons/github.svg",
-        }
-    ]
 
     // nastaveni linku itemu
     const discord = platforms.find(l => l.id === "discord");
@@ -363,7 +371,7 @@ const SettingsTab = () => {
                                     return 0;
                                 }
                             }).map((item, index) => (
-                                <div className={"item" + " " + (loggedUser.connections?.includes(item.id.toUpperCase()) ? "active" : "")} key={index}>
+                                <div className={"item" + " " + (loggedUser.connections?.includes(item.id.toUpperCase()) ? "active" : "") + " " + (item.disabled ? 'disabled' : '') } key={index}>
                                     <div className="content">
                                         <div className="icon" style={{ "--icon": `url(${item.icon})` } as CSSProperties }></div>
                                         <p>{item.name}</p>
