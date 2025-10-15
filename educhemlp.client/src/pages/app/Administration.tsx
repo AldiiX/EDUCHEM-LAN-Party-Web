@@ -7,7 +7,8 @@ import {Avatar} from "../../components/Avatar.tsx";
 import {Modal} from "../../components/modals/Modal.tsx";
 import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 import {toast} from "react-toastify";
-import Switch, {switchClasses} from '@mui/joy/Switch';
+import { switchClasses} from '@mui/joy/Switch';
+import Switch from "../../components/Switch.tsx";
 import {AccountGender, AccountType, AppSettings, BasicAPIResponse, Log, LoggedUser} from "../../interfaces.ts";
 import {
     authUser,
@@ -583,25 +584,7 @@ const UsersTab = () => {
                                         <div className="switch-div">
                                             <p>Povolit rezervace</p>
 
-                                            <Switch slotProps={{input: {role: 'switch', name: "enableReservation"}}}
-                                                    defaultChecked={selectedUser?.enableReservation} sx={{
-                                                '--Switch-thumbSize': '16px',
-                                                '--Switch-trackWidth': '40px',
-                                                '--Switch-trackHeight': '24px',
-                                                '--Switch-thumbBackground': 'var(--bg)',
-                                                '--Switch-trackBackground': 'var(--text-color-darker)',
-                                                '&:hover': {
-                                                    '--Switch-trackBackground': 'var(--text-color-3)',
-                                                },
-                                                [`&.${switchClasses.checked}`]: {
-                                                    '--Switch-trackBackground': 'var(--accent-color)',
-                                                    '--Switch-thumbBackground': 'var(--bg)',
-                                                    '&:hover': {
-                                                        '--Switch-trackBackground': 'var(--accent-color-darker)',
-                                                    },
-                                                },
-                                            }}
-                                            />
+                                            <Switch name="enableReservation" defaultChecked={selectedUser?.enableReservation} />
                                         </div>
                                     </>
                                 ) : null
@@ -614,25 +597,7 @@ const UsersTab = () => {
                                         <div className="switch-div">
                                             <p>Odeslat přihlašovací údaje na email</p>
 
-                                            <Switch slotProps={{input: {role: 'switch', name: "sendToEmail"}}}
-                                                    defaultChecked={true} sx={{
-                                                '--Switch-thumbSize': '16px',
-                                                '--Switch-trackWidth': '40px',
-                                                '--Switch-trackHeight': '24px',
-                                                '--Switch-thumbBackground': 'var(--bg)',
-                                                '--Switch-trackBackground': 'var(--text-color-darker)',
-                                                '&:hover': {
-                                                    '--Switch-trackBackground': 'var(--text-color-3)',
-                                                },
-                                                [`&.${switchClasses.checked}`]: {
-                                                    '--Switch-trackBackground': 'var(--accent-color)',
-                                                    '--Switch-thumbBackground': 'var(--bg)',
-                                                    '&:hover': {
-                                                        '--Switch-trackBackground': 'var(--accent-color-darker)',
-                                                    },
-                                                },
-                                            }}
-                                            />
+                                            <Switch name="sendToEmail" defaultChecked={true} />
                                         </div>
                                     </>
                                 ) : (compareEnumValues(AccountType, selectedUser.type?.toString(), loggedUser.type?.toString()) === -1 ||
