@@ -457,6 +457,8 @@ const SettingsTab = () => {
                                 <option value="OTHER">Vesmírná loď</option>
                                 <option value="OTHER">Drak</option>
                                 <option value="OTHER">Čajová konvice</option>
+                                <option value="OTHER">Kabel RJ45</option>
+                                <option value="OTHER">Labubu</option>
                                 <option value="OTHER">Kobliha</option>
                                 <option value="NULL">Neurčeno</option>
                             </select>
