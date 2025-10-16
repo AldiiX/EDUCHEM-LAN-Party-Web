@@ -90,15 +90,19 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
     private async Task<Account?> GetAccountByIdentifierAsync(string identifier, CancellationToken ct) {
         await using var conn = await db.GetOpenConnectionAsync(ct);
 
-        const string sql = "select * from users where id = @id or email = @id";
-
-
-        await using var cmd = new MySqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("id", identifier);
+        MySqlCommand cmd;
+        if (identifier.Contains('@')) {
+            cmd = new MySqlCommand("select * from users where email = @email limit 1;", conn);
+            cmd.Parameters.Add("@email", MySqlDbType.VarChar).Value = identifier;
+        } else if (ulong.TryParse(identifier, out var id)) {
+            cmd = new MySqlCommand("select * from users where id = @id limit 1;", conn);
+            cmd.Parameters.Add("@id", MySqlDbType.UInt64).Value = id;
+        } else {
+            return null;
+        }
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         if (!await reader.ReadAsync(ct)) return null;
-
         return new Account(reader);
     }
 

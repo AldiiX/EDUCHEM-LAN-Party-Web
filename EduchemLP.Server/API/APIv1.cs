@@ -110,7 +110,7 @@ public class APIv1(
         if(!Utilities.IsPasswordValid(newPassword)) return new BadRequestObjectResult(new { success = false, message = "Heslo musí obsahovat alespoň jedno velké písmeno, jedno číslo a jeden speciální znak." });
 
         // encrypnuti hesla
-        var encryptedNewPassword = Utilities.EncryptPassword(newPassword);
+        var encryptedNewPassword = Utilities.HashPassword(newPassword);
 
         // zapsani do db
         await using var conn = await db.GetOpenConnectionAsync(ct);

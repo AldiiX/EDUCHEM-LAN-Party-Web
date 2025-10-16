@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using BCrypt.Net;
 using EduchemLP.Server.Services;
 
 namespace EduchemLP.Server.Classes;
@@ -11,6 +12,7 @@ namespace EduchemLP.Server.Classes;
 
 public static class Utilities {
 
+    private const HashType enhancedType = HashType.SHA384;
 
     public static class Cookie {
         public static void Set(in string key, in string? value, in bool saveToTemp = true) {
@@ -76,16 +78,20 @@ public static class Utilities {
         return passwordBuilder.ToString();
     }
 
-    public static string EncryptPassword(in string password) => BCrypt.Net.BCrypt.HashPassword(password);
+    public static string EncryptPassword(string plain) => HashPassword(plain);
+
+    public static string HashPassword(string plain, int workFactor = 12) {
+        return BCrypt.Net.BCrypt.EnhancedHashPassword(plain, workFactor, enhancedType);
+    }
 
     public static bool VerifyPassword(in string password, in string hashedPassword) {
         if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(hashedPassword)) return false;
-
         try {
-            return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
-        }
-        catch (BCrypt.Net.SaltParseException) {
-            // If we get a salt parse exception, return false instead of throwing
+            // nejdriv enhanced, pak klasicky
+            return BCrypt.Net.BCrypt.EnhancedVerify(password, hashedPassword, enhancedType)
+                   || BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+        } catch (BCrypt.Net.SaltParseException) {
+            Program.Logger.LogError("SaltParseException in Utilities.VerifyPassword");
             return false;
         }
     }
