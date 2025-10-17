@@ -57,7 +57,7 @@ export const Forum = () => {
                              
                         </div>
                         <div className={style.bottom}>
-                            {/*<div className={style.reaction}> </div> MB v budoucnu */}
+                            {/*<div className={style.reaction}> </div> MB v budoucnu TODO: dodelat emoji */}
                             <div className={style.createDate}>
                                 
                             </div>
