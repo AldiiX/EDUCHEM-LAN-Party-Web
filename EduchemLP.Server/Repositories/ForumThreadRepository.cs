@@ -7,9 +7,9 @@ namespace EduchemLP.Server.Repositories;
 
 public class ForumThreadRepository(IDatabaseService db) : IForumThreadRepository
 {
-    public async Task<IEnumerable<ForumThread>> GetThreadsAsync(int requesterId, string accountType)
+    public async Task<IEnumerable<ForumThread>> GetAllThreadsAsync(CancellationToken ct = default)
     {
-        await using var conn = await db.GetOpenConnectionAsync();
+        await using var conn = await db.GetOpenConnectionAsync(ct);
         await using var cmd = conn!.CreateCommand();
         cmd.CommandText = @"
             SELECT 
@@ -27,9 +27,9 @@ public class ForumThreadRepository(IDatabaseService db) : IForumThreadRepository
             ORDER BY ft.is_pinned DESC, ft.created_at DESC;
         ";
         
-        await using var reader = await cmd.ExecuteReaderAsync();
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
         var threads = new List<ForumThread>();
-        while (await reader.ReadAsync())
+        while (await reader.ReadAsync(ct))
         {
             var thread = new ForumThread(
                 reader.GetGuid("uuid"),
@@ -50,22 +50,22 @@ public class ForumThreadRepository(IDatabaseService db) : IForumThreadRepository
         return threads;
     }
 
-    public async Task<ForumThread?> GetThreadByUuidAsync(Guid uuid, int requesterId, string accountType)
+    public async Task<ForumThread?> GetThreadByUuidAsync(Guid uuid,CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<bool> CreateThreadAsync(ForumThread thread)
+    public async Task<bool> CreateThreadAsync(ForumThread thread, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<bool> ApproveThreadAsync(Guid uuid, int approverId, string accountType)
+    public async Task<bool> ApproveThreadAsync(Guid uuid, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<bool> DeleteThreadAsync(Guid uuid, int requesterId, string accountType)
+    public async Task<bool> DeleteThreadAsync(Guid uuid,CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

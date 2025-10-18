@@ -67,3 +67,17 @@ export type BasicAPIResponse = {
     success: boolean,
     message: string,
 }
+
+export interface ForumThread {
+    uuid: string,
+    title: string,
+    text: string,
+    createdAt: string,
+    author: {
+        id: number,
+        displayName: string,
+        avatar: string | null,
+    },
+    isPinned: boolean,
+    isApproved: boolean,
+}

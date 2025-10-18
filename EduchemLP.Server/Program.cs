@@ -102,6 +102,7 @@ public static class Program {
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IAppSettingsService, AppSettingsService>();
         builder.Services.AddSingleton<IDbLoggerService, DbLoggerService>();
+        builder.Services.AddScoped<IForumThreadRepository, ForumThreadRepository>();
 
 
 
@@ -111,6 +112,7 @@ public static class Program {
         builder.Services.AddSingleton<IWebSocketEndpoint, ChatWebSocketEndpoint>();
         builder.Services.AddSingleton<IWebSocketEndpoint, ReservationsWebSocketEndpoint>();
         builder.Services.AddSingleton<IWebSocketEndpoint, SyncWebSocketEndpoint>();
+        
 
 
 

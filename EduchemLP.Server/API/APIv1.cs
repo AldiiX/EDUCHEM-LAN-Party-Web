@@ -21,7 +21,8 @@ public class APIv1(
     IDbLoggerService dbLogger,
     IAppSettingsService appSettings,
     IAccountRepository accounts,
-    IWebSocketHub webSocketHub
+    IWebSocketHub webSocketHub,
+    IForumThreadRepository forumThreads
 ) : Controller {
 
 
@@ -36,8 +37,76 @@ public class APIv1(
         return new JsonResult(new { password, encrypted = Utilities.EncryptPassword(password) });
     }
     #endif
+    
+    [HttpGet("appsettings")]
+    public async Task<IActionResult> GetAppSettings(CancellationToken ct = default) {
+        return new OkObjectResult(new {
+                reservationsStatus = (await appSettings.GetReservationsStatusAsync(ct)).ToString().ToUpper(),
+                reservationsEnabledFrom = await appSettings.GetReservationsEnabledFromAsync(ct),
+                reservationsEnabledTo = await appSettings.GetReservationsEnabledToAsync(ct),
+                reservationsEnabledRightNow = await appSettings.AreReservationsEnabledRightNowAsync(ct),
+                chatEnabled = await appSettings.GetChatEnabledAsync(ct),
+            }
+        );
+    }
+
+    [HttpPut("appsettings")]
+    public async Task<IActionResult> SetAppSettings([FromBody] Dictionary<string, object?> data, CancellationToken ct = default) {
+        var acc = await auth.ReAuthFromContextOrNullAsync(ct);
+        if(acc == null || acc.Type < Account.AccountType.ADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nelze upravit nastavení, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+
+        IAppSettingsService.ReservationStatusType? status = data.TryGetValue("reservationsStatus", out var _status) ? Enum.TryParse(_status?.ToString(), out IAppSettingsService.ReservationStatusType _status2) ? _status2 : null : null;
+        DateTime? from = data.TryGetValue("reservationsEnabledFrom", out var _from) ? DateTime.TryParse(_from?.ToString(), out var _from2) ? _from2 : null : null;
+        DateTime? to = data.TryGetValue("reservationsEnabledTo", out var _to) ? DateTime.TryParse(_to?.ToString(), out var _to2) ? _to2 : null : null;
+        bool? chatEnabled = data.TryGetValue("chatEnabled", out var _chatEnabled) ? bool.TryParse(_chatEnabled?.ToString(), out var _chatEnabled2) ? _chatEnabled2 : null : null;
+
+        // datetime musi byt v UTC
+
+        // asynch picovinky
+        var t1 = Task.Run(() => {
+            if(status == null) return;
+            appSettings.SetReservationsStatusAsync((IAppSettingsService.ReservationStatusType) status, ct);
+        }, ct);
+
+        var t2 = Task.Run(() => {
+            if(from == null) return;
+            appSettings.SetReservationsEnabledFromAsync((DateTime) from, ct);
+        }, ct);
+
+        var t3 = Task.Run(() => {
+            if(to == null) return;
+            appSettings.SetReservationsEnabledToAsync((DateTime) to, ct);
+        }, ct);
+
+        var t4 = Task.Run(() => {
+            if(chatEnabled == null) return;
+            appSettings.SetChatEnabledAsync((bool) chatEnabled, ct);
+        }, ct);
 
 
+        // oznameni do sync socketu
+        var json = new { action = "updateAppSettings"}.ToJsonString();
+        await webSocketHub.BroadcastAsync("sync", json, ct);
+
+
+        Task.WaitAll(t1, t2, t3, t4);
+        return new NoContentResult();
+    }
+
+    [HttpGet("forum/threads")]
+    public async Task<IActionResult> GetForumThreads(CancellationToken ct = default) {
+        var threads = await forumThreads.GetAllThreadsAsync(ct);
+        var arr = new JsonArray();
+
+        foreach(var thread in threads) {
+            arr.Add(thread.ToJsonNode());
+        }
+
+        return new JsonResult(arr);
+    }
+
+    #region Logged User
+    
     [HttpGet("loggeduser"), HttpGet("me")]
     public async Task<IActionResult> GetLoggedUser(CancellationToken ct = default) {
         var acc = await auth.ReAuthFromContextOrNullAsync(ct);
@@ -211,68 +280,11 @@ public class APIv1(
         await auth.LoginAsync(email, password, ct);
         return Redirect(redirect ?? "/app");
     }
-
-    [HttpGet("appsettings")]
-    public async Task<IActionResult> GetAppSettings(CancellationToken ct = default) {
-        return new OkObjectResult(new {
-                reservationsStatus = (await appSettings.GetReservationsStatusAsync(ct)).ToString().ToUpper(),
-                reservationsEnabledFrom = await appSettings.GetReservationsEnabledFromAsync(ct),
-                reservationsEnabledTo = await appSettings.GetReservationsEnabledToAsync(ct),
-                reservationsEnabledRightNow = await appSettings.AreReservationsEnabledRightNowAsync(ct),
-                chatEnabled = await appSettings.GetChatEnabledAsync(ct),
-            }
-        );
-    }
-
-    [HttpPut("appsettings")]
-    public async Task<IActionResult> SetAppSettings([FromBody] Dictionary<string, object?> data, CancellationToken ct = default) {
-        var acc = await auth.ReAuthFromContextOrNullAsync(ct);
-        if(acc == null || acc.Type < Account.AccountType.ADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nelze upravit nastavení, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
-
-        IAppSettingsService.ReservationStatusType? status = data.TryGetValue("reservationsStatus", out var _status) ? Enum.TryParse(_status?.ToString(), out IAppSettingsService.ReservationStatusType _status2) ? _status2 : null : null;
-        DateTime? from = data.TryGetValue("reservationsEnabledFrom", out var _from) ? DateTime.TryParse(_from?.ToString(), out var _from2) ? _from2 : null : null;
-        DateTime? to = data.TryGetValue("reservationsEnabledTo", out var _to) ? DateTime.TryParse(_to?.ToString(), out var _to2) ? _to2 : null : null;
-        bool? chatEnabled = data.TryGetValue("chatEnabled", out var _chatEnabled) ? bool.TryParse(_chatEnabled?.ToString(), out var _chatEnabled2) ? _chatEnabled2 : null : null;
-
-        // datetime musi byt v UTC
-
-        // asynch picovinky
-        var t1 = Task.Run(() => {
-            if(status == null) return;
-            appSettings.SetReservationsStatusAsync((IAppSettingsService.ReservationStatusType) status, ct);
-        }, ct);
-
-        var t2 = Task.Run(() => {
-            if(from == null) return;
-            appSettings.SetReservationsEnabledFromAsync((DateTime) from, ct);
-        }, ct);
-
-        var t3 = Task.Run(() => {
-            if(to == null) return;
-            appSettings.SetReservationsEnabledToAsync((DateTime) to, ct);
-        }, ct);
-
-        var t4 = Task.Run(() => {
-            if(chatEnabled == null) return;
-            appSettings.SetChatEnabledAsync((bool) chatEnabled, ct);
-        }, ct);
-
-
-        // oznameni do sync socketu
-        var json = new { action = "updateAppSettings"}.ToJsonString();
-        await webSocketHub.BroadcastAsync("sync", json, ct);
-
-
-        Task.WaitAll(t1, t2, t3, t4);
-        return new NoContentResult();
-    }
-
-
-
-
-
-
-
+    
+    #endregion
+    
+    #region Administrace 
+    
     [HttpGet("adm/users")]
     public async Task<IActionResult> GetUsers(CancellationToken ct = default) {
         var acc = await auth.ReAuthFromContextOrNullAsync(ct);
@@ -528,4 +540,6 @@ public class APIv1(
 
         return new JsonResult(array);
     }
+    
+    #endregion
 }
