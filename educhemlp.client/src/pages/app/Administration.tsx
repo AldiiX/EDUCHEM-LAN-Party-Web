@@ -804,7 +804,7 @@ const UsersTab = () => {
 
                 { /*  filtery  */} { /* TODO: udělat design */}
                 {
-                    enumEquals(loggedUser.type, AccountType, AccountType.SUPERADMIN) && (
+                    enumEquals(loggedUser.type.toString(), AccountType, AccountType.SUPERADMIN) && (
                         <div className="filter-sections">
                             <div className="filter-section">
                                 <p className="filter-label">Typ účtu:</p>
