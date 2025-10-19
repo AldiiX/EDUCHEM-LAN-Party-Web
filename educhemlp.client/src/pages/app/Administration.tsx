@@ -802,88 +802,93 @@ const UsersTab = () => {
                     <p className="add-user" onClick={() => addUser()}>+ Přidat uživatele</p>
                 </div>
 
-                <div className="filter-sections">
-                    <div className="filter-section">
-                        <p className="filter-label">Typ účtu:</p>
-                        <div className="filter-checkboxes">
-                            {uniqueAccountTypes.map((type) => (
-                                <label key={type} className="checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedAccountTypes.has(type)}
-                                        onChange={() => toggleAccountType(type)}
-                                    />
-                                    <span>{translateAccountType(type as any)}</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
+                { /*  filtery  */} { /* TODO: udělat design */}
+                {
+                    enumEquals(loggedUser.type, AccountType, AccountType.SUPERADMIN) && (
+                        <div className="filter-sections">
+                            <div className="filter-section">
+                                <p className="filter-label">Typ účtu:</p>
+                                <div className="filter-checkboxes">
+                                    {uniqueAccountTypes.map((type) => (
+                                        <label key={type} className="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedAccountTypes.has(type)}
+                                                onChange={() => toggleAccountType(type)}
+                                            />
+                                            <span>{translateAccountType(type as any)}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
-                    <div className="filter-section">
-                        <p className="filter-label">Pohlaví:</p>
-                        <div className="filter-checkboxes">
-                            {uniqueGenders.map((gender) => (
-                                <label key={gender} className="checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedGenders.has(gender)}
-                                        onChange={() => toggleGender(gender)}
-                                    />
-                                    <span>{translateGender(gender)}</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
+                            <div className="filter-section">
+                                <p className="filter-label">Pohlaví:</p>
+                                <div className="filter-checkboxes">
+                                    {uniqueGenders.map((gender) => (
+                                        <label key={gender} className="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedGenders.has(gender)}
+                                                onChange={() => toggleGender(gender)}
+                                            />
+                                            <span>{translateGender(gender)}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
-                    <div className="filter-section">
-                        <p className="filter-label">Třída:</p>
-                        <div className="filter-checkboxes">
-                            {uniqueClasses.map((cls) => (
-                                <label key={cls} className="checkbox-label">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedClasses.has(cls)}
-                                        onChange={() => toggleClass(cls)}
-                                    />
-                                    <span>{cls}</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
+                            <div className="filter-section">
+                                <p className="filter-label">Třída:</p>
+                                <div className="filter-checkboxes">
+                                    {uniqueClasses.map((cls) => (
+                                        <label key={cls} className="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedClasses.has(cls)}
+                                                onChange={() => toggleClass(cls)}
+                                            />
+                                            <span>{cls}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
-                    <div className="filter-section">
-                        <p className="filter-label">Rezervace:</p>
-                        <div className="filter-checkboxes">
-                            <label className="checkbox-label">
-                                <input
-                                    type="radio"
-                                    name="reservationFilter"
-                                    checked={enabledReservationFilter === "all"}
-                                    onChange={() => setEnabledReservationFilter("all")}
-                                />
-                                <span>Vše</span>
-                            </label>
-                            <label className="checkbox-label">
-                                <input
-                                    type="radio"
-                                    name="reservationFilter"
-                                    checked={enabledReservationFilter === "enabled"}
-                                    onChange={() => setEnabledReservationFilter("enabled")}
-                                />
-                                <span>Povolené</span>
-                            </label>
-                            <label className="checkbox-label">
-                                <input
-                                    type="radio"
-                                    name="reservationFilter"
-                                    checked={enabledReservationFilter === "disabled"}
-                                    onChange={() => setEnabledReservationFilter("disabled")}
-                                />
-                                <span>Zakázané</span>
-                            </label>
+                            <div className="filter-section">
+                                <p className="filter-label">Rezervace:</p>
+                                <div className="filter-checkboxes">
+                                    <label className="checkbox-label">
+                                        <input
+                                            type="radio"
+                                            name="reservationFilter"
+                                            checked={enabledReservationFilter === "all"}
+                                            onChange={() => setEnabledReservationFilter("all")}
+                                        />
+                                        <span>Vše</span>
+                                    </label>
+                                    <label className="checkbox-label">
+                                        <input
+                                            type="radio"
+                                            name="reservationFilter"
+                                            checked={enabledReservationFilter === "enabled"}
+                                            onChange={() => setEnabledReservationFilter("enabled")}
+                                        />
+                                        <span>Povolené</span>
+                                    </label>
+                                    <label className="checkbox-label">
+                                        <input
+                                            type="radio"
+                                            name="reservationFilter"
+                                            checked={enabledReservationFilter === "disabled"}
+                                            onChange={() => setEnabledReservationFilter("disabled")}
+                                        />
+                                        <span>Zakázané</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    )
+                }
 
                 <table>
                     <thead className="clickable">
@@ -946,6 +951,8 @@ const LogsTab = () => {
     const [dateFrom, setDateFrom] = useState<string>("");
     const [dateTo, setDateTo] = useState<string>("");
     const [searchTerm, setSearchTerm] = useState<string>("");
+
+    const loggedAccount = useStore((state) => state.loggedUser);
 
     function fetchLogsFromApi() {
         fetch("/api/v1/adm/logs").then(async res => {
@@ -1034,56 +1041,63 @@ const LogsTab = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
 
-                <div className="filter-section">
-                    <p className="filter-label">Typ logu:</p>
-                    <div className="filter-checkboxes">
-                        {uniqueLogTypes.map((type) => (
-                            <label key={type} className="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedLogTypes.has(type)}
-                                    onChange={() => toggleLogType(type)}
-                                />
-                                <span>{type}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
+                { /*  filtery  */} { /* TODO: udělat design */}
+                {
+                    enumEquals(loggedAccount.type, AccountType, AccountType.SUPERADMIN) && (
+                        <div className="filters">
+                            <div className="filter-section">
+                                <p className="filter-label">Typ logu:</p>
+                                <div className="filter-checkboxes">
+                                    {uniqueLogTypes.map((type) => (
+                                        <label key={type} className="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedLogTypes.has(type)}
+                                                onChange={() => toggleLogType(type)}
+                                            />
+                                            <span>{type}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
-                <div className="filter-section">
-                    <p className="filter-label">Přesný typ:</p>
-                    <div className="filter-checkboxes">
-                        {uniqueExactTypes.map((type) => (
-                            <label key={type} className="checkbox-label">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedExactTypes.has(type)}
-                                    onChange={() => toggleExactType(type)}
-                                />
-                                <span>{type}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
+                            <div className="filter-section">
+                                <p className="filter-label">Přesný typ:</p>
+                                <div className="filter-checkboxes">
+                                    {uniqueExactTypes.map((type) => (
+                                        <label key={type} className="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedExactTypes.has(type)}
+                                                onChange={() => toggleExactType(type)}
+                                            />
+                                            <span>{type}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
-                <div className="filter-section date-filters">
-                    <div className="date-filter">
-                        <label>Od:</label>
-                        <input
-                            type="datetime-local"
-                            value={dateFrom}
-                            onChange={(e) => setDateFrom(e.target.value)}
-                        />
-                    </div>
-                    <div className="date-filter">
-                        <label>Do:</label>
-                        <input
-                            type="datetime-local"
-                            value={dateTo}
-                            onChange={(e) => setDateTo(e.target.value)}
-                        />
-                    </div>
-                </div>
+                            <div className="filter-section date-filters">
+                                <div className="date-filter">
+                                    <label>Od:</label>
+                                    <input
+                                        type="datetime-local"
+                                        value={dateFrom}
+                                        onChange={(e) => setDateFrom(e.target.value)}
+                                    />
+                                </div>
+                                <div className="date-filter">
+                                    <label>Do:</label>
+                                    <input
+                                        type="datetime-local"
+                                        value={dateTo}
+                                        onChange={(e) => setDateTo(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
             </div>
 
             <table>
