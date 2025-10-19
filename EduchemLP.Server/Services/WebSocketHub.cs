@@ -20,18 +20,23 @@ public sealed class WebSocketHub : IWebSocketHub {
     }
 
     public void RemoveClient(string channel, uint clientId) {
-        if (channels.TryGetValue(channel, out var dict)) {
-            var client = dict.GetValueOrDefault(clientId);
-            client?.Abort();
-            dict.TryRemove(clientId, out _);
-        }
+        if (!channels.TryGetValue(channel, out var dict)) return;
+
+        var client = dict.GetValueOrDefault(clientId);
+        client?.Abort();
+        dict.TryRemove(clientId, out _);
     }
 
     public IReadOnlyCollection<WSClient> GetClients(string channel) {
-        if (channels.TryGetValue(channel, out var dict)) {
-            return dict.Values.ToList();
+        if (!channels.TryGetValue(channel, out var dict)) return [];
+
+        foreach (var (key, ws) in dict) {
+            if (ws.State != WebSocketState.Open) {
+                dict.TryRemove(key, out _);
+            }
         }
-        return [];
+
+        return dict.Values.ToList();
     }
 
     public async Task BroadcastAsync(string channel, string json, CancellationToken ct) {
@@ -40,15 +45,17 @@ public sealed class WebSocketHub : IWebSocketHub {
         var clientsToRemove = new List<WSClient>();
 
         foreach (var c in list) {
-            if (c.State != WebSocketState.Open) continue;
+            if (c.State != WebSocketState.Open) {
+                clientsToRemove.Add(c);
+                continue;
+            }
             try {
                 await c.SendAsync(json, ct);
             } catch {
-                 clientsToRemove.Add(c);
+                clientsToRemove.Add(c);
             }
         }
 
-        // odebrani lidi, kteri uz nejsou pripojeni
         foreach (var c in clientsToRemove) {
             RemoveClient(channel, c.Id);
         }
