@@ -156,6 +156,12 @@ const UsersTab = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState("asc");
+    
+    // filtering states
+    const [selectedAccountTypes, setSelectedAccountTypes] = useState<Set<string>>(new Set());
+    const [selectedGenders, setSelectedGenders] = useState<Set<string>>(new Set());
+    const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
+    const [enabledReservationFilter, setEnabledReservationFilter] = useState<string>("all");
 
     const closeModal = useAdminStore((state) => state.closeModal);
 
@@ -187,11 +193,79 @@ const UsersTab = () => {
         setSortDirection(newDirection);
     };
 
+    // Get unique values for filters
+    const uniqueAccountTypes = Array.from(new Set(users?.map((user) => user.type?.toString()).filter((t): t is string => !!t) || [])).sort();
+    const uniqueGenders = Array.from(new Set(users?.map((user) => user.gender?.toString()).filter((g): g is string => !!g) || [])).sort();
+    const uniqueClasses = Array.from(new Set(users?.map((user) => user.class).filter((c): c is string => !!c) || [])).sort();
+
+    // Toggle filters
+    const toggleAccountType = (type: string) => {
+        setSelectedAccountTypes((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(type)) {
+                newSet.delete(type);
+            } else {
+                newSet.add(type);
+            }
+            return newSet;
+        });
+    };
+
+    const toggleGender = (gender: string) => {
+        setSelectedGenders((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(gender)) {
+                newSet.delete(gender);
+            } else {
+                newSet.add(gender);
+            }
+            return newSet;
+        });
+    };
+
+    const toggleClass = (cls: string) => {
+        setSelectedClasses((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(cls)) {
+                newSet.delete(cls);
+            } else {
+                newSet.add(cls);
+            }
+            return newSet;
+        });
+    };
+
     const filteredAndSortedUsers = users
         ?.filter((user) =>
             user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.email.toLowerCase().includes(searchTerm.toLowerCase())
         )
+        .filter((user) => {
+            // Filter by account type
+            if (selectedAccountTypes.size > 0 && !selectedAccountTypes.has(user.type?.toString() ?? "")) {
+                return false;
+            }
+            
+            // Filter by gender
+            if (selectedGenders.size > 0 && !selectedGenders.has(user.gender?.toString() ?? "")) {
+                return false;
+            }
+            
+            // Filter by class
+            if (selectedClasses.size > 0 && !selectedClasses.has(user.class ?? "")) {
+                return false;
+            }
+
+            // Filter by reservation enabled
+            if (enabledReservationFilter === "enabled" && !user.enableReservation) {
+                return false;
+            }
+            if (enabledReservationFilter === "disabled" && user.enableReservation) {
+                return false;
+            }
+
+            return true;
+        })
         .sort((a, b) => {
             if (!sortColumn) return 0;
             const aValue: any = a[sortColumn] || "";
@@ -728,6 +802,89 @@ const UsersTab = () => {
                     <p className="add-user" onClick={() => addUser()}>+ Přidat uživatele</p>
                 </div>
 
+                <div className="filter-sections">
+                    <div className="filter-section">
+                        <p className="filter-label">Typ účtu:</p>
+                        <div className="filter-checkboxes">
+                            {uniqueAccountTypes.map((type) => (
+                                <label key={type} className="checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedAccountTypes.has(type)}
+                                        onChange={() => toggleAccountType(type)}
+                                    />
+                                    <span>{translateAccountType(type as any)}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="filter-section">
+                        <p className="filter-label">Pohlaví:</p>
+                        <div className="filter-checkboxes">
+                            {uniqueGenders.map((gender) => (
+                                <label key={gender} className="checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedGenders.has(gender)}
+                                        onChange={() => toggleGender(gender)}
+                                    />
+                                    <span>{translateGender(gender)}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="filter-section">
+                        <p className="filter-label">Třída:</p>
+                        <div className="filter-checkboxes">
+                            {uniqueClasses.map((cls) => (
+                                <label key={cls} className="checkbox-label">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedClasses.has(cls)}
+                                        onChange={() => toggleClass(cls)}
+                                    />
+                                    <span>{cls}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="filter-section">
+                        <p className="filter-label">Rezervace:</p>
+                        <div className="filter-checkboxes">
+                            <label className="checkbox-label">
+                                <input
+                                    type="radio"
+                                    name="reservationFilter"
+                                    checked={enabledReservationFilter === "all"}
+                                    onChange={() => setEnabledReservationFilter("all")}
+                                />
+                                <span>Vše</span>
+                            </label>
+                            <label className="checkbox-label">
+                                <input
+                                    type="radio"
+                                    name="reservationFilter"
+                                    checked={enabledReservationFilter === "enabled"}
+                                    onChange={() => setEnabledReservationFilter("enabled")}
+                                />
+                                <span>Povolené</span>
+                            </label>
+                            <label className="checkbox-label">
+                                <input
+                                    type="radio"
+                                    name="reservationFilter"
+                                    checked={enabledReservationFilter === "disabled"}
+                                    onChange={() => setEnabledReservationFilter("disabled")}
+                                />
+                                <span>Zakázané</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <table>
                     <thead className="clickable">
                         <tr>
@@ -782,6 +939,13 @@ const UsersTab = () => {
 const LogsTab = () => {
     const logs = useAdminStore((state) => state.logs);
     const setLogs = useAdminStore((state) => state.setLogs);
+    
+    // filtering states
+    const [selectedLogTypes, setSelectedLogTypes] = useState<Set<string>>(new Set());
+    const [selectedExactTypes, setSelectedExactTypes] = useState<Set<string>>(new Set());
+    const [dateFrom, setDateFrom] = useState<string>("");
+    const [dateTo, setDateTo] = useState<string>("");
+    const [searchTerm, setSearchTerm] = useState<string>("");
 
     function fetchLogsFromApi() {
         fetch("/api/v1/adm/logs").then(async res => {
@@ -799,10 +963,130 @@ const LogsTab = () => {
         fetchLogsFromApi();
     }, []);
 
+    // Get unique exact types from logs
+    const uniqueExactTypes = Array.from(new Set(logs?.map((log) => log.exactType) || [])).sort();
+    const uniqueLogTypes = Array.from(new Set(logs?.map((log) => log.type.toString()) || [])).sort();
+
+    // Toggle filters
+    const toggleLogType = (type: string) => {
+        setSelectedLogTypes((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(type)) {
+                newSet.delete(type);
+            } else {
+                newSet.add(type);
+            }
+            return newSet;
+        });
+    };
+
+    const toggleExactType = (type: string) => {
+        setSelectedExactTypes((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(type)) {
+                newSet.delete(type);
+            } else {
+                newSet.add(type);
+            }
+            return newSet;
+        });
+    };
+
+    // Filter logs
+    const filteredLogs = logs?.filter((log) => {
+        // Filter by log type
+        if (selectedLogTypes.size > 0 && !selectedLogTypes.has(log.type.toString())) {
+            return false;
+        }
+
+        // Filter by exact type
+        if (selectedExactTypes.size > 0 && !selectedExactTypes.has(log.exactType)) {
+            return false;
+        }
+
+        // Filter by date range
+        const logDate = new Date(log.date);
+        if (dateFrom && logDate < new Date(dateFrom)) {
+            return false;
+        }
+        if (dateTo && logDate > new Date(dateTo)) {
+            return false;
+        }
+
+        // Filter by search term
+        if (searchTerm && !log.message.toLowerCase().includes(searchTerm.toLowerCase())) {
+            return false;
+        }
+
+        return true;
+    });
+
 
     return (
         <div className="users-wrapper">
-            <table style={{ marginTop: 64 }}>
+            <div className="inputs logs-filters">
+                <p className="user-count">Logy ({filteredLogs?.length ?? 0})</p>
+                
+                <input
+                    type="text"
+                    placeholder="Hledat v logách..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+
+                <div className="filter-section">
+                    <p className="filter-label">Typ logu:</p>
+                    <div className="filter-checkboxes">
+                        {uniqueLogTypes.map((type) => (
+                            <label key={type} className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedLogTypes.has(type)}
+                                    onChange={() => toggleLogType(type)}
+                                />
+                                <span>{type}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="filter-section">
+                    <p className="filter-label">Přesný typ:</p>
+                    <div className="filter-checkboxes">
+                        {uniqueExactTypes.map((type) => (
+                            <label key={type} className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedExactTypes.has(type)}
+                                    onChange={() => toggleExactType(type)}
+                                />
+                                <span>{type}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="filter-section date-filters">
+                    <div className="date-filter">
+                        <label>Od:</label>
+                        <input
+                            type="datetime-local"
+                            value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                        />
+                    </div>
+                    <div className="date-filter">
+                        <label>Do:</label>
+                        <input
+                            type="datetime-local"
+                            value={dateTo}
+                            onChange={(e) => setDateTo(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <table>
                 <thead className="clickable">
                     <tr>
                         <th>Typ</th>
@@ -813,7 +1097,7 @@ const LogsTab = () => {
                 </thead>
 
                 <tbody>
-                    {logs?.map((log: Log) => (
+                    {filteredLogs?.map((log: Log) => (
                         <tr
                             key={log.id}
                         >
