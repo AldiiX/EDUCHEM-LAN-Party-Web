@@ -349,7 +349,7 @@ public class APIv1(
         // zapsani do logu
         await dbLogger.LogInfoAsync($"Uživatel {targetUser.DisplayName} ({targetUser.Email}) byl smazán uživatelem {loggedUser.DisplayName} ({loggedUser.Email}).", "user-delete", ct);
 
-        return new NoContentResult();
+        return new JsonResult(new { success = true, message = "Uživatel byl smazán." });
     }
 
     [HttpPost("adm/users/passwordreset")]
