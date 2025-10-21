@@ -21,11 +21,72 @@
                     text-align: center;
                 }
 
-                >.users {
-                    display: flex;
-                    gap: 4px;
-                    align-items: center;
-                    justify-content: center;
+                >.users-container {
+                    position: relative;
+
+                    >.users {
+                        display: flex;
+                        gap: 4px;
+                        align-items: center;
+                        justify-content: center;
+
+                        >.more-users-button {
+                            width: 24px;
+                            height: 24px;
+                            border-radius: 50%;
+                            background-color: var(--accent-color);
+                            color: var(--accent-color-text);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 12px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: transform 0.2s ease;
+
+                            &:hover {
+                                transform: scale(1.1);
+                            }
+                        }
+                    }
+
+                    >.all-users-popover {
+                        position: absolute;
+                        top: calc(100% + 0px);
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background-color: var(--element-bg);
+                        border: 1px solid var(--popover-border-color);
+                        border-radius: 12px;
+                        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+                        padding: 12px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                        max-height: 400px;
+                        overflow-y: auto;
+                        z-index: 1000;
+                        min-width: 200px;
+
+                        >.user-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            padding: 4px 8px;
+                            border-radius: 8px;
+                            transition: background-color 0.2s ease;
+
+                            &:hover {
+                                background-color: var(--element-bg-colored);
+                            }
+
+                            >span {
+                                font-size: 14px;
+                                color: var(--text-color);
+                                white-space: nowrap;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -368,8 +429,16 @@
                         text-align: right;
                     }
 
-                    .users {
-                        justify-content: right;
+                    .users-container {
+                        .users {
+                            justify-content: right;
+                        }
+
+                        .all-users-popover {
+                            left: auto;
+                            right: 0;
+                            transform: none;
+                        }
                     }
                 }
             }
