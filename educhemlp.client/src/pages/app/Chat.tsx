@@ -50,7 +50,7 @@ const MESSAGE_COOLDOWN_IN_SECONDS = 1;
 
 const ChatTitleBar = () => {
     const connectedUsers = useChatStore((state) => state.connectedUsers);
-    const MAX_VISIBLE_USERS = 10;
+    const MAX_VISIBLE_USERS = 5;
     const visibleUsers = connectedUsers.slice(0, MAX_VISIBLE_USERS);
     const remainingCount = connectedUsers.length - MAX_VISIBLE_USERS;
     const [showAllUsers, setShowAllUsers] = useState(false);
