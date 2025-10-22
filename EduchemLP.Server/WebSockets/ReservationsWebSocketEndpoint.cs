@@ -122,12 +122,16 @@ public sealed class ReservationsWebSocketEndpoint(
                         if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
 
                         // kontrola opravneni rezervovat
-                        if (sessionAccount is { EnableReservation: false }) {
+                        var accountCanReserve = await IsAccountAbleToReserveAsync(sessionAccount, ct);
+                        //Console.WriteLine($"Account {sessionAccount!.Id} can reserve: {accountCanReserve}");
+
+                        if (!accountCanReserve) {
                             await client.SendAsync(new {
                                     action = "error",
                                     message = "Tvůj účet nemá povolené rezervace."
                                 }.ToJsonString(), ct
                             );
+
                             break;
                         }
 
@@ -331,6 +335,22 @@ public sealed class ReservationsWebSocketEndpoint(
                 }
             });
         }
+    }
+
+    private async Task<bool> IsAccountAbleToReserveAsync(Account? account, CancellationToken ct) {
+        if (account == null) return false;
+
+        await using var conn = await db.GetOpenConnectionAsync(ct);
+        if (conn is null) return false;
+
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM users WHERE id = @user_id AND enable_reservation = 1";
+        cmd.Parameters.AddWithValue("@user_id", account.Id);
+
+        var result = await cmd.ExecuteScalarAsync(ct);
+        //Program.Logger.LogInformation("Reservation permission check for account {AccountId}: {Result}", account.Id, result);
+        var count = int.TryParse(result?.ToString(), out var c) ? c : 0;
+        return count > 0;
     }
 
     private async Task<string> BuildStatusPayloadAsync(ReservationsClient receiver, CancellationToken ct) {

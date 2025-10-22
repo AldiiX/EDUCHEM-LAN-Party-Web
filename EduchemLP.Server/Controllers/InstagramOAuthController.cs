@@ -23,7 +23,7 @@ public class InstagramOAuthController(
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] string code, CancellationToken ct = default) {
         var account = await auth.ReAuthFromContextOrNullAsync(ct);
-        if (account == null) return RedirectPermanent("/login");
+        if (account == null) return Redirect("/login");
 
 
         var client = new HttpClient();
@@ -43,9 +43,16 @@ public class InstagramOAuthController(
         var accessToken = body?["access_token"]?.ToString();
         var userId = body?["user_id"]?.ToString();
 
+
+        // kontrola odpovedi (pokud request byl zrusen, tak se nic neposle do db)
+        if (accessToken == null) {
+            return Redirect("/app/account?tab=settings");
+        }
+
+
         // zapsani do db
         await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return RedirectPermanent("/app/account");
+        if (conn == null) return Redirect("/app/account");
 
         await using var cmd = new MySqlCommand(
             """
@@ -58,12 +65,12 @@ public class InstagramOAuthController(
             conn);
 
         cmd.Parameters.AddWithValue("@userId", account.Id );
-        cmd.Parameters.AddWithValue("@accessToken", body?["access_token"]?.ToString());
+        cmd.Parameters.AddWithValue("@accessToken", accessToken);
         await cmd.ExecuteNonQueryAsync(ct);
 
         // znovu reauth
         account = await auth.ReAuthAsync(ct);
-        if(account is null) return RedirectPermanent("/app/account?tab=settings");
+        if(account is null) return Redirect("/app/account?tab=settings");
 
 
         await accounts.UpdateAvatarByConnectedPlatformAsync(account, ct);

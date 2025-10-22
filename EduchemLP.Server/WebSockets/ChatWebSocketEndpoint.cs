@@ -404,6 +404,15 @@ public sealed class ChatWebSocketEndpoint(
             avatar = (c as ChatClient)?.Avatar
         }).ToList();
 
+        // pridani 20 test userů pro demo
+        /*for (int i = 1; i <= 20; i++) {
+            users.Add(new {
+                id = (uint) (1000 + i),
+                name = $"Test User {i}",
+                avatar = (i % 2 == 0) ? "https://i.pravatar.cc/150?img=" + (10 + i) : null
+            });
+        }*/
+
         var json = JsonSerializer.Serialize(new {
             action = "updateConnectedUsers",
             users

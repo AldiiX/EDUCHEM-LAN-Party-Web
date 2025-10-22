@@ -53,33 +53,33 @@ export default defineConfig(({ command, mode }: any): any => {
     }
 
     // Vývojová konfigurace: generace certifikátů a nastavení HTTPS
-    const baseFolder =
-        env.APPDATA !== undefined && env.APPDATA !== ''
-            ? `${env.APPDATA}/ASP.NET/https`
-            : `${env.HOME}/.aspnet/https`;
-
-    const certificateName = "4tense.client";
-    const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
-    const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
-
-    if (!fs.existsSync(baseFolder)) {
-        fs.mkdirSync(baseFolder, { recursive: true });
-    }
-
-    if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
-        const result = child_process.spawnSync('dotnet', [
-            'dev-certs',
-            'https',
-            '--export-path',
-            certFilePath,
-            '--format',
-            'Pem',
-            '--no-password',
-        ], { stdio: 'inherit' });
-        if (result.status !== 0) {
-            throw new Error("Could not create certificate.");
-        }
-    }
+    // const baseFolder =
+    //     env.APPDATA !== undefined && env.APPDATA !== ''
+    //         ? `${env.APPDATA}/ASP.NET/https`
+    //         : `${env.HOME}/.aspnet/https`;
+    //
+    // const certificateName = "4tense.client";
+    // const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
+    // const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
+    //
+    // if (!fs.existsSync(baseFolder)) {
+    //     fs.mkdirSync(baseFolder, { recursive: true });
+    // }
+    //
+    // if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
+    //     const result = child_process.spawnSync('dotnet', [
+    //         'dev-certs',
+    //         'https',
+    //         '--export-path',
+    //         certFilePath,
+    //         '--format',
+    //         'Pem',
+    //         '--no-password',
+    //     ], { stdio: 'inherit' });
+    //     if (result.status !== 0) {
+    //         throw new Error("Could not create certificate.");
+    //     }
+    // }
 
     return {
         plugins: [plugin()],

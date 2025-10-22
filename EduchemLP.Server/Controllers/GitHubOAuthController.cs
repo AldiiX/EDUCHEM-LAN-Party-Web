@@ -20,7 +20,7 @@ public class GitHubOAuthController(
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] string code, [FromQuery] string? state, CancellationToken ct = default) {
         var account = await auth.ReAuthFromContextOrNullAsync(ct);
-        if (account == null) return RedirectPermanent("/login");
+        if (account == null) return Redirect("/login");
 
         var client = new HttpClient();
         var content = new FormUrlEncodedContent(new Dictionary<string, string> {
@@ -41,14 +41,14 @@ public class GitHubOAuthController(
         var refreshToken = queryParams["refresh_token"]; // většinou NULL (GitHub OAuth apps defaultně nevrací refresh token)
         var error = queryParams["error"];
 
-        if (!string.IsNullOrEmpty(error) || string.IsNullOrEmpty(accessToken)){
-            //Console.WriteLine("GitHub OAuth Error: " + responseString);
-            return RedirectPermanent("/login");
+        // kontrola odpovedi (pokud request byl zrusen, tak se nic neposle do db)
+        if (accessToken == null || error != null) {
+            return Redirect("/app/account?tab=settings");
         }
 
         // zapsani do db
         await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return RedirectPermanent("/app/account");
+        if (conn == null) return Redirect("/app/account");
 
         await using var cmd = new MySqlCommand(
         """
@@ -66,7 +66,7 @@ public class GitHubOAuthController(
 
         // znovu reauth
         account = await auth.ReAuthAsync(ct);
-        if(account is null) return RedirectPermanent("/app/account?tab=settings");
+        if(account is null) return Redirect("/app/account?tab=settings");
 
 
         await accounts.UpdateAvatarByConnectedPlatformAsync(account, ct);

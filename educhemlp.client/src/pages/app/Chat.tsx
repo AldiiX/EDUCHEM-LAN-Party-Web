@@ -50,6 +50,10 @@ const MESSAGE_COOLDOWN_IN_SECONDS = 1;
 
 const ChatTitleBar = () => {
     const connectedUsers = useChatStore((state) => state.connectedUsers);
+    const MAX_VISIBLE_USERS = 5;
+    const visibleUsers = connectedUsers.slice(0, MAX_VISIBLE_USERS);
+    const remainingCount = connectedUsers.length - MAX_VISIBLE_USERS;
+    const [showAllUsers, setShowAllUsers] = useState(false);
 
     return (
         <div className="titlebar">
@@ -60,16 +64,49 @@ const ChatTitleBar = () => {
                     connectedUsers.length > 0 ? (
                         <div className="online-users">
                             <p>Online uživatelé</p>
-                            <div className="users">
-                                {
-                                    connectedUsers.map((user, index) => {
-                                        return (
-                                            <div className="user" key={index} title={user.name}>
-                                                <Avatar size={"24px"} src={user.avatar} name={user.name} />
-                                                {/*<span>{user.name}</span>*/}
+                            <div className="users-container">
+                                <div className="users">
+                                    {
+                                        visibleUsers.map((user, index) => {
+                                            return (
+                                                <div className="user" key={index} title={user.name}>
+                                                    <Avatar size={"24px"} src={user.avatar} name={user.name} />
+                                                </div>
+                                            )
+                                        })
+                                    }
+                                    {
+                                        remainingCount > 0 && (
+                                            <div 
+                                                className="more-users-button" 
+                                                title={`+${remainingCount} dalších uživatelů`}
+                                                onMouseEnter={() => setShowAllUsers(true)}
+                                                onMouseLeave={() => setShowAllUsers(false)}
+                                            >
+                                                +{remainingCount}
                                             </div>
                                         )
-                                    })
+                                    }
+                                </div>
+                                {
+                                    showAllUsers && remainingCount > 0 && (
+                                        <div 
+                                            className="all-users-popover"
+                                            onMouseEnter={() => setShowAllUsers(true)}
+                                            onMouseLeave={() => setShowAllUsers(false)}
+                                        >
+                                            {
+                                                connectedUsers.map((user, index) => {
+                                                    return (
+                                                        <div className="user-item" key={index}>
+                                                            <Avatar size={"24px"} src={user.avatar} name={user.name} />
+                                                            <span>{user.name}</span>
+                                                        </div>
+                                                    )
+                                                })
+                                            }
+                                        </div>
+                                    )
                                 }
                             </div>
                         </div>
@@ -99,6 +136,7 @@ export const Chat = () => {
     const setConnectedUsers = useChatStore((state) => state.setConnectedUsers);
     const [forceCloseMenuPopover, setForceCloseMenuPopover] = useState<boolean>(false);
     const scrollToBottomButtonRef = useRef<HTMLDivElement | null>(null);
+    const isIntentionalCloseRef = useRef<boolean>(false);
 
 
     // datumy v cestine textem
@@ -167,6 +205,7 @@ export const Chat = () => {
     }
 
     function connectToWebSocket() {
+        isIntentionalCloseRef.current = false;
         const ws = new WebSocket(
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/chat`
         );
@@ -275,7 +314,11 @@ export const Chat = () => {
             }
         };
         
-        ws.onerror = () => toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
+        ws.onerror = () => {
+            if (!isIntentionalCloseRef.current) {
+                toast.error("Chyba při připojení k chatu. Refreshněte stránku.");
+            }
+        };
 
         ws.onclose = () => {
             setSocketState(ChatSocketState.DISCONNECTED);
@@ -303,6 +346,7 @@ export const Chat = () => {
         checkAndAddScrollListener();
 
         return () => {
+            isIntentionalCloseRef.current = true;
             wsRef.current?.close();
 
             const scrollContainer = document.querySelector("body #app .right");

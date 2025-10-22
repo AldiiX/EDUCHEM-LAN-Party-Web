@@ -55,6 +55,13 @@
                 gap: 16px;
 
                 >.item {
+                    user-select: none;
+
+                    &:is(.disabled) {
+                        opacity: 0.5;
+                        pointer-events: none;
+                    }
+
                     &:is(.active) {
                         >.content {
                             background-color: var(--element-bg-colored);

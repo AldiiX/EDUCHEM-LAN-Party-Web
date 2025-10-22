@@ -20,6 +20,19 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
         if (!Utilities.VerifyPassword(plainPassword, acc.Password)) return null;
         http.HttpContext!.Session.SetString("loggedaccount", JsonSerializer.Serialize(acc, JsonSerializerOptions.Web));
         http.HttpContext.Items["loggedaccount"] = acc;
+        _ = UpdateLastLoggedInAsync(acc, ct);
+        return acc;
+    }
+
+    public async Task<Account?> ForceLoginAsync(string identifier, CancellationToken ct = default) {
+        var acc = await GetAccountByIdentifierAsync(identifier, ct);
+        if (acc == null) return null;
+
+        http.HttpContext!.Session.Clear();
+        await http.HttpContext.Session.CommitAsync(ct);
+        http.HttpContext.Session.SetString("loggedaccount", JsonSerializer.Serialize(acc, JsonSerializerOptions.Web));
+        http.HttpContext.Items["loggedaccount"] = acc;
+        await http.HttpContext.Session.CommitAsync(ct);
         return acc;
     }
 
@@ -33,6 +46,7 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
         var acc = await accounts.GetByIdAsync(sessionAcc.Id, ct);
         if (acc == null || acc.Password != sessionAcc.Password) return null;
 
+        _ = UpdateLastLoggedInAsync(acc, ct);
         http.HttpContext!.Items["loggedaccount"] = acc;
         http.HttpContext!.Session.SetString("loggedaccount", JsonSerializer.Serialize(acc, JsonSerializerOptions.Web));
         return acc;
@@ -76,28 +90,41 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
     private async Task<Account?> GetAccountByIdentifierAsync(string identifier, CancellationToken ct) {
         await using var conn = await db.GetOpenConnectionAsync(ct);
 
-        const string sql = "select * from users where id = @id or email = @id";
-
-
-        await using var cmd = new MySqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("id", identifier);
+        MySqlCommand cmd;
+        if (identifier.Contains('@')) {
+            cmd = new MySqlCommand("select * from users where email = @email limit 1;", conn);
+            cmd.Parameters.Add("@email", MySqlDbType.VarChar).Value = identifier;
+        } else if (ulong.TryParse(identifier, out var id)) {
+            cmd = new MySqlCommand("select * from users where id = @id limit 1;", conn);
+            cmd.Parameters.Add("@id", MySqlDbType.UInt64).Value = id;
+        } else {
+            return null;
+        }
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         if (!await reader.ReadAsync(ct)) return null;
-
         return new Account(reader);
     }
 
     public async Task<Account?> ReAuthFromContextOrNullAsync(CancellationToken ct = default) {
         if (http.HttpContext == null) return null;
-        if (http.HttpContext.Items.ContainsKey("loggedaccount")) {
-            var str = http.HttpContext?.Session.GetString("loggedaccount");
-            if (string.IsNullOrEmpty(str)) return null;
+        if (!http.HttpContext.Items.ContainsKey("loggedaccount")) return await ReAuthAsync(ct);
 
-            var acc = JsonSerializer.Deserialize<Account>(str, JsonSerializerOptions.Web);
-            if (acc != null) return acc;
-        }
+        var str = http.HttpContext?.Session.GetString("loggedaccount");
+        if (string.IsNullOrEmpty(str)) return null;
+
+        var acc = JsonSerializer.Deserialize<Account>(str, JsonSerializerOptions.Web);
+        if (acc != null) return acc;
 
         return await ReAuthAsync(ct);
+    }
+
+    public async Task<bool> UpdateLastLoggedInAsync(Account account, CancellationToken ct = default) {
+        await using var conn = await db.GetOpenConnectionAsync(ct);
+        const string sql = "update users set last_logged_in = now() where id = @id";
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("id", account.Id);
+        var affected = await cmd.ExecuteNonQueryAsync(ct);
+        return affected > 0;
     }
 }

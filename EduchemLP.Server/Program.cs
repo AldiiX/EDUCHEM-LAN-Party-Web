@@ -144,8 +144,9 @@ public static class Program {
         App.UseMiddleware<BeforeInitMiddleware>();
 
         App.UseWebSockets(new WebSocketOptions {
-            KeepAliveInterval = TimeSpan.FromSeconds(15),
+            KeepAliveInterval = TimeSpan.FromSeconds(20),
         });
+
         App.UseMiddleware<WebSocketMiddleware>();
 
         App.UseRouting();

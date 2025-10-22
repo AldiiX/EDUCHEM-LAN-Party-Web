@@ -136,7 +136,7 @@ export const AppLayout = ({ children, className, customTitleBar, titleBarType = 
 
                 <div className="footer">
                     <p>© { new Date().getFullYear() } EDUCHEM LAN Party</p>
-                    <p>Vytvořili: <a href="https://stanislavskudrna.cz" target="_blank">Stanislav Škudrna</a>, <a href="https://github.com/WezeAnonymm" target="_blank">Serhii Yavorskyi</a></p>
+                    <p>Vytvořili: <a href="https://stanislavskudrna.cz" target="_blank">Stanislav Škudrna</a>, <a href="https://serhii.cz" target="_blank">Serhii Yavorskyi</a></p>
                 </div>
             </section>
 

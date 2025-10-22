@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
@@ -178,7 +179,7 @@ public class APIv1(
         if(!Utilities.IsPasswordValid(newPassword)) return new BadRequestObjectResult(new { success = false, message = "Heslo musí obsahovat alespoň jedno velké písmeno, jedno číslo a jeden speciální znak." });
 
         // encrypnuti hesla
-        var encryptedNewPassword = Utilities.EncryptPassword(newPassword);
+        var encryptedNewPassword = Utilities.HashPassword(newPassword);
 
         // zapsani do db
         await using var conn = await db.GetOpenConnectionAsync(ct);
@@ -265,8 +266,8 @@ public class APIv1(
 
     [HttpDelete("loggeduser"), HttpDelete("me")]
     public IActionResult Logout() {
-        HttpContextService.Current.Items["loggeduser"] = null;
-        HttpContextService.Current.Session.Remove("loggeduser");
+        HttpContextService.Current.Items["loggedaccount"] = null;
+        HttpContextService.Current.Session.Remove("loggedaccount");
         Response.Cookies.Delete("educhemlp_session");
         return new NoContentResult();
     }
@@ -290,33 +291,11 @@ public class APIv1(
         var acc = await auth.ReAuthFromContextOrNullAsync(ct);
         if(acc?.Type < Account.AccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if(conn == null) return new StatusCodeResult(500);
-
-        var command = new MySqlCommand(
-            """
-            SELECT * FROM users WHERE id > 0 ORDER BY display_name;
-            """, conn
-        );
-
-        await using var reader = await command.ExecuteReaderAsync(ct);
-
+        var users = await accounts.GetAllAsync(ct);
         var array = new JsonArray();
-        while(await reader.ReadAsync(ct)) {
-            var obj = new JsonObject {
-                ["id"] = reader.GetInt32("id"),
-                ["email"] = reader.GetString("email"),
-                ["name"] = reader.GetString("display_name"),
-                ["class"] = reader.GetStringOrNull("class"),
-                ["gender"] = reader.GetStringOrNull("gender"),
-                ["type"] = reader.GetString("account_type"),
-                ["lastUpdated"] = reader.GetDateTime("last_updated"),
-                ["lastLoggedIn"] = reader.GetStringOrNull("last_logged_in") != null ? (DateTime)reader.GetValue("last_logged_in") : null,
-                ["avatar"] = reader.GetStringOrNull("avatar"),
-                ["banner"] = reader.GetStringOrNull("banner"),
-            };
 
-            array.Add(obj);
+        foreach (var user in users.Where(user => user.Id >= 0)) {
+            array.Add(user.ToPublicJsonNode());
         }
 
         return new JsonResult(array);
@@ -346,7 +325,7 @@ public class APIv1(
         // zapassani do logu
         await dbLogger.LogInfoAsync($"Uživatel {account.DisplayName} ({account.Email}) byl vytvořen uživatelem {loggedUser.DisplayName} ({loggedUser.Email}).", "user-create", ct);
 
-        return new NoContentResult();
+        return new JsonResult(new { success = true, message = "Uživatel byl vytvořen." });
     }
 
     [HttpDelete("adm/users")]
@@ -382,7 +361,7 @@ public class APIv1(
         // zapsani do logu
         await dbLogger.LogInfoAsync($"Uživatel {targetUser.DisplayName} ({targetUser.Email}) byl smazán uživatelem {loggedUser.DisplayName} ({loggedUser.Email}).", "user-delete", ct);
 
-        return new NoContentResult();
+        return new JsonResult(new { success = true, message = "Uživatel byl smazán." });
     }
 
     [HttpPost("adm/users/passwordreset")]
@@ -460,6 +439,7 @@ public class APIv1(
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
         Account.AccountType? accountType = body.TryGetValue("type", out var _accountType) ? Enum.TryParse(_accountType?.ToString(), out Account.AccountType _ac) ? _ac : null : null;
         Account.AccountGender? gender = body.TryGetValue("gender", out var _gender) ? Enum.TryParse(_gender?.ToString(), out Account.AccountGender _g) ? _g : null : null;
+        bool? enableReservation = body.TryGetValue("enableReservation", out var _enableReservation) ? bool.TryParse(_enableReservation?.ToString(), out var _er) ? _er : null : null;
         email = email == "" ? null : email?.Trim();
         displayName = displayName == "" ? null : displayName?.Trim();
         @class = @class == "" ? null : @class?.Trim();
@@ -489,6 +469,7 @@ public class APIv1(
                 `class`=@class,
                 `account_type`=IF(@accountType IS NULL, account_type, @accountType),
                 `gender`=IF(@gender IS NULL, gender, @gender),
+                `enable_reservation`=IF(@enableReservation IS NULL, enable_reservation, @enableReservation),
                 `last_updated`=NOW()
             WHERE id=@id;
             """, conn
@@ -500,6 +481,7 @@ public class APIv1(
         command.Parameters.AddWithValue("@class", @class);
         command.Parameters.AddWithValue("@accountType", accountType.ToString()?.ToUpper());
         command.Parameters.AddWithValue("@gender", gender.ToString()?.ToUpper());
+        command.Parameters.AddWithValue("@enableReservation", enableReservation);
 
 
         // zapsani do logu
@@ -539,6 +521,27 @@ public class APIv1(
         }
 
         return new JsonResult(array);
+    }
+
+    [HttpPost("adm/users/loginas")]
+    public async Task<IActionResult> LoginAsUser([FromBody] JsonNode body, CancellationToken ct = default) {
+        var acc = await auth.ReAuthFromContextOrNullAsync(ct);
+        if(acc == null || acc.Type < Account.AccountType.ADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+
+        int? userId = int.TryParse(body["uid"]?.GetValue<string>(), out var _id) ? _id : null;
+        if(userId == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'uid'" });
+
+        var targetUser = await accounts.GetByIdAsync(userId.Value, ct);
+        if(targetUser == null) return new NotFoundObjectResult(new { success = false, message = "Uživatel nenalezen." });
+
+        // pokud má target user vyšší nebo stejné práva jako přihlašující se user, nepovoli se to krom superadmina
+        if(targetUser.Type >= acc.Type && acc.Type != Account.AccountType.SUPERADMIN)
+            return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš se přihlásit jako uživatel s vyššími nebo stejnými právy." });
+
+        var success = await auth.ForceLoginAsync(targetUser.Email, ct) != null;
+        if(!success) return new ObjectResult(new { success = false, message = "Nepodařilo se přihlásit jako tento uživatel." }) { StatusCode = 500 };
+
+        return new JsonResult(new { success = true, message = "Přihlášení proběhlo úspěšně." });
     }
     
     #endregion

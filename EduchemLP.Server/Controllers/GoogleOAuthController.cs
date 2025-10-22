@@ -22,7 +22,7 @@ public class GoogleOAuthController(
     [HttpGet]
     public async Task<IActionResult> Index([FromQuery] string code, CancellationToken ct = default) {
         var account = await auth.ReAuthFromContextOrNullAsync(ct);
-        if (account == null) return RedirectPermanent("/login");
+        if (account == null) return Redirect("/login");
 
         var client = new HttpClient();
         var content = new FormUrlEncodedContent(new Dictionary<string, string> {
@@ -41,10 +41,15 @@ public class GoogleOAuthController(
         var refreshToken = tokenData?["refresh_token"]?.ToString();
 
 
+        // kontrola odpovedi (pokud request byl zrusen, tak se nic neposle do db)
+        if (accessToken == null || refreshToken == null) {
+            return Redirect("/app/account?tab=settings");
+        }
+
 
         // zapsani do db
         await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return RedirectPermanent("/app/account");
+        if (conn == null) return Redirect("/app/account");
 
         await using var cmd = new MySqlCommand(
             """
@@ -62,7 +67,7 @@ public class GoogleOAuthController(
 
         // znovu reauth
         account = await auth.ReAuthAsync(ct);
-        if(account is null) return RedirectPermanent("/app/account?tab=settings");
+        if(account is null) return Redirect("/app/account?tab=settings");
 
 
         await accounts.UpdateAvatarByConnectedPlatformAsync(account, ct);

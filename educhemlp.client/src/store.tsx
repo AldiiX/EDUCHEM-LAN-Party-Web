@@ -27,6 +27,9 @@ type Store = {
 
     currentPage: CurrentPage | null,
     setCurrentPage: (page: CurrentPage) => void,
+
+    syncSocket: WebSocket | null,
+    setSyncSocket: (socket: WebSocket | null) => void,
 };
 
 export const useStore = create<Store | any>((set: any) => ({
@@ -67,4 +70,7 @@ export const useStore = create<Store | any>((set: any) => ({
         if (JSON.stringify(state.currentPage) === JSON.stringify(page)) return {};
         return {currentPage: page};
     }),
+
+    syncSocket: null,
+    setSyncSocket: (socket: WebSocket | null) => set({syncSocket: socket }),
 }));
