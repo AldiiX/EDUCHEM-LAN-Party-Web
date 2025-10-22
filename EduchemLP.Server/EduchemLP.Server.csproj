@@ -6,9 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>5524e4a2-be9a-4354-9647-42b43dea516f</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <SpaRoot>..\educhemlp.client</SpaRoot>
-    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
-    <SpaProxyServerUrl>https://localhost:3154</SpaProxyServerUrl>
+<!--    <SpaRoot>..\educhemlp.client</SpaRoot>-->
+<!--    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>-->
+<!--    <SpaProxyServerUrl>https://localhost:3154</SpaProxyServerUrl>-->
   </PropertyGroup>
 
   <ItemGroup>
