@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run Dev" type="CompoundRunConfigurationType">
+    <toRun name="EduchemLP.Server: http" type="LaunchSettings" />
+    <toRun name="educhemlp.client: run" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>
