@@ -226,6 +226,17 @@
                 }
             }
 
+            .res-en, .res-dis {
+                margin: 4px 0 0 0;
+                font-size: 14px;
+                opacity: 0.25;
+            }
+
+            .res-en {
+                color: var(--accent-color);
+                opacity: 0.5;
+            }
+
             h1 {
                 margin: 0;
                 font-family: gabarito, leaguespartan, sans-serif;

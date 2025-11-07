@@ -19,6 +19,7 @@ public partial class Account {
     public string? Avatar { get; private set; }
     public string? Banner { get; private set; }
     public AccountType Type { get; private set; }
+    public DateTime CreatedAt { get; private set; }
     public DateTime LastUpdated { get; private set; }
     public DateTime? LastLoggedIn { get; private set; }
     public AccountGender? Gender { get; private set; }
@@ -29,13 +30,14 @@ public partial class Account {
 
 
     [JsonConstructor]
-    public Account(int id, string displayName, string email, string password, string? @class, AccountType type, DateTime lastUpdated, DateTime? lastLoggedIn, AccountGender? gender, string? avatar, string? banner, List<AccountAccessToken>? accessTokens, bool enableReservation = false) {
+    public Account(int id, string displayName, string email, string password, string? @class, AccountType type, DateTime createdAt, DateTime lastUpdated, DateTime? lastLoggedIn, AccountGender? gender, string? avatar, string? banner, List<AccountAccessToken>? accessTokens, bool enableReservation = false) {
         Id = id;
         DisplayName = displayName;
         Class = @class;
         Password = password;
         Email = email;
         Type = type;
+        CreatedAt = createdAt;
         LastUpdated = lastUpdated;
         LastLoggedIn = lastLoggedIn;
         Avatar = avatar;
@@ -52,6 +54,7 @@ public partial class Account {
         reader.GetString("password"),
         reader.GetStringOrNull("class"),
         Enum.TryParse(reader.GetString("account_type"), out Account.AccountType _ac) ? _ac : Account.AccountType.STUDENT,
+        reader.GetDateTime("created_at"),
         reader.GetDateTime("last_updated"),
         reader.GetValueOrNull<DateTime>("last_logged_in"),
         Enum.TryParse<Account.AccountGender>(reader.GetStringOrNull("gender"), out var _g ) ? _g : null,

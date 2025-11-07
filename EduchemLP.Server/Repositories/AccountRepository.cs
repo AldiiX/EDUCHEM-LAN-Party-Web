@@ -84,6 +84,7 @@ public class AccountRepository(
                    JSON_ARRAY()
                 ) AS access_tokens
             FROM `users` u
+            ORDER BY `display_name` ASC
         """, conn);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
@@ -197,14 +198,14 @@ public class AccountRepository(
         http.HttpContext.Session.SetString("loggedaccount", sessionAcc.ToJsonString());
     }
 
-    public async Task<Account?> CreateAsync(string email, string displayName, string? @class, Account.AccountGender gender, Account.AccountType accountType, bool sendToEmail = false, CancellationToken ct = default) {
+    public async Task<Account?> CreateAsync(string email, string displayName, string? @class, Account.AccountGender gender, Account.AccountType accountType, bool sendToEmail = false, bool enableReservation = false, CancellationToken ct = default) {
         await using var conn = await db.GetOpenConnectionAsync(ct);
         if (conn == null) return null;
 
         var password = Utilities.GenerateRandomPassword();
         const string insertQuery =
             """
-            INSERT INTO users (email, display_name, password, class, account_type, gender) VALUES (@email, @displayName, @password, @class, @accountType, @gender);
+            INSERT INTO users (email, display_name, password, class, account_type, gender, enable_reservation) VALUES (@email, @displayName, @password, @class, @accountType, @gender, @enableReservation);
 
             SELECT * FROM users WHERE id = LAST_INSERT_ID();
             """;
@@ -215,6 +216,7 @@ public class AccountRepository(
         cmd.Parameters.AddWithValue("@class", @class);
         cmd.Parameters.AddWithValue("@accountType", accountType.ToString().ToUpper());
         cmd.Parameters.AddWithValue("@gender", gender.ToString().ToUpper());
+        cmd.Parameters.AddWithValue("@enableReservation", enableReservation ? 1 : 0);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         if (!await reader.ReadAsync(ct)) return null;

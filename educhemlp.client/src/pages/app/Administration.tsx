@@ -36,6 +36,7 @@ interface User {
     class: string,
     type: AccountType,
     gender: AccountGender | null,
+    createdAt: string,
     lastUpdated: string,
     lastLoggedIn: string,
     banner: string | null,
@@ -271,7 +272,7 @@ const UsersTab = () => {
             const aValue: any = a[sortColumn] || "";
             const bValue: any = b[sortColumn] || "";
             return (
-                aValue?.toString().localeCompare(bValue?.toString(), "cs", {numeric: true}) *
+                aValue?.toString().localeCompare(bValue?.toString(), "en", {numeric: true}) *
                 (sortDirection === "asc" ? 1 : -1)
             );
     });
@@ -296,6 +297,7 @@ const UsersTab = () => {
             }
 
             setUsers(data as User[]);
+            handleSort("name");
         });
     }
 
@@ -362,6 +364,7 @@ const UsersTab = () => {
         const gender = (userModal.querySelector("select[name='gender']") as HTMLSelectElement).value;
         const accountType = (userModal.querySelector("select[name='accountType']") as HTMLSelectElement).value;
         const sendToEmail = (userModal.querySelector("input[name='sendToEmail']") as HTMLInputElement).checked;
+        const enableReservation = (userModal.querySelector("input[name='enableReservation']") as HTMLInputElement)?.checked ?? false;
 
         if (name?.length < 3) {
             toast.error("Jméno musí mít alespoň 3 znaky.");
@@ -389,6 +392,7 @@ const UsersTab = () => {
                 type: accountType,
                 gender: gender,
                 sendToEmail: sendToEmail,
+                enableReservation: enableReservation,
             })
         }).then(async res => {
             const data: BasicAPIResponse = await res.json();
@@ -517,21 +521,31 @@ const UsersTab = () => {
                         <div className="bottom">
                             {
                                 !userModalEditMode ? (
-                                    <div className="namediv">
-                                        <h1>{selectedUser?.name}</h1>
-                                        <div className="connected-platforms">
-                                            {
-                                                selectedUser.connections.map((conn) => {
-                                                    const platform = platforms.find((p) => p.name.toUpperCase() === conn.toUpperCase());
-                                                    if (!platform) return null;
+                                    <>
+                                        <div className="namediv">
+                                            <h1>{selectedUser?.name}</h1>
+                                            <div className="connected-platforms">
+                                                {
+                                                    selectedUser.connections.map((conn) => {
+                                                        const platform = platforms.find((p) => p.name.toUpperCase() === conn.toUpperCase());
+                                                        if (!platform) return null;
 
-                                                    return (
-                                                        <div key={conn} className="platform" title={platform.name} style={{ maskImage: `url(${platform.icon})`}}></div>
-                                                    );
-                                                })
-                                            }
+                                                        return (
+                                                            <div key={conn} className="platform" title={platform.name} style={{ maskImage: `url(${platform.icon})`}}></div>
+                                                        );
+                                                    })
+                                                }
+                                            </div>
                                         </div>
-                                    </div>
+
+                                        {
+                                            selectedUser?.enableReservation ? (
+                                                <p className="res-en">Rezervace povolené</p>
+                                            ) : (
+                                                <p className="res-dis">Rezervace zakázané</p>
+                                            )
+                                        }
+                                    </>
                                 ) : (
                                     <input name="name" style={{
                                         fontSize: 28,
@@ -685,6 +699,31 @@ const UsersTab = () => {
                                 userModalCreationMode ? (
                                     <>
                                         <div className="separator" style={{marginTop: 24}}></div>
+
+                                        <div className="switch-div" style={{ marginBottom: 8 }}>
+                                            <p>Povolit rezervace</p>
+
+                                            <Switch slotProps={{input: {role: 'switch', name: "enableReservation"}}}
+                                                    defaultChecked={selectedUser?.enableReservation} sx={{
+                                                '--Switch-thumbSize': '16px',
+                                                '--Switch-trackWidth': '40px',
+                                                '--Switch-trackHeight': '24px',
+                                                '--Switch-thumbBackground': 'var(--bg)',
+                                                '--Switch-trackBackground': 'var(--text-color-darker)',
+                                                '&:hover': {
+                                                    '--Switch-trackBackground': 'var(--text-color-3)',
+                                                },
+                                                [`&.${switchClasses.checked}`]: {
+                                                    '--Switch-trackBackground': 'var(--accent-color)',
+                                                    '--Switch-thumbBackground': 'var(--bg)',
+                                                    '&:hover': {
+                                                        '--Switch-trackBackground': 'var(--accent-color-darker)',
+                                                    },
+                                                },
+                                            }}
+                                            />
+                                        </div>
+
                                         <div className="switch-div">
                                             <p>Odeslat přihlašovací údaje na email</p>
 
@@ -898,6 +937,7 @@ const UsersTab = () => {
                             <th onClick={() => handleSort("gender")}>Pohlaví</th>
                             <th onClick={() => handleSort("class")}>Třída</th>
                             <th onClick={() => handleSort("type")}>Typ účtu</th>
+                            <th onClick={() => handleSort("createdAt")}>Vytvořen</th>
                             <th onClick={() => handleSort("lastUpdated")}>Naposledy upraven</th>
                             <th onClick={() => handleSort("lastLoggedIn")}>Naposledy přihlášen</th>
                         </tr>
@@ -928,6 +968,7 @@ const UsersTab = () => {
                                 <td>{translateGender(user.gender?.toString())}</td>
                                 <td>{user.class}</td>
                                 <td>{translateAccountType(user.type, user.gender)}</td>
+                                <td>{new Date(user.createdAt).toLocaleString()}</td>
                                 <td>{new Date(user.lastUpdated).toLocaleString()}</td>
                                 <td>{user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : null}</td>
                             </tr>

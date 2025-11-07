@@ -300,6 +300,7 @@ public class APIv1(
         string? accountType = body.TryGetValue("type", out var _accountType) ? _accountType?.ToString() : null;
         string? gender = body.TryGetValue("gender", out var _gender) ? _gender?.ToString() : null;
         bool sendToEmail = body.TryGetValue("sendToEmail", out var _sendToEmail) && bool.TryParse(_sendToEmail?.ToString(), out var _sendToEmail2) && _sendToEmail2;
+        bool enableReservation = body.TryGetValue("enableReservation", out var _enableReservation) && bool.TryParse(_enableReservation?.ToString(), out var _enableReservation2) && _enableReservation2;
 
         if(email == null || displayName == null || accountType == null) return new BadRequestObjectResult(new { success = false, message = "Chybí parametr 'email', 'displayName' nebo 'type'" });
         var accountTypeParsed = Enum.TryParse(accountType, out Account.AccountType _ac) ? _ac : Account.AccountType.STUDENT;
@@ -307,7 +308,7 @@ public class APIv1(
         if(loggedUser.Type < accountTypeParsed && loggedUser.Type != Account.AccountType.SUPERADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš vytvořit uživatele s vyššími právy." });
 
         var genderParsed = Enum.TryParse(gender, out Account.AccountGender _g) ? _g : Account.AccountGender.OTHER;
-        var account = await accounts.CreateAsync(email, displayName, @class, genderParsed, accountTypeParsed, sendToEmail, ct);
+        var account = await accounts.CreateAsync(email, displayName, @class, genderParsed, accountTypeParsed, sendToEmail, enableReservation, ct);
         if(account == null) return new JsonResult(new { success = false, message = "Chyba při vytváření uživatele." }) { StatusCode = 500};
 
         // zapassani do logu
