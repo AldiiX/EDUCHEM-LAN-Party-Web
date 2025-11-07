@@ -1,0 +1,19 @@
+name: Deploy to Emsio Servers
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Emsio
+        uses: AldiiX/emsio-deploy@v3
+        with:
+          deploy_token: ${{ secrets.DEPLOY_TOKEN_TESTBRANCH }}
+          project_uuid: ${{ secrets.PROJECT_UUID_TESTBRANCH }}
+          # branch is optional; defaults to the current branch
+          branch: main
