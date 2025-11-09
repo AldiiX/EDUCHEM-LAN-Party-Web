@@ -60,7 +60,6 @@ public sealed class ReservationsWebSocketEndpoint(
         // auth je nepovinny, muze vratit null (anonymni klient)
         using var scope = scopeFactory.CreateScope();
         var auth = scope.ServiceProvider.GetRequiredService<IAuthService>();
-        var appSettings = scope.ServiceProvider.GetRequiredService<IAppSettingsService>();
 
         var sessionAccount = await auth.ReAuthAsync(ct);
         var client = new ReservationsClient(socket, sessionAccount);
@@ -119,20 +118,35 @@ public sealed class ReservationsWebSocketEndpoint(
 
                 switch (action) {
                     case "reserve": {
-                        if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
+                        using var reserveScope = scopeFactory.CreateScope();
+                        var freshAppSettings = reserveScope.ServiceProvider.GetRequiredService<IAppSettingsService>();
+
+                        // kontrola, zda jsou rezervace povolene (napr. podle casu)
+                        if (!await freshAppSettings.AreReservationsEnabledRightNowAsync(ct)) {
+                            await client.SendAsync(new
+                                {
+                                    action = "error",
+                                    message = "Rezervace nejsou momentálně povolené."
+                                }.ToJsonString(), ct
+                            );
+
+                            continue;
+                        }
 
                         // kontrola opravneni rezervovat
                         var accountCanReserve = await IsAccountAbleToReserveAsync(sessionAccount, ct);
                         //Console.WriteLine($"Account {sessionAccount!.Id} can reserve: {accountCanReserve}");
 
-                        if (!accountCanReserve) {
-                            await client.SendAsync(new {
+                        if (!accountCanReserve)
+                        {
+                            await client.SendAsync(new
+                                {
                                     action = "error",
                                     message = "Tvůj účet nemá povolené rezervace."
                                 }.ToJsonString(), ct
                             );
 
-                            break;
+                            continue;
                         }
 
                         var room = messageJson?["room"]?.ToString();
@@ -140,7 +154,7 @@ public sealed class ReservationsWebSocketEndpoint(
                         if (string.IsNullOrWhiteSpace(room) && string.IsNullOrWhiteSpace(computer)) break;
 
                         await using var conn = await db.GetOpenConnectionAsync(ct);
-                        if (conn is null) break;
+                        if (conn is null) continue;
 
                         await using (var cmd = conn.CreateCommand()) {
                             cmd.CommandText =
@@ -162,14 +176,26 @@ public sealed class ReservationsWebSocketEndpoint(
                             $"Uživatel {sessionAccount.DisplayName} ({sessionAccount.Email}) rezervoval {room ?? computer}.",
                             "reservation", ct
                         );
-                    }
-                        break;
+                    } break;
 
                     case "deleteReservation": {
-                        if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
+                        using var deleteScope = scopeFactory.CreateScope();
+                        var freshAppSettings = deleteScope.ServiceProvider.GetRequiredService<IAppSettingsService>();
+
+                        // kontrola, zda jsou rezervace povolene (napr. podle casu)
+                        if (!await freshAppSettings.AreReservationsEnabledRightNowAsync(ct)) {
+                            await client.SendAsync(new
+                                {
+                                    action = "error",
+                                    message = "Rezervace nejsou momentálně povolené."
+                                }.ToJsonString(), ct
+                            );
+
+                            continue;
+                        }
 
                         await using var conn = await db.GetOpenConnectionAsync(ct);
-                        if (conn is null) break;
+                        if (conn is null) continue;
 
                         await using (var cmd = conn.CreateCommand()) {
                             cmd.CommandText = "DELETE FROM reservations WHERE user_id = @user_id;";
@@ -183,13 +209,11 @@ public sealed class ReservationsWebSocketEndpoint(
                             $"Uživatel {sessionAccount!.DisplayName} ({sessionAccount!.Email}) zrušil rezervaci.",
                             "reservation", ct
                         );
-                    }
-                        break;
+                    } break;
 
                     case "disconnect": {
                         await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by user", ct);
-                    }
-                        break;
+                    } break;
                 }
             }
         }
