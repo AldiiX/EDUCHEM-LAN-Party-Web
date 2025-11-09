@@ -27,6 +27,9 @@ const useReservationsStore = create((set: any) => ({
 
     selectedReservationLoadingButton: false as boolean,
     setSelectedReservationLoadingButton: (loading: boolean) => set({ selectedReservationLoadingButton: loading }),
+
+    selectedReservationButtonCooldown: false as boolean,
+    setSelectedReservationButtonCooldown: (cooldown: boolean) => set({ selectedReservationButtonCooldown: cooldown }),
 }));
 
 
@@ -436,6 +439,8 @@ export const Reservations = () => {
             
             case"error": {
                 toast.error(object.message);
+
+                setSelectedReservationLoadingButton(false);
             } break;
         }
     }
