@@ -95,6 +95,8 @@ const SelectedReservation = () => {
     const appSettings: AppSettings = useStore((state) => state.appSettings);
     const buttonLoading = useReservationsStore((state) => state.selectedReservationLoadingButton);
     const setButtonLoading = useReservationsStore((state) => state.setSelectedReservationLoadingButton);
+    const buttonCooldown = useReservationsStore((state) => state.selectedReservationButtonCooldown);
+    const setButtonCooldown = useReservationsStore((state) => state.setSelectedReservationButtonCooldown);
 
     const reserve = async (room: string | null, computer: string | null) => {
         if(!appSettings.reservationsEnabledRightNow) {
@@ -107,7 +109,14 @@ const SelectedReservation = () => {
             return;
         }
 
+        if(buttonCooldown) {
+            return;
+        }
+
         setButtonLoading(true);
+        setButtonCooldown(true);
+        setTimeout(() => setButtonCooldown(false), 1000);
+        
         socket.current.send(JSON.stringify({
             action: "reserve",
             room: room,
@@ -123,7 +132,14 @@ const SelectedReservation = () => {
 
         if(!socket.current) return;
 
+        if(buttonCooldown) {
+            return;
+        }
+
         setButtonLoading(true);
+        setButtonCooldown(true);
+        setTimeout(() => setButtonCooldown(false), 1000);
+        
         socket.current.send(JSON.stringify({ action: "deleteReservation" }));
     }
 
@@ -157,7 +173,7 @@ const SelectedReservation = () => {
         <>
             <Divider />
             <div className="buttons">
-                <Button type={type} text={text} icon={icon} onClick={onClick} loading={buttonLoading} />
+                <Button type={type} text={text} icon={icon} onClick={onClick} loading={buttonLoading} disabled={buttonCooldown} />
             </div>
         </>
     );
