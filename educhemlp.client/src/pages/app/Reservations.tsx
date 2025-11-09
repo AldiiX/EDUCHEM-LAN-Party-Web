@@ -597,6 +597,29 @@ export const Reservations = () => {
         };
     }, []);
 
+    // odpojení/připojení socketu při opuštění/návratu na stránku
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                // Stránka je skrytá (minimalizovaná nebo uživatel přešel na jinou záložku)
+                if (socket.current && socket.current.readyState === WebSocket.OPEN) {
+                    socket.current.close();
+                }
+            } else {
+                // Stránka je zase viditelná
+                if (!socket.current || socket.current.readyState !== WebSocket.OPEN) {
+                    connectToSocket();
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
+
     // efekt pro nastaveni veci po tom co se změní selectReservation
     useEffect(() => {
         if (computers.length > 0 && rooms.length > 0) {
