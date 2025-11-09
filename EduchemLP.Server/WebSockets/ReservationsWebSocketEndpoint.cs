@@ -60,7 +60,6 @@ public sealed class ReservationsWebSocketEndpoint(
         // auth je nepovinny, muze vratit null (anonymni klient)
         using var scope = scopeFactory.CreateScope();
         var auth = scope.ServiceProvider.GetRequiredService<IAuthService>();
-        var appSettings = scope.ServiceProvider.GetRequiredService<IAppSettingsService>();
 
         var sessionAccount = await auth.ReAuthAsync(ct);
         var client = new ReservationsClient(socket, sessionAccount);
@@ -119,7 +118,10 @@ public sealed class ReservationsWebSocketEndpoint(
 
                 switch (action) {
                     case "reserve": {
-                        if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
+                        // Create a new scope to get fresh app settings (avoids stale cache)
+                        using var reserveScope = scopeFactory.CreateScope();
+                        var freshAppSettings = reserveScope.ServiceProvider.GetRequiredService<IAppSettingsService>();
+                        if (!await freshAppSettings.AreReservationsEnabledRightNowAsync(ct)) break;
 
                         // kontrola opravneni rezervovat
                         var accountCanReserve = await IsAccountAbleToReserveAsync(sessionAccount, ct);
@@ -166,7 +168,10 @@ public sealed class ReservationsWebSocketEndpoint(
                         break;
 
                     case "deleteReservation": {
-                        if (!await appSettings.AreReservationsEnabledRightNowAsync(ct)) break;
+                        // Create a new scope to get fresh app settings (avoids stale cache)
+                        using var deleteScope = scopeFactory.CreateScope();
+                        var freshAppSettings = deleteScope.ServiceProvider.GetRequiredService<IAppSettingsService>();
+                        if (!await freshAppSettings.AreReservationsEnabledRightNowAsync(ct)) break;
 
                         await using var conn = await db.GetOpenConnectionAsync(ct);
                         if (conn is null) break;
