@@ -235,7 +235,13 @@ public class APIv1(
         DateTime? to = data.TryGetValue("reservationsEnabledTo", out var _to) ? DateTime.TryParse(_to?.ToString(), out var _to2) ? _to2 : null : null;
         bool? chatEnabled = data.TryGetValue("chatEnabled", out var _chatEnabled) ? bool.TryParse(_chatEnabled?.ToString(), out var _chatEnabled2) ? _chatEnabled2 : null : null;
 
-        // datetime musi byt v UTC
+        // Ensure datetime values are stored as UTC
+        if (from.HasValue && from.Value.Kind != DateTimeKind.Utc) {
+            from = DateTime.SpecifyKind(from.Value, DateTimeKind.Utc);
+        }
+        if (to.HasValue && to.Value.Kind != DateTimeKind.Utc) {
+            to = DateTime.SpecifyKind(to.Value, DateTimeKind.Utc);
+        }
 
         // asynch picovinky
         var t1 = Task.Run(() => {

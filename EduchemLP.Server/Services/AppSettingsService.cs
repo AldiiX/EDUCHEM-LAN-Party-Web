@@ -19,6 +19,7 @@ public class AppSettingsService(IDatabaseService db) : IAppSettingsService {
 
         var s = await GetSettingRawAsync("reservations_enabled_from", ct);
         if (!string.IsNullOrWhiteSpace(s)) {
+            // Parse as UTC since we store UTC in database
             if (DateTime.TryParseExact(s, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dt)
                 || DateTime.TryParse(s, out dt)) {
                 _reservationsEnabledFrom = dt;
@@ -41,6 +42,7 @@ public class AppSettingsService(IDatabaseService db) : IAppSettingsService {
 
         var s = await GetSettingRawAsync("reservations_enabled_to", ct);
         if (!string.IsNullOrWhiteSpace(s)) {
+            // Parse as UTC since we store UTC in database
             if (DateTime.TryParseExact(s, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dt)
                 || DateTime.TryParse(s, out dt)) {
                 _reservationsEnabledTo = dt;

@@ -1211,15 +1211,14 @@ const AppSettingsTab = () => {
         let reservationsEnabledTo = form.reservationsEnabledTo?.value as string | null;
         //console.log(reservationsStatus, reservationsEnabledFrom, reservationsEnabledTo);
 
-        // prevedeni casu do UTC
+        // Send datetime-local value as UTC (treat local input as if it were UTC)
+        // This way when user enters "15:38" it will be stored and evaluated as "15:38 UTC"
         if (reservationsEnabledFrom) {
-            const date = new Date(reservationsEnabledFrom);
-            reservationsEnabledFrom = date.toISOString();
+            reservationsEnabledFrom = reservationsEnabledFrom + ":00Z";
         }
 
         if (reservationsEnabledTo) {
-            const date = new Date(reservationsEnabledTo);
-            reservationsEnabledTo = date.toISOString();
+            reservationsEnabledTo = reservationsEnabledTo + ":00Z";
         }
 
         fetch("/api/v1/appsettings", {
@@ -1279,9 +1278,11 @@ const AppSettingsTab = () => {
     }
 
     function toDatetimeLocal(utcString: string) {
+        // Display UTC time as-is in the input field (no timezone conversion)
+        // This shows the actual UTC time that was stored
         const date = new Date(utcString);
         const pad = (n: number) => n.toString().padStart(2, '0');
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
     };
 
 
