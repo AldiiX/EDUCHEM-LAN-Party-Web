@@ -1,5 +1,5 @@
 import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
-import React, {CSSProperties, MutableRefObject, useEffect, useRef, useState} from "react";
+import React, {CSSProperties, MutableRefObject, useEffect, useRef, useState, memo} from "react";
 import "./Reservations.scss";
 import {SpiralUpper} from "../../components/reservation_areas/SpiralUpper.tsx";
 import {useStore} from "../../store.tsx";
@@ -98,6 +98,7 @@ const SelectedReservation = () => {
     const buttonCooldown = useReservationsStore((state) => state.selectedReservationButtonCooldown);
     const setButtonCooldown = useReservationsStore((state) => state.setSelectedReservationButtonCooldown);
     const reservationsListRef = useRef<HTMLDivElement>(null);
+    const savedScrollPosition = useRef<number>(0);
 
     const reserve = async (room: string | null, computer: string | null) => {
         if(!appSettings.reservationsEnabledRightNow) {
@@ -349,21 +350,29 @@ const SelectedReservation = () => {
     // endregion
 
 
-    // Preserve scroll position on re-renders
+    // Save scroll position when user scrolls
     useEffect(() => {
         const element = reservationsListRef.current;
         if (!element) return;
 
-        // Store scroll position before update
-        const scrollTop = element.scrollTop;
+        const handleScroll = () => {
+            savedScrollPosition.current = element.scrollTop;
+        };
+
+        element.addEventListener('scroll', handleScroll);
+        return () => element.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Restore scroll position when selectedReservation changes
+    useEffect(() => {
+        const element = reservationsListRef.current;
+        if (!element) return;
 
         // Restore scroll position after React updates the DOM
         requestAnimationFrame(() => {
-            if (element.scrollTop !== scrollTop) {
-                element.scrollTop = scrollTop;
-            }
+            element.scrollTop = savedScrollPosition.current;
         });
-    }, [selectedReservation]);
+    }, [selectedReservation?.reservations]);
 
 
     if(!selectedReservation) return null;
@@ -416,6 +425,61 @@ const SelectedReservation = () => {
 
 
 
+// Memoized countdown component to prevent re-renders of parent
+const CountdownDisplay = memo(({ appSettings, setAppSettings }: { appSettings: AppSettings, setAppSettings: (settings: AppSettings) => void }) => {
+    const [countdownText, setCountdownText] = useState<string | null>(null);
+    const [countdownText2, setCountdownText2] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (appSettings.reservationsStatus !== "USE_TIMER") {
+            setCountdownText(null);
+            setCountdownText2(null);
+            return;
+        }
+
+        const updateCountdown = () => {
+            const now = Date.now();
+            const from = new Date(appSettings.reservationsEnabledFrom).getTime();
+            const to = new Date(appSettings.reservationsEnabledTo).getTime();
+
+            if (now < from) {
+                const diff = from - now;
+                setCountdownText(`Rezervace se otevírají za`);
+                setCountdownText2(formatTime(diff));
+            } else if (now < to) {
+                const diff = to - now;
+                setCountdownText(`Rezervace se uzavírají za`);
+                setCountdownText2(formatTime(diff));
+            } else {
+                setCountdownText("Rezervace jsou uzavřeny");
+                setCountdownText2(null);
+            }
+
+            // v pripade ze se odpocet odpocita, tak se znovu nacte appsettings
+            const dateDiff = Math.min(Math.abs(now - from), Math.abs(now - to));
+
+            if(dateDiff < 1000) getAppSettings(setAppSettings);
+        }
+
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
+
+        return () => clearInterval(interval);
+    }, [appSettings, setAppSettings]);
+
+    if (appSettings.reservationsStatus === "CLOSED") {
+        return <p>Rezervace jsou uzavřeny</p>;
+    }
+
+    return (
+        <>
+            <p>{countdownText}</p>
+            <h1>{countdownText2}</h1>
+        </>
+    );
+});
+CountdownDisplay.displayName = 'CountdownDisplay';
+
 // main
 export const Reservations = () => {
     const [selectedArea, setSelectedArea] = useState<string>(areas[0].id);
@@ -437,8 +501,6 @@ export const Reservations = () => {
     const isFirstRender = useRef(true);
     const appSettings: AppSettings = useStore((state) => state.appSettings);
     const setAppSettings = useStore((state) => state.setAppSettings);
-    const [countdownText, setCountdownText] = useState<string | null>(null);
-    const [countdownText2, setCountdownText2] = useState<string | null>(null);
     const setSelectedReservationLoadingButton = useReservationsStore((state) => state.setSelectedReservationLoadingButton);
     const sidebarReservationsListRef = useRef<HTMLDivElement>(null);
     const scrollPositionRef = useRef<number>(0);
@@ -726,44 +788,6 @@ export const Reservations = () => {
         }, 750);
     }, [loggedUser, userAuthed]);
 
-    // effekt pro časovač když jsou rezervace s časovačem
-    useEffect(() => {
-        if (appSettings.reservationsStatus !== "USE_TIMER") {
-            setCountdownText(null);
-            setCountdownText2(null);
-            return;
-        }
-
-        const updateCountdown = () => {
-            const now = Date.now();
-            const from = new Date(appSettings.reservationsEnabledFrom).getTime();
-            const to = new Date(appSettings.reservationsEnabledTo).getTime();
-
-            if (now < from) {
-                const diff = from - now;
-                setCountdownText(`Rezervace se otevírají za`);
-                setCountdownText2(formatTime(diff));
-            } else if (now < to) {
-                const diff = to - now;
-                setCountdownText(`Rezervace se uzavírají za`);
-                setCountdownText2(formatTime(diff));
-            } else {
-                setCountdownText("Rezervace jsou uzavřeny");
-                setCountdownText2(null);
-            }
-
-            // v pripade ze se odpocet odpocita, tak se znovu nacte appsettings
-            let dateDiff = Math.min(Math.abs(now - from), Math.abs(now - to));
-
-            if(dateDiff < 1000) getAppSettings(setAppSettings);
-        }
-
-        updateCountdown();
-        const interval = setInterval(updateCountdown, 1000);
-
-        return () => clearInterval(interval);
-    }, [appSettings]);
-
     // Preserve scroll position for sidebar reservations list
     useEffect(() => {
         const element = sidebarReservationsListRef.current;
@@ -781,7 +805,7 @@ export const Reservations = () => {
         };
     }, []);
 
-    // Restore scroll position after updates
+    // Restore scroll position after reservations update (not timer updates)
     useEffect(() => {
         const element = sidebarReservationsListRef.current;
         if (!element) return;
@@ -790,7 +814,7 @@ export const Reservations = () => {
         requestAnimationFrame(() => {
             element.scrollTop = scrollPositionRef.current;
         });
-    }, [reservations, countdownText, countdownText2]);
+    }, [reservations]);
 
 
     return (
@@ -811,14 +835,7 @@ export const Reservations = () => {
                 <div className="map" ref={mapRef}>
 
                     <div className="reservations-status">
-                        {appSettings.reservationsStatus === "CLOSED" ? (
-                            <p>Rezervace jsou uzavřeny</p>
-                        ) : (
-                            <>
-                                <p>{countdownText}</p>
-                                <h1>{countdownText2}</h1>
-                            </>
-                        )}
+                        <CountdownDisplay appSettings={appSettings} setAppSettings={setAppSettings} />
                     </div>
 
                     <div className="legend">
