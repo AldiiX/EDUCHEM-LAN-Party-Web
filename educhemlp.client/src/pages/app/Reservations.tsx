@@ -1,5 +1,5 @@
 import {AppLayout, AppLayoutTitleBarType} from "./AppLayout.tsx";
-import React, {CSSProperties, MutableRefObject, useEffect, useRef, useState, memo} from "react";
+import React, {CSSProperties, MutableRefObject, useEffect, useLayoutEffect, useRef, useState, memo} from "react";
 import "./Reservations.scss";
 import {SpiralUpper} from "../../components/reservation_areas/SpiralUpper.tsx";
 import {useStore} from "../../store.tsx";
@@ -369,19 +369,16 @@ const SelectedReservation = () => {
     }, [setPopupScrollPosition]);
 
     // Restore scroll position when selectedReservation data changes (not when user scrolls)
-    useEffect(() => {
+    // Using useLayoutEffect to restore BEFORE browser paint, preventing visible jump
+    useLayoutEffect(() => {
         const element = reservationsListRef.current;
         if (!element) return;
 
         // Get the current scroll position from store at restoration time
         const currentPosition = popupScrollPosition;
 
-        // Use double requestAnimationFrame to ensure DOM is fully updated
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                element.scrollTop = currentPosition;
-            });
-        });
+        // Restore immediately after DOM mutation, before paint
+        element.scrollTop = currentPosition;
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedReservation?.reservations]);
 
