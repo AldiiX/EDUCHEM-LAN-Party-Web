@@ -277,7 +277,7 @@ public class APIv1(
     [HttpGet("adm/users")]
     public async Task<IActionResult> GetUsers(CancellationToken ct = default) {
         var acc = await auth.ReAuthFromContextOrNullAsync(ct);
-        if(acc?.Type < Account.AccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+        if(acc?.Type < Account.AccountType.TEACHER_ORG) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
         var users = await accounts.GetAllAsync(ct);
         var array = new JsonArray();
@@ -292,7 +292,7 @@ public class APIv1(
     [HttpPost("adm/users")]
     public async Task<IActionResult> AddUser([FromBody] Dictionary<string, object?> body, CancellationToken ct = default) {
         var loggedUser = await auth.ReAuthFromContextOrNullAsync(ct);
-        if(loggedUser == null || loggedUser.Type < Account.AccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+        if(loggedUser == null || loggedUser.Type < Account.AccountType.TEACHER_ORG) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
         string? email = body.TryGetValue("email", out var _email) ? _email?.ToString() : null;
         string? displayName = body.TryGetValue("displayName", out var _displayName) ? _displayName?.ToString() : null;
@@ -357,7 +357,7 @@ public class APIv1(
     public async Task<IActionResult> ResetUserPassword([FromBody] Dictionary<string, object?> data, CancellationToken ct = default) {
         // zjisteni prihlasenyho uzivatele + jeho perms
         var loggedAccount = await auth.ReAuthFromContextOrNullAsync(ct);
-        if(loggedAccount == null || loggedAccount.Type < Account.AccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+        if(loggedAccount == null || loggedAccount.Type < Account.AccountType.TEACHER_ORG) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
         // zjisteni id uzivatele kteryho chceme mazat
         int? id = data.TryGetValue("id", out var _id) ? int.TryParse(_id?.ToString(), out var _id2) ? _id2 : null : null;
@@ -409,7 +409,7 @@ public class APIv1(
     public async Task<IActionResult> EditUser([FromBody] Dictionary<string, object?> body, CancellationToken ct = default) {
         // zjisteni prihlasenyho uzivatele + jeho perms
         var loggedAccount = await auth.ReAuthFromContextOrNullAsync(ct);
-        if(loggedAccount == null || loggedAccount.Type < Account.AccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze upravit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+        if(loggedAccount == null || loggedAccount.Type < Account.AccountType.TEACHER_ORG) return new UnauthorizedObjectResult(new { success = false, message = "Nelze upravit uživatele, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
         // zjisteni id uzivatele kteryho chceme mazat
         int? id = body.TryGetValue("id", out var _id) ? int.TryParse(_id?.ToString(), out var _id2) ? _id2 : null : null;
@@ -483,7 +483,7 @@ public class APIv1(
     [HttpGet("adm/logs")]
     public async Task<IActionResult> GetLogs(CancellationToken ct = default) {
         var acc = await auth.ReAuthFromContextOrNullAsync(ct);
-        if(acc == null || acc.Type < Account.AccountType.TEACHER) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit logy, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+        if(acc == null || acc.Type < Account.AccountType.TEACHER_ORG) return new UnauthorizedObjectResult(new { success = false, message = "Nelze zobrazit logy, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
         await using var conn = await db.GetOpenConnectionAsync(ct);
         if(conn == null) return new StatusCodeResult(500);

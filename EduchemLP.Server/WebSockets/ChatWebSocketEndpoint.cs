@@ -297,7 +297,7 @@ public sealed class ChatWebSocketEndpoint(
         if (conn is null) return;
 
         // kdyz neni teacher/admin, smi smazat jen vlastni zpravu
-        if (client.AccountType < Account.AccountType.TEACHER) {
+        if (client.AccountType < Account.AccountType.TEACHER_ORG) {
             await using var checkCmd = conn.CreateCommand();
             checkCmd.CommandText = "SELECT user_id FROM chat WHERE uuid = @uuid";
             checkCmd.Parameters.AddWithValue("@uuid", messageUuid);

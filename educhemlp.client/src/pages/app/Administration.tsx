@@ -134,6 +134,9 @@ function translateAccountType(type: AccountType | null | undefined, gender: Acco
         case "TEACHER" :
             if(g === "female") return "Učitelka";
             return "Učitel";
+        case "TEACHER_ORG"  :
+            if(g === "female") return "Učitelka (ORG)";
+            return "Učitel (ORG)";
         case "ADMIN" :
             if(g === "female") return "Administrátorka";
             return "Administrátor";
@@ -640,10 +643,14 @@ const UsersTab = () => {
                                         ) : (
                                             <select name="accountType" defaultValue={selectedUser?.type}>
                                                 <option value="STUDENT">{translateAccountType("STUDENT" as any, selectedUser?.gender )}</option>
-
                                                 {
                                                     enumIsGreater(loggedUser?.type?.toString(), AccountType, AccountType.TEACHER) ? (
                                                         <option value="TEACHER">{translateAccountType("TEACHER" as any, selectedUser?.gender )}</option>
+                                                    ) : null
+                                                }
+                                                {
+                                                    enumIsGreater(loggedUser?.type?.toString(), AccountType, AccountType.TEACHER_ORG) ? (
+                                                        <option value="TEACHER_ORG">{translateAccountType("TEACHER_ORG" as any, selectedUser?.gender )}</option>
                                                     ) : null
                                                 }
 
@@ -1379,12 +1386,12 @@ export const Administration = () => {
             return;
         }
 
-        if (loggedUser && enumIsSmaller(loggedUser?.type, AccountType, AccountType.TEACHER)) {
+        if (loggedUser && enumIsSmaller(loggedUser?.type, AccountType, AccountType.TEACHER_ORG)) {
             navigate("/app");
         }
     }, [userAuthed, loggedUser, navigate]);
 
-    if (!userAuthed || !loggedUser || !enumIsGreaterOrEquals(loggedUser?.type, AccountType, AccountType.TEACHER)) {
+    if (!userAuthed || !loggedUser || !enumIsGreaterOrEquals(loggedUser?.type, AccountType, AccountType.TEACHER_ORG)) {
         return null;
     }
 

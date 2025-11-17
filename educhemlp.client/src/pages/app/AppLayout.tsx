@@ -40,6 +40,13 @@ export const AppLayoutLoggedUserSection = ({ style }: { style?: CSSProperties}) 
             return "Učitel"
         }
 
+        else if(enumEquals(loggedUser.type.toString(), AccountType, AccountType.TEACHER_ORG)) {
+            if(enumEquals(account.gender?.toString(), AccountGender, AccountGender.FEMALE))
+                return "Učitelka"
+
+            return "Učitel"
+        }
+
         else if(enumEquals(loggedUser.type.toString(), AccountType, AccountType.ADMIN)) {
             if(enumEquals(account.gender?.toString(), AccountGender, AccountGender.FEMALE))
                 return "Administrátorka"
