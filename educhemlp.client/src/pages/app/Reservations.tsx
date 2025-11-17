@@ -91,7 +91,8 @@ interface SelectedReservation extends Room, Reservation {
 
 
 // popup s aktualne zobrazenou rezervaci
-const SelectedReservation = () => {
+// Memoized to prevent re-renders when parent re-renders
+const SelectedReservation = memo(() => {
     const loggedUser:LoggedUser | null = useStore((state) => state.loggedUser);
     const selectedReservation = useReservationsStore((state) => state.selectedReservation);
     const setSelectedReservation = useReservationsStore((state) => state.setSelectedReservation);
@@ -417,7 +418,8 @@ const SelectedReservation = () => {
             </div>
         </div>
     )
-}
+});
+SelectedReservation.displayName = 'SelectedReservation';
 
 
 
