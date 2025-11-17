@@ -97,6 +97,7 @@ const SelectedReservation = () => {
     const setButtonLoading = useReservationsStore((state) => state.setSelectedReservationLoadingButton);
     const buttonCooldown = useReservationsStore((state) => state.selectedReservationButtonCooldown);
     const setButtonCooldown = useReservationsStore((state) => state.setSelectedReservationButtonCooldown);
+    const reservationsListRef = useRef<HTMLDivElement>(null);
 
     const reserve = async (room: string | null, computer: string | null) => {
         if(!appSettings.reservationsEnabledRightNow) {
@@ -230,7 +231,7 @@ const SelectedReservation = () => {
     );
 
     const ReservationsList = ({reservations, currentUserId}: { reservations: any[]; currentUserId?: string | number | null; }) => (
-        <div className="reservations-parent">
+        <div className="reservations-parent" ref={reservationsListRef}>
             {reservations.map((reservation: any, index: number) => {
                 const you = reservation?.user?.id === currentUserId;
                 return (
@@ -348,7 +349,21 @@ const SelectedReservation = () => {
     // endregion
 
 
+    // Preserve scroll position on re-renders
+    useEffect(() => {
+        const element = reservationsListRef.current;
+        if (!element) return;
 
+        // Store scroll position before update
+        const scrollTop = element.scrollTop;
+
+        // Restore scroll position after React updates the DOM
+        requestAnimationFrame(() => {
+            if (element.scrollTop !== scrollTop) {
+                element.scrollTop = scrollTop;
+            }
+        });
+    }, [selectedReservation]);
 
 
     if(!selectedReservation) return null;
@@ -425,6 +440,8 @@ export const Reservations = () => {
     const [countdownText, setCountdownText] = useState<string | null>(null);
     const [countdownText2, setCountdownText2] = useState<string | null>(null);
     const setSelectedReservationLoadingButton = useReservationsStore((state) => state.setSelectedReservationLoadingButton);
+    const sidebarReservationsListRef = useRef<HTMLDivElement>(null);
+    const scrollPositionRef = useRef<number>(0);
 
 
     // region ostatní funkce
@@ -747,6 +764,33 @@ export const Reservations = () => {
         return () => clearInterval(interval);
     }, [appSettings]);
 
+    // Preserve scroll position for sidebar reservations list
+    useEffect(() => {
+        const element = sidebarReservationsListRef.current;
+        if (!element) return;
+
+        // Save current scroll position
+        const handleScroll = () => {
+            scrollPositionRef.current = element.scrollTop;
+        };
+
+        element.addEventListener('scroll', handleScroll);
+
+        return () => {
+            element.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
+    // Restore scroll position after updates
+    useEffect(() => {
+        const element = sidebarReservationsListRef.current;
+        if (!element) return;
+
+        // Restore scroll position after React updates the DOM
+        requestAnimationFrame(() => {
+            element.scrollTop = scrollPositionRef.current;
+        });
+    }, [reservations, countdownText, countdownText2]);
 
 
     return (
@@ -873,7 +917,7 @@ export const Reservations = () => {
                             <div className={"block reservations"}>
                                 <h1>Seznam rezervací</h1>
 
-                                <div className={"reservations-parent"}>
+                                <div className={"reservations-parent"} ref={sidebarReservationsListRef}>
                                     {
                                         reservations === null! ? (
                                             [0,1,2,3,4].map((index) => {
