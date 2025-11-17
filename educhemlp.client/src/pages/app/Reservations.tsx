@@ -30,6 +30,10 @@ const useReservationsStore = create((set: any) => ({
 
     selectedReservationButtonCooldown: false as boolean,
     setSelectedReservationButtonCooldown: (cooldown: boolean) => set({ selectedReservationButtonCooldown: cooldown }),
+
+    // Scroll position for popup reservation list
+    popupScrollPosition: 0 as number,
+    setPopupScrollPosition: (position: number) => set({ popupScrollPosition: position }),
 }));
 
 
@@ -97,8 +101,9 @@ const SelectedReservation = () => {
     const setButtonLoading = useReservationsStore((state) => state.setSelectedReservationLoadingButton);
     const buttonCooldown = useReservationsStore((state) => state.selectedReservationButtonCooldown);
     const setButtonCooldown = useReservationsStore((state) => state.setSelectedReservationButtonCooldown);
+    const popupScrollPosition = useReservationsStore((state) => state.popupScrollPosition);
+    const setPopupScrollPosition = useReservationsStore((state) => state.setPopupScrollPosition);
     const reservationsListRef = useRef<HTMLDivElement>(null);
-    const savedScrollPosition = useRef<number>(0);
 
     const reserve = async (room: string | null, computer: string | null) => {
         if(!appSettings.reservationsEnabledRightNow) {
@@ -356,23 +361,25 @@ const SelectedReservation = () => {
         if (!element) return;
 
         const handleScroll = () => {
-            savedScrollPosition.current = element.scrollTop;
+            setPopupScrollPosition(element.scrollTop);
         };
 
         element.addEventListener('scroll', handleScroll);
         return () => element.removeEventListener('scroll', handleScroll);
-    }, []);
+    }, [setPopupScrollPosition]);
 
     // Restore scroll position when selectedReservation changes
     useEffect(() => {
         const element = reservationsListRef.current;
         if (!element) return;
 
-        // Restore scroll position after React updates the DOM
+        // Use double requestAnimationFrame to ensure DOM is fully updated
         requestAnimationFrame(() => {
-            element.scrollTop = savedScrollPosition.current;
+            requestAnimationFrame(() => {
+                element.scrollTop = popupScrollPosition;
+            });
         });
-    }, [selectedReservation?.reservations]);
+    }, [selectedReservation?.reservations, popupScrollPosition]);
 
 
     if(!selectedReservation) return null;
@@ -810,9 +817,11 @@ export const Reservations = () => {
         const element = sidebarReservationsListRef.current;
         if (!element) return;
 
-        // Restore scroll position after React updates the DOM
+        // Use double requestAnimationFrame to ensure DOM is fully updated
         requestAnimationFrame(() => {
-            element.scrollTop = scrollPositionRef.current;
+            requestAnimationFrame(() => {
+                element.scrollTop = scrollPositionRef.current;
+            });
         });
     }, [reservations]);
 
