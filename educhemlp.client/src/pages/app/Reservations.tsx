@@ -97,6 +97,23 @@ const SelectedReservation = () => {
     const setButtonLoading = useReservationsStore((state) => state.setSelectedReservationLoadingButton);
     const buttonCooldown = useReservationsStore((state) => state.selectedReservationButtonCooldown);
     const setButtonCooldown = useReservationsStore((state) => state.setSelectedReservationButtonCooldown);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const scrollPositionRef = useRef<number>(0);
+
+    // Save scroll position on scroll
+    const handleScroll = () => {
+        if (scrollContainerRef.current) {
+            scrollPositionRef.current = scrollContainerRef.current.scrollTop;
+        }
+    };
+
+    // Restore scroll position after selectedReservation updates
+    useEffect(() => {
+        if (scrollContainerRef.current && selectedReservation) {
+            scrollContainerRef.current.scrollTop = scrollPositionRef.current;
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedReservation?.reservations]);
 
     const reserve = async (room: string | null, computer: string | null) => {
         if(!appSettings.reservationsEnabledRightNow) {
@@ -230,7 +247,7 @@ const SelectedReservation = () => {
     );
 
     const ReservationsList = ({reservations, currentUserId}: { reservations: any[]; currentUserId?: string | number | null; }) => (
-        <div className="reservations-parent">
+        <div className="reservations-parent" ref={scrollContainerRef} onScroll={handleScroll}>
             {reservations.map((reservation: any, index: number) => {
                 const you = reservation?.user?.id === currentUserId;
                 return (
@@ -425,6 +442,7 @@ export const Reservations = () => {
     const [countdownText, setCountdownText] = useState<string | null>(null);
     const [countdownText2, setCountdownText2] = useState<string | null>(null);
     const setSelectedReservationLoadingButton = useReservationsStore((state) => state.setSelectedReservationLoadingButton);
+    const selectedReservationRef = useRef<SelectedReservation | null>(null);
 
 
     // region ostatní funkce
@@ -641,6 +659,11 @@ export const Reservations = () => {
         };
     }, []);
 
+    // Keep selectedReservation in sync with ref
+    useEffect(() => {
+        selectedReservationRef.current = selectedReservation;
+    }, [selectedReservation]);
+
     // efekt pro nastaveni veci po tom co se změní selectReservation
     useEffect(() => {
         if (computers.length > 0 && rooms.length > 0) {
@@ -654,10 +677,23 @@ export const Reservations = () => {
 
             setOccupiedPercent(Math.round((reservations?.length ?? 0) / (computers.length + roomsAllSeats) * 100));
 
-            if(selectedReservation !== null) {
-                selectReservation(selectedReservation.element);
+            // Only update selectedReservation's reservations array, not the entire object
+            if(selectedReservationRef.current !== null && reservations) {
+                const current = selectedReservationRef.current;
+                const updatedReservations = reservations.filter((res: any) => {
+                    return res.computer?.id === current.id || res.room?.id === current.id;
+                });
+                
+                // Only update if reservations changed to avoid unnecessary re-renders
+                if (JSON.stringify(updatedReservations) !== JSON.stringify(current.reservations)) {
+                    setSelectedReservation({
+                        ...current,
+                        reservations: updatedReservations
+                    });
+                }
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [computers, rooms, reservations, selectedArea]);
 
     // efekt co se zmeni kdyz se odloaduji rezervace
