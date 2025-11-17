@@ -136,6 +136,7 @@ export const Announcements = () => (
     <AppLayout>
         <h1>Oznámení</h1>
         {/*<RichEditor className={styles.richEditor} />*/}
+        <p style={{ marginTop: 16, opacity: 0.25 }}>Bude implementováno ve verzi <a href={'https://github.com/AldiiX/EDUCHEM-LAN-Party-Web/milestone/2'} target='_blank'>3.5.0</a> (na další LAN Party)</p>
     </AppLayout>
 );
 
