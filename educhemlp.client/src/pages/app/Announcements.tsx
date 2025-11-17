@@ -135,7 +135,7 @@ function RichEditor({ className }: { className?: string }) {
 export const Announcements = () => (
     <AppLayout>
         <h1>Oznámení</h1>
-        <RichEditor className={styles.richEditor} />
+        {/*<RichEditor className={styles.richEditor} />*/}
     </AppLayout>
 );
 

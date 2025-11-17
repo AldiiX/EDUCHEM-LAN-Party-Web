@@ -481,7 +481,7 @@ const SettingsTab = () => {
                                         "USB-C oboustranné",
                                         "Toaletní voda",
                                     ].sort((a, b) => a.localeCompare(b)).map((g, i) => (
-                                        <option value={"OTHER"} key={i}>{g}</option>
+                                        <option value={"OTHER"} key={i} disabled>{g}</option>
                                     ))
                                 }
 
