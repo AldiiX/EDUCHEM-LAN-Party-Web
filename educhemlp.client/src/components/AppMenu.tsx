@@ -36,6 +36,11 @@ export const AppMenu = ({ onClick }: AppMenuProps) => {
                 <p>Rezervace</p>
             </Link>
 
+            <Link to={"/app/statistics"} onClick={onClick}  className={currentPage === "/app/statistics" ? "active" : ""}>
+                <div style={{ maskImage: 'url(/images/icons/statistics.svg)' }}></div>
+                <p>Statistiky</p>
+            </Link>
+
             <Link to={"/app/forum"} onClick={onClick}  className={currentPage === "/app/forum" ? "active" : ""}>
                 <div style={{ maskImage: 'url(/images/icons/forum.svg)' }}></div>
                 <p>Forum</p>
@@ -50,17 +55,22 @@ export const AppMenu = ({ onClick }: AppMenuProps) => {
                     : null
             }
 
-            <Link to={"/app/attendance"} onClick={onClick} className={currentPage === "/app/attendance" ? "active" : ""}>
-                <div style={{ maskImage: 'url(/images/icons/user_in_building.svg)' }}></div>
-                <p>Příchody / Odchody</p>
-            </Link>
+            {/*<Link to={"/app/attendance"} onClick={onClick} className={currentPage === "/app/attendance" ? "active" : ""}>*/}
+            {/*    <div style={{ maskImage: 'url(/images/icons/user_in_building.svg)' }}></div>*/}
+            {/*    <p>Příchody / Odchody</p>*/}
+            {/*</Link>*/}
 
             <Link to={"/app/tournaments"} onClick={onClick} className={currentPage === "/app/tournaments" ? "active" : ""}>
                 <div style={{ maskImage: 'url(/images/icons/trophy_star.svg)' }}></div>
                 <p>Turnaje</p>
             </Link>
 
-            { AccountType[loggedUser?.type as unknown as keyof typeof AccountType] >= AccountType.TEACHER ?
+            <Link to={"/app/problems"} onClick={onClick} className={currentPage === "/app/problems" ? "active" : ""}>
+                <div style={{ maskImage: 'url(/images/icons/warn2.svg)' }}></div>
+                <p>Nahlásit problém</p>
+            </Link>
+
+            { AccountType[loggedUser?.type as unknown as keyof typeof AccountType] >= AccountType.TEACHER_ORG ?
                 <Link to={"/app/administration"} onClick={onClick}  className={currentPage === "/app/administration" ? "active" : ""}>
                     <div style={{ maskImage: 'url(/images/icons/user_with_shield.svg)' }}></div>
                     <p>Administrace</p>

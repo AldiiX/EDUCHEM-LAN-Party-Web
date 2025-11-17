@@ -2,13 +2,13 @@
 #ARG APP_UID=1000
 
 # base stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
 
 # stage to install node.js (will be the parent for build)
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS with-node
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS with-node
 RUN apt-get update && apt-get install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_22.x | bash && apt-get install -y nodejs
+RUN curl -sL https://deb.nodesource.com/setup_24.x | bash && apt-get install -y nodejs
 
 # turn off npm lifecycle scripts everywhere downstream (prevents postinstall => patch-package)
 ENV npm_config_ignore_scripts=true
@@ -55,7 +55,7 @@ ENV NPM_CONFIG_IGNORE_SCRIPTS=true
 # switch to root to install packages
 USER root
 RUN apt-get update && apt-get install -y curl nginx
-RUN curl -sL https://deb.nodesource.com/setup_22.x | bash && apt-get install -y nodejs
+RUN curl -sL https://deb.nodesource.com/setup_24.x | bash && apt-get install -y nodejs
 
 # copy frontend files and fix permissions
 COPY ["educhemlp.client/", "/app/client/"]

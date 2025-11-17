@@ -450,14 +450,41 @@ const SettingsTab = () => {
                                 <option value="MALE">Muž</option>
                                 <option value="FEMALE">Žena</option>
                                 <option value="OTHER">Ostatní</option>
-                                <option value="OTHER">Tank</option>
-                                <option value="OTHER">Helikoptéra</option>
-                                <option value="OTHER">Sanitka Mercedes</option>
-                                <option value="OTHER">Tatarka</option>
-                                <option value="OTHER">Vesmírná loď</option>
-                                <option value="OTHER">Drak</option>
-                                <option value="OTHER">Čajová konvice</option>
-                                <option value="OTHER">Kobliha</option>
+
+                                {
+                                    [
+                                        "Tank",
+                                        "Helikoptéra",
+                                        "Sanitka Mercedes",
+                                        "Tatarka",
+                                        "Drak",
+                                        "Čajová konvice",
+                                        "Kabel RJ45",
+                                        "Labubu",
+                                        "Kobliha",
+                                        "Vesmírný pirát",
+                                        "Černá díra",
+                                        "Anténa 5G",
+                                        "Duhový paprsek",
+                                        "Houba shiitake",
+                                        "Štrúdl",
+                                        "Kávovar",
+                                        "Kazeta VHS",
+                                        "Lampa pouliční",
+                                        "Solární panel",
+                                        "Mechový koberec",
+                                        "Víkendový batoh",
+                                        "Origami jeřáb",
+                                        "Kapka rosy",
+                                        "Vzducholoď",
+                                        "Schrödingerova kočka",
+                                        "USB-C oboustranné",
+                                        "Toaletní voda",
+                                    ].sort((a, b) => a.localeCompare(b)).map((g, i) => (
+                                        <option value={"OTHER"} key={i} disabled>{g}</option>
+                                    ))
+                                }
+
                                 <option value="NULL">Neurčeno</option>
                             </select>
                         </div>

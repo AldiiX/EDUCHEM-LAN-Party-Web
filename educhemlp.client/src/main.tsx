@@ -11,6 +11,8 @@ import { ToastContainer } from 'react-toastify';
 import {ErrorView as AppErrorView} from "./pages/app/ErrorView.tsx";
 import {ErrorView} from "./pages/ErrorView.tsx";
 import {CurrentPage} from "./interfaces.ts";
+import Statistics from "./pages/app/Statistics.tsx";
+import Problems from "./pages/app/Problems.tsx";
 
 const Home = lazy(() => import('./pages/Home.tsx'));
 const Login = lazy(() => import('./pages/Login.tsx'));
@@ -95,12 +97,26 @@ const RouteTitle = () => {
                 url: '/app/forum',
                 title: "Forum • EDUCHEM LAN Party"
             },
+            '/app/problems': {
+                name: 'Nahlásit problém',
+                id: '/app/problems',
+                icon: '/images/icons/warn2.svg',
+                url: '/app/problems',
+                title: "Nahlásit problém • EDUCHEM LAN Party"
+            },
             '/app/map': {
                 name: 'Mapa školy',
                 id: '/app/map',
                 icon: '/images/icons/map.svg',
                 url: '/app/map',
                 title: "Mapa • EDUCHEM LAN Party"
+            },
+            '/app/statistics': {
+                name: 'Statistiky',
+                id: '/app/statistics',
+                icon: '/images/icons/statistics.svg',
+                url: '/app/statistics',
+                title: "Statistiky • EDUCHEM LAN Party"
             },
             '/app/account': {
                 name: 'Můj účet',
@@ -253,6 +269,8 @@ const AppInner = () => {
                 <Route path="/app/tournaments" element={<Tournaments />} />
                 <Route path="/app/chat" element={<Chat />} />
                 <Route path="/app/forum" element={<Forum />} />
+                <Route path="/app/statistics" element={<Statistics />} />
+                <Route path="/app/problems" element={<Problems />} />
                 <Route path="/app/map" element={<Map />} />
                 <Route path="/app/account" element={<Account />} />
                 <Route path="/app/*" element={<AppErrorView />} />

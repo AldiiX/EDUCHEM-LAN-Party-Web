@@ -1,0 +1,99 @@
+﻿.page {
+    //max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    h1 {
+        font-weight: 700;
+    }
+
+    p {
+        max-width: 44rem;
+        color: var(--text-color);
+        opacity: 0.25;
+    }
+}
+
+.sections {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    //margin: 0 auto;
+    margin-top: 12px;
+    max-width: 960px;
+
+    .section {
+        padding: 24px;
+        border-radius: 12px;
+        //backdrop-filter: blur(12px);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: var(--element-bg);
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.025);
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--accent-color);
+        }
+
+        p {
+            line-height: 1.6;
+        }
+    }
+}
+
+
+.list {
+    padding-left: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+
+    li {
+        color: var(--text-color-darker);
+    }
+
+    li + li {
+        margin-top: 0.2rem;
+    }
+}
+
+.btn {
+    width: fit-content;
+    margin-top: 12px;
+}
+
+.link {
+    color: var(--accent-color);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+
+    &:hover {
+        text-decoration-style: wavy;
+    }
+}
+
+.noteSection {
+    margin-top: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px dashed var(--text-color-3);
+    font-size: 14px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .sections {
+        margin-top: 0;
+    }
+}

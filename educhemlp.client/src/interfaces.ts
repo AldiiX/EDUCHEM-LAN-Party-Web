@@ -37,6 +37,7 @@ export type AppSettings = {
 export enum AccountType {
     STUDENT,
     TEACHER,
+    TEACHER_ORG,
     ADMIN,
     SUPERADMIN,
 }

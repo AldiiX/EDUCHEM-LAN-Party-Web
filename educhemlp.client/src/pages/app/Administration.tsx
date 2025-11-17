@@ -7,7 +7,8 @@ import {Avatar} from "../../components/Avatar.tsx";
 import {Modal} from "../../components/modals/Modal.tsx";
 import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 import {toast} from "react-toastify";
-import Switch, {switchClasses} from '@mui/joy/Switch';
+import { switchClasses} from '@mui/joy/Switch';
+import Switch from "../../components/Switch.tsx";
 import {AccountGender, AccountType, AppSettings, BasicAPIResponse, Log, LoggedUser} from "../../interfaces.ts";
 import {
     authUser,
@@ -134,6 +135,9 @@ function translateAccountType(type: AccountType | null | undefined, gender: Acco
         case "TEACHER" :
             if(g === "female") return "Učitelka";
             return "Učitel";
+        case "TEACHER_ORG"  :
+            if(g === "female") return "Učitelka (ORG)";
+            return "Učitel (ORG)";
         case "ADMIN" :
             if(g === "female") return "Administrátorka";
             return "Administrátor";
@@ -640,10 +644,14 @@ const UsersTab = () => {
                                         ) : (
                                             <select name="accountType" defaultValue={selectedUser?.type}>
                                                 <option value="STUDENT">{translateAccountType("STUDENT" as any, selectedUser?.gender )}</option>
-
                                                 {
                                                     enumIsGreater(loggedUser?.type?.toString(), AccountType, AccountType.TEACHER) ? (
                                                         <option value="TEACHER">{translateAccountType("TEACHER" as any, selectedUser?.gender )}</option>
+                                                    ) : null
+                                                }
+                                                {
+                                                    enumIsGreater(loggedUser?.type?.toString(), AccountType, AccountType.TEACHER_ORG) ? (
+                                                        <option value="TEACHER_ORG">{translateAccountType("TEACHER_ORG" as any, selectedUser?.gender )}</option>
                                                     ) : null
                                                 }
 
@@ -671,25 +679,7 @@ const UsersTab = () => {
                                         <div className="switch-div">
                                             <p>Povolit rezervace</p>
 
-                                            <Switch slotProps={{input: {role: 'switch', name: "enableReservation"}}}
-                                                    defaultChecked={selectedUser?.enableReservation} sx={{
-                                                '--Switch-thumbSize': '16px',
-                                                '--Switch-trackWidth': '40px',
-                                                '--Switch-trackHeight': '24px',
-                                                '--Switch-thumbBackground': 'var(--bg)',
-                                                '--Switch-trackBackground': 'var(--text-color-darker)',
-                                                '&:hover': {
-                                                    '--Switch-trackBackground': 'var(--text-color-3)',
-                                                },
-                                                [`&.${switchClasses.checked}`]: {
-                                                    '--Switch-trackBackground': 'var(--accent-color)',
-                                                    '--Switch-thumbBackground': 'var(--bg)',
-                                                    '&:hover': {
-                                                        '--Switch-trackBackground': 'var(--accent-color-darker)',
-                                                    },
-                                                },
-                                            }}
-                                            />
+                                            <Switch name="enableReservation" defaultChecked={selectedUser?.enableReservation} />
                                         </div>
                                     </>
                                 ) : null
@@ -727,25 +717,7 @@ const UsersTab = () => {
                                         <div className="switch-div">
                                             <p>Odeslat přihlašovací údaje na email</p>
 
-                                            <Switch slotProps={{input: {role: 'switch', name: "sendToEmail"}}}
-                                                    defaultChecked={true} sx={{
-                                                '--Switch-thumbSize': '16px',
-                                                '--Switch-trackWidth': '40px',
-                                                '--Switch-trackHeight': '24px',
-                                                '--Switch-thumbBackground': 'var(--bg)',
-                                                '--Switch-trackBackground': 'var(--text-color-darker)',
-                                                '&:hover': {
-                                                    '--Switch-trackBackground': 'var(--text-color-3)',
-                                                },
-                                                [`&.${switchClasses.checked}`]: {
-                                                    '--Switch-trackBackground': 'var(--accent-color)',
-                                                    '--Switch-thumbBackground': 'var(--bg)',
-                                                    '&:hover': {
-                                                        '--Switch-trackBackground': 'var(--accent-color-darker)',
-                                                    },
-                                                },
-                                            }}
-                                            />
+                                            <Switch name="sendToEmail" defaultChecked={true} />
                                         </div>
                                     </>
                                 ) : (compareEnumValues(AccountType, selectedUser.type?.toString(), loggedUser.type?.toString()) === -1 ||
@@ -1379,12 +1351,12 @@ export const Administration = () => {
             return;
         }
 
-        if (loggedUser && enumIsSmaller(loggedUser?.type, AccountType, AccountType.TEACHER)) {
+        if (loggedUser && enumIsSmaller(loggedUser?.type, AccountType, AccountType.TEACHER_ORG)) {
             navigate("/app");
         }
     }, [userAuthed, loggedUser, navigate]);
 
-    if (!userAuthed || !loggedUser || !enumIsGreaterOrEquals(loggedUser?.type, AccountType, AccountType.TEACHER)) {
+    if (!userAuthed || !loggedUser || !enumIsGreaterOrEquals(loggedUser?.type, AccountType, AccountType.TEACHER_ORG)) {
         return null;
     }
 
