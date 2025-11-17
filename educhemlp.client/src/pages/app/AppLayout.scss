@@ -279,7 +279,6 @@ a {
         .loggeduser {
             position: relative;
             width: fit-content;
-
             >a {
                 display: flex;
                 gap: 16px;
@@ -334,7 +333,94 @@ a {
                 border-radius: 8px;
                 top: calc(100%);
                 right: 0;
-                z-index: 1;
+                z-index: 3;
+                gap: 12px;
+                justify-content: flex-start;
+                
+                >.avatarContainer{
+                    display: flex;
+                    margin: 0 auto;
+                    gap: 12px;
+                    align-items: center;
+                    margin-bottom: 8px;
+                    
+                    >.avatarPopover{
+                        
+                    }
+                }
+                
+                >.infoContainer{
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    margin-bottom: 16px;
+                    
+                    >h2{
+                        font-size: 22px;
+                        color: var(--accent-color);
+                        text-align: center;
+                    }
+                    
+                    >p{
+                        font-size: 14px;
+                        color: var(--text-color-3);
+                    }
+                }
+                
+                >.themeContainer{
+                    display: flex;
+                    gap: 4px;
+                    padding: 0 0 8px 0;
+                    border-bottom: 1px solid var(--text-color-3);
+                    transition-duration: 0.3s;
+                    
+                    >.themeIcon{
+                        width:20px;
+                        height:20px;
+                        mask-image: url("../../../public/images/icons/theme.svg");
+                        mask-repeat:no-repeat;
+                        mask-position:left;
+                        mask-size: cover;
+                        background-color: var(--text-color);
+                    }
+                    
+                    >p{
+                        
+                    }
+
+                    &:hover {
+                        cursor: pointer;
+                        opacity: 0.5;
+                        transition-duration: 0.3s;
+                    }
+                }
+                
+                >.logoutContainer {
+                    display: flex;
+                    gap: 4px;
+                    margin-left: 2px;
+                    transition-duration: 0.3s;
+                    
+                    > .logoutIcon {
+                        width: 20px;
+                        height: 20px;
+                        mask-image: url("../../../public/images/icons/logout.svg");
+                        mask-repeat: no-repeat;
+                        mask-position: center;
+                        mask-size: cover;
+                        background-color: var(--error-color);
+                    }
+                    
+                    >p {
+                        color: var(--error-color);
+                    }
+                    
+                    &:hover {
+                        cursor: pointer;
+                        opacity: 0.5;
+                        transition-duration: 0.3s;
+                    }
+                }
             }
 
             &:hover {
@@ -344,7 +430,7 @@ a {
                     transition-duration: 0.3s;
                 }
 
-                .texts, .avatar {
+                .texts, .avatarHeader {
                     transition-duration: 0.3s;
                     opacity: 0.5;
                 }

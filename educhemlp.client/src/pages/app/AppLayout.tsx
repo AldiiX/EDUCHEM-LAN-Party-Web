@@ -9,6 +9,7 @@ import {AccountGender, AccountType, LoggedUser} from "../../interfaces.ts";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
 import {Banner} from "../../components/Banner.tsx";
+import {PopOver} from "../../components/PopOver.tsx";
 
 
 export enum AppLayoutTitleBarType {
@@ -72,13 +73,29 @@ export const AppLayoutLoggedUserSection = ({ style }: { style?: CSSProperties}) 
                         <h2>{ loggedUser?.displayName }</h2>
                     </div>
 
-                    <Avatar size="48px" src={loggedUser?.avatar} name={loggedUser?.displayName}  />
+                    <Avatar className={"avatarHeader"} size="48px" src={loggedUser?.avatar} name={loggedUser?.displayName}  />
                 </Link>
-
-                <div className={"popover"}>
-                    <p onClick={ () => toggleWebTheme() }>Změnit theme</p>
-                    <p onClick={ () => logout(setLoggedUser)}>Odhlásit se</p>
-                </div>
+                
+                <PopOver>
+                    <div className={"avatarContainer"}>
+                        <Avatar className={"avatarPopover"} size="128px" src={loggedUser?.avatar} name={loggedUser?.displayName}  />
+                    </div>
+                    <div className={"infoContainer"}>
+                        <h2>{ loggedUser?.displayName }</h2>
+                        <p>{ loggedUser?.email }</p>
+                    </div>
+                    <div className={"themeContainer"}>
+                        <div className={"themeIcon"}></div><p onClick={ () => toggleWebTheme() }>Změnit theme</p>
+                    </div>
+                    <div className={"logoutContainer"}>
+                        <div className={"logoutIcon"}></div><p onClick={ () => logout(setLoggedUser)}>Odhlásit se</p>
+                    </div>
+                </PopOver>
+                
+                {/*<div className={"popover"}>*/}
+                {/*    <p onClick={ () => toggleWebTheme() }>Změnit theme</p>*/}
+                {/*    <p onClick={ () => logout(setLoggedUser)}>Odhlásit se</p>*/}
+                {/*</div>*/}
             </div>
         </>
     )
