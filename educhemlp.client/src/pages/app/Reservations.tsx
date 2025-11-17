@@ -368,18 +368,22 @@ const SelectedReservation = () => {
         return () => element.removeEventListener('scroll', handleScroll);
     }, [setPopupScrollPosition]);
 
-    // Restore scroll position when selectedReservation changes
+    // Restore scroll position when selectedReservation data changes (not when user scrolls)
     useEffect(() => {
         const element = reservationsListRef.current;
         if (!element) return;
 
+        // Get the current scroll position from store at restoration time
+        const currentPosition = popupScrollPosition;
+
         // Use double requestAnimationFrame to ensure DOM is fully updated
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-                element.scrollTop = popupScrollPosition;
+                element.scrollTop = currentPosition;
             });
         });
-    }, [selectedReservation?.reservations, popupScrollPosition]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedReservation?.reservations]);
 
 
     if(!selectedReservation) return null;
