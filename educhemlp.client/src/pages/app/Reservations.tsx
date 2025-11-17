@@ -242,9 +242,11 @@ const SelectedReservation = memo(() => {
         <div className="reservations-parent" ref={reservationsListRef}>
             {reservations.map((reservation: any, index: number) => {
                 const you = reservation?.user?.id === currentUserId;
+                // Use unique key based on reservation data instead of index to prevent full DOM recreation
+                const key = reservation.id || `${reservation.user?.id}-${reservation.computer?.id || reservation.room?.id}-${index}`;
                 return (
                     <div
-                        key={index}
+                        key={key}
                         className={"reservation" + (you ? " you" : "")}
                     >
                         <Avatar
@@ -372,6 +374,16 @@ const SelectedReservation = memo(() => {
         return () => element.removeEventListener('scroll', handleScroll);
     }, [setPopupScrollPosition]);
 
+    // Save scroll position BEFORE component updates
+    useLayoutEffect(() => {
+        const element = reservationsListRef.current;
+        if (element && element.scrollTop > 0) {
+            // Save current scroll position before any updates
+            scrollPositionBackupRef.current = element.scrollTop;
+            setPopupScrollPosition(element.scrollTop);
+        }
+    });
+
     // Restore scroll position when selectedReservation data changes (not when user scrolls)
     // Using useLayoutEffect to restore BEFORE browser paint, preventing visible jump
     useLayoutEffect(() => {
@@ -382,7 +394,9 @@ const SelectedReservation = memo(() => {
         const currentPosition = popupScrollPosition || scrollPositionBackupRef.current;
 
         // Restore immediately after DOM mutation, before paint
-        element.scrollTop = currentPosition;
+        if (currentPosition > 0) {
+            element.scrollTop = currentPosition;
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedReservation?.reservations]);
 
