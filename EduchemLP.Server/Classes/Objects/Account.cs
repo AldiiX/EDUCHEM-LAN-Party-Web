@@ -100,6 +100,7 @@ public partial class Account {
     public enum AccountType {
         STUDENT,
         TEACHER,
+        TEACHER_ORG,
         ADMIN,
         SUPERADMIN,
     }

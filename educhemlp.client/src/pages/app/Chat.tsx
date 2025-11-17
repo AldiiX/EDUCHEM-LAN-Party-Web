@@ -531,7 +531,7 @@ export const Chat = () => {
                                                             />
 
                                                             {
-                                                               isOwn || enumIsGreaterOrEquals(loggedUser.type, AccountType, AccountType.TEACHER) ? (
+                                                               isOwn || enumIsGreaterOrEquals(loggedUser.type, AccountType, AccountType.TEACHER_ORG) ? (
                                                                     <TextWithIcon
                                                                         onClick={() => handleDeleteMessage(message.uuid) }
                                                                         color={"var(--error-color)"}
