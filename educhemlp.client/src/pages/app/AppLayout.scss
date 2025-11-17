@@ -349,43 +349,39 @@ a {
                     }
                 }
                 
-                >.infoContainer{
+                >.infoContainer {
                     display: flex;
                     flex-direction: column;
-                    gap: 8px;
                     margin-bottom: 16px;
                     
                     >h2{
                         font-size: 22px;
                         color: var(--accent-color);
                         text-align: center;
+                        width: max-content;
                     }
                     
                     >p{
                         font-size: 14px;
                         color: var(--text-color-3);
+                        margin: 0 auto;
                     }
                 }
-                
-                >.themeContainer{
+
+                >.container {
                     display: flex;
                     gap: 4px;
-                    padding: 0 0 8px 0;
-                    border-bottom: 1px solid var(--text-color-3);
                     transition-duration: 0.3s;
-                    
-                    >.themeIcon{
-                        width:20px;
-                        height:20px;
-                        mask-image: url("../../../public/images/icons/theme.svg");
-                        mask-repeat:no-repeat;
-                        mask-position:left;
+                    user-select: none;
+
+                    >.icon {
+                        width: 20px;
+                        height: 20px;
+                        mask-image: url("../../../public/images/icons/logout.svg");
+                        mask-repeat: no-repeat;
+                        mask-position: center;
                         mask-size: cover;
                         background-color: var(--text-color);
-                    }
-                    
-                    >p{
-                        
                     }
 
                     &:hover {
@@ -395,30 +391,25 @@ a {
                     }
                 }
                 
-                >.logoutContainer {
-                    display: flex;
-                    gap: 4px;
-                    margin-left: 2px;
-                    transition-duration: 0.3s;
+                >.themeContainer{
+                    padding: 0 0 12px 0;
+                    border-bottom: 1px solid var(--text-color-3);
                     
-                    > .logoutIcon {
-                        width: 20px;
-                        height: 20px;
-                        mask-image: url("../../../public/images/icons/logout.svg");
-                        mask-repeat: no-repeat;
-                        mask-position: center;
-                        mask-size: cover;
-                        background-color: var(--error-color);
+                    >.icon {
+                        mask-image: url("../../../public/images/icons/theme.svg");
                     }
-                    
+                }
+                
+                >.logoutContainer {
+                    margin-left: 2px;
+
+                    >.icon {
+                        background-color: var(--error-color);
+                        mask-image: url("../../../public/images/icons/logout.svg");
+                    }
+
                     >p {
                         color: var(--error-color);
-                    }
-                    
-                    &:hover {
-                        cursor: pointer;
-                        opacity: 0.5;
-                        transition-duration: 0.3s;
                     }
                 }
             }

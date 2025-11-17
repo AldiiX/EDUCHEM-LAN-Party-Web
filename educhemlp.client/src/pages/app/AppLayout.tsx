@@ -84,11 +84,11 @@ export const AppLayoutLoggedUserSection = ({ style }: { style?: CSSProperties}) 
                         <h2>{ loggedUser?.displayName }</h2>
                         <p>{ loggedUser?.email }</p>
                     </div>
-                    <div className={"themeContainer"}>
-                        <div className={"themeIcon"}></div><p onClick={ () => toggleWebTheme() }>Změnit theme</p>
+                    <div className={"container themeContainer"}>
+                        <div className={"icon"}></div><p onClick={ () => toggleWebTheme() }>Změnit theme</p>
                     </div>
-                    <div className={"logoutContainer"}>
-                        <div className={"logoutIcon"}></div><p onClick={ () => logout(setLoggedUser)}>Odhlásit se</p>
+                    <div className={"container logoutContainer"}>
+                        <div className={"icon"}></div><p onClick={ () => logout(setLoggedUser)}>Odhlásit se</p>
                     </div>
                 </PopOver>
                 
