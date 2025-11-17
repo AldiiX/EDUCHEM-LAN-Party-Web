@@ -105,6 +105,7 @@ const SelectedReservation = memo(() => {
     const popupScrollPosition = useReservationsStore((state) => state.popupScrollPosition);
     const setPopupScrollPosition = useReservationsStore((state) => state.setPopupScrollPosition);
     const reservationsListRef = useRef<HTMLDivElement>(null);
+    const scrollPositionBackupRef = useRef<number>(0); // Backup ref for extra safety
 
     const reserve = async (room: string | null, computer: string | null) => {
         if(!appSettings.reservationsEnabledRightNow) {
@@ -356,13 +357,15 @@ const SelectedReservation = memo(() => {
     // endregion
 
 
-    // Save scroll position when user scrolls
+    // Save scroll position when user scrolls (both in store and backup ref)
     useEffect(() => {
         const element = reservationsListRef.current;
         if (!element) return;
 
         const handleScroll = () => {
-            setPopupScrollPosition(element.scrollTop);
+            const position = element.scrollTop;
+            setPopupScrollPosition(position);
+            scrollPositionBackupRef.current = position; // Backup in ref
         };
 
         element.addEventListener('scroll', handleScroll);
@@ -375,8 +378,8 @@ const SelectedReservation = memo(() => {
         const element = reservationsListRef.current;
         if (!element) return;
 
-        // Get the current scroll position from store at restoration time
-        const currentPosition = popupScrollPosition;
+        // Get scroll position from store, fallback to backup ref for extra safety
+        const currentPosition = popupScrollPosition || scrollPositionBackupRef.current;
 
         // Restore immediately after DOM mutation, before paint
         element.scrollTop = currentPosition;
