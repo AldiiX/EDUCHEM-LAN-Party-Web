@@ -7,7 +7,6 @@ import {Avatar} from "../../components/Avatar.tsx";
 import {Modal} from "../../components/modals/Modal.tsx";
 import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 import {toast} from "react-toastify";
-import { switchClasses} from '@mui/joy/Switch';
 import Switch from "../../components/Switch.tsx";
 import {AccountGender, AccountType, AppSettings, BasicAPIResponse, Log, LoggedUser} from "../../interfaces.ts";
 import {
@@ -693,25 +692,7 @@ const UsersTab = () => {
                                         <div className="switch-div" style={{ marginBottom: 8 }}>
                                             <p>Povolit rezervace</p>
 
-                                            <Switch slotProps={{input: {role: 'switch', name: "enableReservation"}}}
-                                                    defaultChecked={selectedUser?.enableReservation} sx={{
-                                                '--Switch-thumbSize': '16px',
-                                                '--Switch-trackWidth': '40px',
-                                                '--Switch-trackHeight': '24px',
-                                                '--Switch-thumbBackground': 'var(--bg)',
-                                                '--Switch-trackBackground': 'var(--text-color-darker)',
-                                                '&:hover': {
-                                                    '--Switch-trackBackground': 'var(--text-color-3)',
-                                                },
-                                                [`&.${switchClasses.checked}`]: {
-                                                    '--Switch-trackBackground': 'var(--accent-color)',
-                                                    '--Switch-thumbBackground': 'var(--bg)',
-                                                    '&:hover': {
-                                                        '--Switch-trackBackground': 'var(--accent-color-darker)',
-                                                    },
-                                                },
-                                            }}
-                                            />
+                                            <Switch name="enableReservation" defaultChecked={false} />
                                         </div>
 
                                         <div className="switch-div">
