@@ -390,6 +390,14 @@ a {
                         transition-duration: 0.3s;
                     }
                 }
+
+                >.account {
+                    text-decoration: none;
+
+                    >.icon {
+                        mask-image: url("../../../public/images/icons/account_outline.svg");
+                    }
+                }
                 
                 >.themeContainer{
                     padding: 0 0 12px 0;
