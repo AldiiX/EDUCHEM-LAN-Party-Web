@@ -154,8 +154,6 @@ export const AppLayout = ({ children, className, customTitleBar, titleBarType = 
             >
 
             <section className="left">
-
-
                 {/*<h1>Educhem<br/>LAN Party</h1>*/}
                 <div className="title">
                     <div className="logo"></div>

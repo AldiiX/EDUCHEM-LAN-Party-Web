@@ -1,0 +1,95 @@
+﻿.tournamentsPage {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 16px;
+    z-index: 2;
+}
+
+.card {
+    position: relative;
+    aspect-ratio: 16/9;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background-color: var(--element-bg);
+    color: var(--text-color);
+    text-decoration: none;
+    cursor: pointer;
+    transition-duration: 0.3s;
+    user-select: none;
+
+    &:hover {
+        background-color: var(--background-bg-2);
+        transition-duration: 0.3s;
+
+        .bg {
+            opacity: 0.5;
+            transition-duration: 0.3s;
+        }
+    }
+
+    &:is(.disabled) {
+        pointer-events: none;
+        opacity: 0.5;
+        filter: grayscale(100%);
+    }
+
+    .content {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+        height: 100%;
+        justify-content: space-between;
+        align-items: end;
+    }
+
+    .bg {
+        position: absolute;
+        background-size: cover;
+        background-position: center;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        opacity: 1;
+        z-index: 0;
+        mask: linear-gradient(to bottom, rgba(0, 0, 0, 1) 00%, rgba(0, 0, 0, 0) 100%);
+        transition-duration: 0.3s;
+    }
+}
+
+.gameName {
+    font-size: 1rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.externalIcon {
+    width: 12px;
+    height: 12px;
+    border: 2px solid currentColor;
+    border-bottom: none;
+    border-left: none;
+    transform: translateY(1px) rotate(45deg);
+    opacity: 0.65;
+    flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+    .grid {
+        display: flex;
+        flex-direction: column;
+    }
+}

@@ -36,15 +36,15 @@ export const AppMenu = ({ onClick }: AppMenuProps) => {
                 <p>Rezervace</p>
             </Link>
 
-            <Link to={"/app/statistics"} onClick={onClick}  className={currentPage === "/app/statistics" ? "active" : ""}>
-                <div style={{ maskImage: 'url(/images/icons/statistics.svg)' }}></div>
-                <p>Statistiky</p>
-            </Link>
+            {/*<Link to={"/app/statistics"} onClick={onClick}  className={currentPage === "/app/statistics" ? "active" : ""}>*/}
+            {/*    <div style={{ maskImage: 'url(/images/icons/statistics.svg)' }}></div>*/}
+            {/*    <p>Statistiky</p>*/}
+            {/*</Link>*/}
 
-            <Link to={"/app/forum"} onClick={onClick}  className={currentPage === "/app/forum" ? "active" : ""}>
-                <div style={{ maskImage: 'url(/images/icons/forum.svg)' }}></div>
-                <p>Forum</p>
-            </Link>
+            {/*<Link to={"/app/forum"} onClick={onClick}  className={currentPage === "/app/forum" ? "active" : ""}>*/}
+            {/*    <div style={{ maskImage: 'url(/images/icons/forum.svg)' }}></div>*/}
+            {/*    <p>Forum</p>*/}
+            {/*</Link>*/}
 
             {
                 loggedUser !== null && appSettings.chatEnabled
