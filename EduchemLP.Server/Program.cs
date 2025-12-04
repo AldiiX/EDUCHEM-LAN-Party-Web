@@ -9,10 +9,9 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using MySqlConnector;
 using StackExchange.Redis;
+using System.Threading;
 
 namespace EduchemLP.Server;
-
-
 
 public static class Program {
 
@@ -20,10 +19,8 @@ public static class Program {
     public static IDictionary<string, string> ENV { get; private set; } = null!;
     public static ILogger Logger => App.Logger;
 
-
-
     // random picovinky
-    public const string ROOT_DOMAIN = /*"lanparty.educhem.it";*/"educhemlan.emsio.cz";
+    public const string ROOT_DOMAIN = "educhemlan.emsio.cz";
 
     #if DEBUG
         public const bool DEVELOPMENT_MODE = true;
@@ -35,22 +32,34 @@ public static class Program {
 
 
 
-
     public static void Main(string[] args) {
         ENV = DotEnv.Read();
-        var builder = WebApplication.CreateBuilder(args);
 
+        // zvyseni min threadu aby nedochazelo ke thread pool starvation pri spickach
+        ThreadPool.SetMinThreads(workerThreads: 200, completionPortThreads: 200);
+
+        var builder = WebApplication.CreateBuilder(args);
 
         // pripojeni k redisu
         var rhost = ENV.GetValueOrNull("REDIS_IP") ?? ENV["DATABASE_IP"];
         var rport = ENV["REDIS_PORT"];
         var rpassword = ENV.GetValueOrNull("REDIS_PASSWORD");
 
-        var redis = ConnectionMultiplexer.Connect(new ConfigurationOptions {
-            EndPoints = { $"{rhost}:{rport}" },
+        // konfigurace redisu vcetne timeoutu a keepalive
+        var redisOptions = new ConfigurationOptions {
             AbortOnConnectFail = false,
             Password = string.IsNullOrWhiteSpace(rpassword) ? null : rpassword,
-        });
+            KeepAlive = 30,             // keepalive v sekundach
+            SyncTimeout = 10000,        // 10s pro sync operace (session atd.)
+            AsyncTimeout = 10000,       // 10s pro async operace
+            ConnectTimeout = 5000,      // 5s na navazani spojeni
+            ClientName = "EduchemLP_Server"
+        };
+
+        // pridani endpointu
+        redisOptions.EndPoints.Add(rhost, int.Parse(rport));
+
+        var redis = ConnectionMultiplexer.Connect(redisOptions);
 
         builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
 
@@ -66,7 +75,8 @@ public static class Program {
 
         builder.Services.AddSingleton<IDistributedCache>(sp =>
             new RedisCache(new RedisCacheOptions {
-                ConfigurationOptions = ConfigurationOptions.Parse(redis.Configuration),
+                // pouzijeme stejnou konfiguraci jako pro hlavni redis connection
+                ConfigurationOptions = redisOptions,
                 InstanceName = "EduchemLP_session"
             })
         );
@@ -83,16 +93,12 @@ public static class Program {
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
-
-
         // databaze source service
         builder.Services.AddSingleton(sp => {
-            string cs = $"server={ENV["DATABASE_IP"]};userid={ENV["DATABASE_USERNAME"]};password={ENV["DATABASE_PASSWORD"]};database={ENV["DATABASE_DBNAME"]};pooling=true;Max Pool Size=300;";
+            var cs = $"server={ENV["DATABASE_IP"]};userid={ENV["DATABASE_USERNAME"]};password={ENV["DATABASE_PASSWORD"]};database={ENV["DATABASE_DBNAME"]};pooling=true;Max Pool Size=300;";
             var dsb = new MySqlDataSourceBuilder(cs);
             return dsb.Build();
         });
-
-
 
         // repozitare a service
         builder.Services.AddScoped<IAccountRepository, AccountRepository>();
@@ -103,16 +109,12 @@ public static class Program {
         builder.Services.AddScoped<IAppSettingsService, AppSettingsService>();
         builder.Services.AddSingleton<IDbLoggerService, DbLoggerService>();
 
-
-
         // websocket endpointy
         builder.Services.AddSingleton<IWebSocketHub, WebSocketHub>();
         builder.Services.AddHostedService<WebSocketHeartbeatService>();
         builder.Services.AddSingleton<IWebSocketEndpoint, ChatWebSocketEndpoint>();
         builder.Services.AddSingleton<IWebSocketEndpoint, ReservationsWebSocketEndpoint>();
         builder.Services.AddSingleton<IWebSocketEndpoint, SyncWebSocketEndpoint>();
-
-
 
         #if DEBUG
             builder.Configuration.AddJsonFile("appsettings.Debug.json", optional: true, reloadOnChange: true);
