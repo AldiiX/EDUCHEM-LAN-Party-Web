@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using EduchemLP.Server.Classes.Objects;
-using EduchemLP.Server.WebSockets;
 
 namespace EduchemLP.Server.Services;
 
