@@ -1,12 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Infrastructure;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace EduchemLP.Server.WebSockets;
 
@@ -82,13 +90,21 @@ public sealed class ReservationsWebSocketEndpoint(
     private ReservationSnapshot? _currentSnapshot;
     private readonly SemaphoreSlim _snapshotSemaphore = new(1, 1); // hlida pristup k snapshotu
 
-    public async Task HandleAsync(HttpContext context, WebSocket socket, CancellationToken ct) {
+    public async Task HandleAsync(HttpContext context, WebSocket socket, CancellationToken ct = default) {
         // auth je nepovinny, muze vratit null (anonymni klient)
         using var scope = scopeFactory.CreateScope();
         var auth = scope.ServiceProvider.GetRequiredService<IAuthService>();
 
         var sessionAccount = await auth.ReAuthAsync(ct);
         var client = new ReservationsClient(socket, sessionAccount);
+
+        logger.LogInformation(
+            "ws reservations connected: clientId={ClientId}, isGuest={IsGuest}, accountType={AccountType}, socketState={State}",
+            client.Id,
+            client.IsGuest,
+            client.AccountType,
+            socket.State
+        );
 
         // registrace klienta do kanalu "reservations"
         hub.AddClient("reservations", client);
@@ -110,13 +126,45 @@ public sealed class ReservationsWebSocketEndpoint(
                 WebSocketReceiveResult result;
                 try {
                     result = await socket.ReceiveAsync(buffer, ct);
-                } catch (OperationCanceledException) {
+                } catch (OperationCanceledException ex) {
+                    // zadost o zruseni (server shutdown / token cancel)
+                    logger.LogInformation(
+                        ex,
+                        "ws reservations receive canceled: clientId={ClientId}, state={State}",
+                        client.Id,
+                        socket.State
+                    );
                     break;
-                } catch (WebSocketException) {
+                } catch (WebSocketException ex) {
+                    // chyba ws (timeout, reset, atd.)
+                    logger.LogWarning(
+                        ex,
+                        "ws reservations websocket exception: clientId={ClientId}, errorCode={ErrorCode}, state={State}",
+                        client.Id,
+                        ex.WebSocketErrorCode,
+                        socket.State
+                    );
+                    break;
+                } catch (Exception ex) {
+                    // necekana chyba pri receive
+                    logger.LogError(
+                        ex,
+                        "ws reservations unhandled receive exception: clientId={ClientId}, state={State}",
+                        client.Id,
+                        socket.State
+                    );
                     break;
                 }
 
-                if (result.MessageType == WebSocketMessageType.Close) break;
+                if (result.MessageType == WebSocketMessageType.Close) {
+                    logger.LogInformation(
+                        "ws reservations closed by client: clientId={ClientId}, closeStatus={Status}, reason={Reason}",
+                        client.Id,
+                        result.CloseStatus,
+                        result.CloseStatusDescription
+                    );
+                    break;
+                }
 
                 var messageString = Encoding.UTF8.GetString(buffer, 0, result.Count);
                 if (string.IsNullOrWhiteSpace(messageString)) continue;
@@ -124,7 +172,14 @@ public sealed class ReservationsWebSocketEndpoint(
                 JsonNode? messageJson;
                 try {
                     messageJson = JsonNode.Parse(messageString);
-                } catch (JsonException) {
+                } catch (JsonException ex) {
+                    // nevalidni json z klienta
+                    logger.LogWarning(
+                        ex,
+                        "ws reservations invalid json from client: clientId={ClientId}, payload={Payload}",
+                        client.Id,
+                        messageString
+                    );
                     continue;
                 }
 
@@ -232,12 +287,31 @@ public sealed class ReservationsWebSocketEndpoint(
                     } break;
 
                     case "disconnect": {
+                        logger.LogInformation(
+                            "ws reservations disconnect requested by client: clientId={ClientId}",
+                            client.Id
+                        );
                         await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by user", ct);
+                    } break;
+
+                    default: {
+                        // neznamy action – jen zalogovat
+                        logger.LogWarning(
+                            "ws reservations unknown action '{Action}' from clientId={ClientId}",
+                            action,
+                            client.Id
+                        );
                     } break;
                 }
             }
         }
         finally {
+            logger.LogInformation(
+                "ws reservations disconnected: clientId={ClientId}, finalState={State}",
+                client.Id,
+                socket.State
+            );
+
             // odhlaseni klienta
             hub.RemoveClient("reservations", client.Id);
 
@@ -305,9 +379,9 @@ public sealed class ReservationsWebSocketEndpoint(
         cmd.CommandText =
             """
             SELECT 
-                res.*, 
-                usr.id AS user_id, 
-                usr.display_name AS user_display_name, 
+                res.*,
+                usr.id AS user_id,
+                usr.display_name AS user_display_name,
                 usr.class AS user_class,
                 usr.avatar AS user_avatar,
                 usr.banner AS user_banner,
