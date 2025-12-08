@@ -9,7 +9,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using MySqlConnector;
 using StackExchange.Redis;
-using System.Threading;
 
 namespace EduchemLP.Server;
 

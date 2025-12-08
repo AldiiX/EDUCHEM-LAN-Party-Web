@@ -8,23 +8,16 @@
  *  potřebné řešit škálování na více serverů.
  *
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Threading;
-using System.Threading.Tasks;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Infrastructure;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace EduchemLP.Server.WebSockets;
 
@@ -77,7 +70,7 @@ internal sealed record ReservationRow(
 );
 
 // snapshot vsech dat, ktera se posilaji klientum
-sealed record ReservationSnapshot(
+internal sealed record ReservationSnapshot(
     IReadOnlyList<ReservationRow> Reservations,
     object Rooms,
     object Computers
@@ -102,10 +95,10 @@ public sealed class ReservationsWebSocketEndpoint(
 
     // throttling a cache pro status zpravy
     private static readonly TimeSpan StatusBroadcastInterval = TimeSpan.FromSeconds(1);
-    private static readonly object _statusBroadcastLock = new();
+    private static readonly Lock _statusBroadcastLock = new();
     private static bool _statusBroadcastScheduled;
 
-    private static readonly object _statusCacheLock = new();
+    private static readonly Lock _statusCacheLock = new();
     private static DateTime _statusCacheValidUntilUtc = DateTime.MinValue;
     private static string? _statusPayloadForGuest;
     private static string? _statusPayloadForAuthenticated;
@@ -301,7 +294,7 @@ public sealed class ReservationsWebSocketEndpoint(
                         await ReloadAndBroadcastFullReservationInfoAsync(ct);
 
                         _ = dbLogger.LogAsync(IDbLoggerService.LogType.INFO,
-                            $"Uživatel {sessionAccount!.DisplayName} ({sessionAccount!.Email}) zrušil rezervaci.",
+                            $"Uživatel {sessionAccount.DisplayName} ({sessionAccount.Email}) zrušil rezervaci.",
                             "reservation", ct
                         );
                     } break;
@@ -449,7 +442,7 @@ public sealed class ReservationsWebSocketEndpoint(
             reservations.Add(row);
         }
 
-        return new ReservationSnapshot(reservations, roomsLocal!, computersLocal!);
+        return new ReservationSnapshot(reservations, roomsLocal, computersLocal);
     }
 
     private Task BroadcastStatusAsync(CancellationToken ct) {
@@ -520,7 +513,7 @@ public sealed class ReservationsWebSocketEndpoint(
                     ["banner"] = row.UserBanner
                 };
 
-                if (client.AccountType.HasValue && client.AccountType.Value > Account.AccountType.STUDENT) {
+                if (client.AccountType is > Account.AccountType.STUDENT) {
                     userObj["class"] = row.UserClass;
                 }
 

@@ -1,17 +1,10 @@
-using System;
-using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Threading;
-using System.Threading.Tasks;
 using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Infrastructure;
 using EduchemLP.Server.Services;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace EduchemLP.Server.WebSockets;
 
@@ -140,7 +133,7 @@ public sealed class ChatWebSocketEndpoint(
                     case "deleteMessage": {
                         var uuid = messageJson?["uuid"]?.ToString();
                         if (!string.IsNullOrWhiteSpace(uuid)) {
-                            await DeleteMessageAsync(client, uuid!, ct);
+                            await DeleteMessageAsync(client, uuid, ct);
                         }
                     }
                         break;
@@ -148,7 +141,7 @@ public sealed class ChatWebSocketEndpoint(
                     case "loadOlderMessages": {
                         var beforeUuid = messageJson?["beforeUuid"]?.ToString();
                         if (!string.IsNullOrWhiteSpace(beforeUuid)) {
-                            await SendOlderMessagesAsync(client, beforeUuid!, ct);
+                            await SendOlderMessagesAsync(client, beforeUuid, ct);
                         }
                     }
                         break;
