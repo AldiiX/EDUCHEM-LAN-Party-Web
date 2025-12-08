@@ -1,3 +1,13 @@
+/*
+ *
+ *  6000 připojených socketů je otestováno, že funguje bez problémů.
+ *
+ *  Nad 6000 už začíná být aplikace zpomalená (pravděpodobně kvůli nedostatku paměti).
+ *
+ *  Pravděpodobně nikdy nebude potřeba více než 6000 současných připojení, proto prozatím není
+ *  potřebné řešit škálování na více serverů.
+ *
+ */
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,7 +57,7 @@ public sealed class ReservationsClient : WSClient {
 }
 
 // interni radek pro jednu rezervaci
-sealed record ReservationRow(
+internal sealed record ReservationRow(
     int? UserId,
     string? UserDisplayName,
     string? UserClass,
@@ -90,6 +100,16 @@ public sealed class ReservationsWebSocketEndpoint(
     private ReservationSnapshot? _currentSnapshot;
     private readonly SemaphoreSlim _snapshotSemaphore = new(1, 1); // hlida pristup k snapshotu
 
+    // throttling a cache pro status zpravy
+    private static readonly TimeSpan StatusBroadcastInterval = TimeSpan.FromSeconds(1);
+    private static readonly object _statusBroadcastLock = new();
+    private static bool _statusBroadcastScheduled;
+
+    private static readonly object _statusCacheLock = new();
+    private static DateTime _statusCacheValidUntilUtc = DateTime.MinValue;
+    private static string? _statusPayloadForGuest;
+    private static string? _statusPayloadForAuthenticated;
+
     public async Task HandleAsync(HttpContext context, WebSocket socket, CancellationToken ct = default) {
         // auth je nepovinny, muze vratit null (anonymni klient)
         using var scope = scopeFactory.CreateScope();
@@ -98,18 +118,18 @@ public sealed class ReservationsWebSocketEndpoint(
         var sessionAccount = await auth.ReAuthAsync(ct);
         var client = new ReservationsClient(socket, sessionAccount);
 
-        logger.LogInformation(
+        /*logger.LogInformation(
             "ws reservations connected: clientId={ClientId}, isGuest={IsGuest}, accountType={AccountType}, socketState={State}",
             client.Id,
             client.IsGuest,
             client.AccountType,
             socket.State
-        );
+        );*/
 
         // registrace klienta do kanalu "reservations"
         hub.AddClient("reservations", client);
 
-        // poslat aktualni status (pripojeni useru atd.)
+        // poslat (throttlovany) status o pripojenych uzivatelich
         await BroadcastStatusAsync(ct);
 
         // poslat plny stav rezervaci novemu klientovi
@@ -128,41 +148,41 @@ public sealed class ReservationsWebSocketEndpoint(
                     result = await socket.ReceiveAsync(buffer, ct);
                 } catch (OperationCanceledException ex) {
                     // zadost o zruseni (server shutdown / token cancel)
-                    logger.LogInformation(
+                    /*logger.LogInformation(
                         ex,
                         "ws reservations receive canceled: clientId={ClientId}, state={State}",
                         client.Id,
                         socket.State
-                    );
+                    );*/
                     break;
                 } catch (WebSocketException ex) {
                     // chyba ws (timeout, reset, atd.)
-                    logger.LogWarning(
+                    /*logger.LogWarning(
                         ex,
                         "ws reservations websocket exception: clientId={ClientId}, errorCode={ErrorCode}, state={State}",
                         client.Id,
                         ex.WebSocketErrorCode,
                         socket.State
-                    );
+                    );*/
                     break;
                 } catch (Exception ex) {
                     // necekana chyba pri receive
-                    logger.LogError(
+                    /*logger.LogError(
                         ex,
                         "ws reservations unhandled receive exception: clientId={ClientId}, state={State}",
                         client.Id,
                         socket.State
-                    );
+                    );*/
                     break;
                 }
 
                 if (result.MessageType == WebSocketMessageType.Close) {
-                    logger.LogInformation(
+                    /*logger.LogInformation(
                         "ws reservations closed by client: clientId={ClientId}, closeStatus={Status}, reason={Reason}",
                         client.Id,
                         result.CloseStatus,
                         result.CloseStatusDescription
-                    );
+                    );*/
                     break;
                 }
 
@@ -174,12 +194,12 @@ public sealed class ReservationsWebSocketEndpoint(
                     messageJson = JsonNode.Parse(messageString);
                 } catch (JsonException ex) {
                     // nevalidni json z klienta
-                    logger.LogWarning(
+                    /*logger.LogWarning(
                         ex,
                         "ws reservations invalid json from client: clientId={ClientId}, payload={Payload}",
                         client.Id,
                         messageString
-                    );
+                    );*/
                     continue;
                 }
 
@@ -287,35 +307,35 @@ public sealed class ReservationsWebSocketEndpoint(
                     } break;
 
                     case "disconnect": {
-                        logger.LogInformation(
+                        /*logger.LogInformation(
                             "ws reservations disconnect requested by client: clientId={ClientId}",
                             client.Id
-                        );
+                        );*/
                         await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by user", ct);
                     } break;
 
                     default: {
                         // neznamy action – jen zalogovat
-                        logger.LogWarning(
+                        /*logger.LogWarning(
                             "ws reservations unknown action '{Action}' from clientId={ClientId}",
                             action,
                             client.Id
-                        );
+                        );*/
                     } break;
                 }
             }
         }
         finally {
-            logger.LogInformation(
+            /*logger.LogInformation(
                 "ws reservations disconnected: clientId={ClientId}, finalState={State}",
                 client.Id,
                 socket.State
-            );
+            );*/
 
             // odhlaseni klienta
             hub.RemoveClient("reservations", client.Id);
 
-            // poslat okamzity status po odhlaseni
+            // poslat (throttlovany) status po odhlaseni
             await BroadcastStatusAsync(CancellationToken.None);
         }
     }
@@ -432,7 +452,44 @@ public sealed class ReservationsWebSocketEndpoint(
         return new ReservationSnapshot(reservations, roomsLocal!, computersLocal!);
     }
 
-    private async Task BroadcastStatusAsync(CancellationToken ct) {
+    private Task BroadcastStatusAsync(CancellationToken ct) {
+        lock (_statusBroadcastLock) {
+            // pokud uz je naplanovany broadcast, dalsi volani jen skonci
+            if (_statusBroadcastScheduled) {
+                return Task.CompletedTask;
+            }
+
+            _statusBroadcastScheduled = true;
+
+            _ = Task.Run(async () => {
+                try {
+                    // kratke zpozdeni slouzi jako debounce okno,
+                    // aby se vice pripojeni/odpojeni slilo do jednoho statusu
+                    try {
+                        await Task.Delay(StatusBroadcastInterval, ct);
+                    }
+                    catch (OperationCanceledException) {
+                        // pokud se token zrusi, pokusime se i tak jednou status poslat,
+                        // protoze je globalni pro vsechny klienty
+                    }
+
+                    await BroadcastStatusCoreAsync(CancellationToken.None);
+                }
+                catch (Exception ex) {
+                    //logger.LogError(ex, "ws reservations throttled status broadcast failed");
+                }
+                finally {
+                    lock (_statusBroadcastLock) {
+                        _statusBroadcastScheduled = false;
+                    }
+                }
+            }, CancellationToken.None);
+
+            return Task.CompletedTask;
+        }
+    }
+
+    private async Task BroadcastStatusCoreAsync(CancellationToken ct) {
         // pro kazdeho prijemce je obsah trochu jiny (schovani informaci pro anonymni)
         var list = hub.GetClients("reservations").ToList();
 
@@ -514,17 +571,9 @@ public sealed class ReservationsWebSocketEndpoint(
 
     private async Task RegisterHeartbeatAsync() {
         if (Interlocked.CompareExchange(ref heartbeatRegistered, 1, 0) == 0) {
-            hub.RegisterHeartbeat("reservations", async (hub2, token) => {
-                // posli aktualni status kazdemu prijemci zvlast (muze byt personalizovany)
-                var list = hub2.GetClients("reservations").ToList();
-
-                foreach (var r in list) {
-                    if (r.State != WebSocketState.Open) continue;
-
-                    var receiver = (ReservationsClient)r;
-                    var payload = await BuildStatusPayloadAsync(receiver, token);
-                    await hub2.SendAsync("reservations", receiver.Id, payload, token);
-                }
+            hub.RegisterHeartbeat("reservations", async (_, token) => {
+                // heartbeat vyuziva stejny throttling jako udalosti pripojeni/odpojeni
+                await BroadcastStatusAsync(token);
             });
         }
     }
@@ -544,7 +593,23 @@ public sealed class ReservationsWebSocketEndpoint(
         return count > 0;
     }
 
-    private async Task<string> BuildStatusPayloadAsync(ReservationsClient receiver, CancellationToken ct) {
+    private Task<string> BuildStatusPayloadAsync(ReservationsClient receiver, CancellationToken ct) {
+        var now = DateTime.UtcNow;
+
+        // 1) zkusi pouzit cache (platna pro oba typy prijemcu max statusbroadcastinterval)
+        lock (_statusCacheLock) {
+            if (now <= _statusCacheValidUntilUtc) {
+                if (receiver.AccountType is null && _statusPayloadForGuest is not null) {
+                    return Task.FromResult(_statusPayloadForGuest);
+                }
+
+                if (receiver.AccountType is not null && _statusPayloadForAuthenticated is not null) {
+                    return Task.FromResult(_statusPayloadForAuthenticated);
+                }
+            }
+        }
+
+        // 2) cache neni – postavi payload z aktualniho seznamu klientu
         var list = hub.GetClients("reservations").ToList();
         var connectedUsers = new JsonArray();
 
@@ -569,6 +634,17 @@ public sealed class ReservationsWebSocketEndpoint(
             connectedUsers
         }.ToJsonString();
 
-        return json;
+        // 3) ulozi do cache pro dalsi volani v pristi sekunde
+        lock (_statusCacheLock) {
+            _statusCacheValidUntilUtc = DateTime.UtcNow.Add(StatusBroadcastInterval);
+
+            if (receiver.AccountType is null) {
+                _statusPayloadForGuest = json;
+            } else {
+                _statusPayloadForAuthenticated = json;
+            }
+        }
+
+        return Task.FromResult(json);
     }
 }
