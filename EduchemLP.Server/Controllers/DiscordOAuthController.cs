@@ -1,14 +1,15 @@
 using System.Text.Json.Nodes;
+using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.Data;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;
 using Microsoft.AspNetCore.Mvc;
-using MySqlConnector;
 
 namespace EduchemLP.Server.Controllers;
 
 
 [Route("/_be/discord/oauth")]
-public class DiscordOAuthController(IAuthService auth, IDatabaseService db, IAccountRepository accounts) : Controller {
+public class DiscordOAuthController(IAuthService auth, EduchemLpDbContext db, IAccountRepository accounts) : Controller {
 
     #if DEBUG
         public const string REDIRECT_URI = "http://localhost:3154/_be/discord/oauth";
@@ -49,23 +50,26 @@ public class DiscordOAuthController(IAuthService auth, IDatabaseService db, IAcc
 
 
         // zapsani do db
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return Redirect("/app/account");
+        var token = await db.AccountAccessTokens.FindAsync(
+            [Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD, account.Id],
+            cancellationToken: ct
+        );
 
-        await using var cmd = new MySqlCommand(
-            """
-                    DELETE FROM users_access_tokens WHERE platform = 'DISCORD' AND user_id = @userId;
+        if (token == null) {
+            db.AccountAccessTokens.Add(new Account.AccountAccessToken(
+                userId: account.Id,
+                platform: Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD,
+                accessToken: body?["access_token"]?.ToString(),
+                refreshToken: body?["refresh_token"]?.ToString(),
+                type: Account.AccountAccessToken.AccountAccessTokenType.BEARER
+            ));
+        } else {
+            token.AccessToken = body?["access_token"]?.ToString();
+            token.RefreshToken = body?["refresh_token"]?.ToString();
+            token.Type = Account.AccountAccessToken.AccountAccessTokenType.BEARER;
+        }
 
-                    INSERT INTO 
-                        users_access_tokens (user_id, platform, access_token, refresh_token, token_type) 
-                        VALUES (@userId, 'DISCORD', @accessToken, @refreshToken, 'BEARER');
-                    """,
-        conn);
-
-        cmd.Parameters.AddWithValue("@userId", account.Id );
-        cmd.Parameters.AddWithValue("@accessToken", body?["access_token"]?.ToString());
-        cmd.Parameters.AddWithValue("@refreshToken", body?["refresh_token"]?.ToString());
-        await cmd.ExecuteNonQueryAsync(ct);
+        await db.SaveChangesAsync(ct);
 
         // znovu reauth
         account = await auth.ReAuthAsync(ct);

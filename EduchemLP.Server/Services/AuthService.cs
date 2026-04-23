@@ -2,16 +2,12 @@ using System.Text.Json;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Repositories;
-using MySqlConnector;
+using EduchemLP.Server.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace EduchemLP.Server.Services;
 
-
-
-
-
-public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccountRepository accounts) : IAuthService {
-
+public class AuthService(EduchemLpDbContext db, IHttpContextAccessor http, IAccountRepository accounts) : IAuthService {
 
     public async Task<Account?> LoginAsync(string identifier, string plainPassword, CancellationToken ct = default) {
         var acc = await GetAccountByIdentifierAsync(identifier, ct);
@@ -52,58 +48,22 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
         return acc;
     }
 
-    /*public async Task<Account?> RegisterAsync(string username, string email, string plainPassword, string? displayName, CancellationToken ct = default) {
-        var hashed = Utilities.EncryptPassword(plainPassword);
-        await using var conn = await db.OpenAsync(ct);
-
-        await using var cmd = new NpgsqlCommand(@"
-            insert into accounts (uuid, username, display_name, email, password, created_at)
-            values (gen_random_uuid(), @u, @d, @e, @p, now());
-            select * from accounts where username = @u and email = @e;
-        ", conn);
-
-        cmd.Parameters.AddWithValue("u", username);
-        cmd.Parameters.AddWithValue("d", (object?)displayName ?? DBNull.Value);
-        cmd.Parameters.AddWithValue("e", email);
-        cmd.Parameters.AddWithValue("p", hashed);
-
-        try {
-            await using var reader = await cmd.ExecuteReaderAsync(ct);
-            if (!await reader.ReadAsync(ct)) return null;
-
-            return new Account(
-                reader.GetGuid("uuid"),
-                reader.GetString("username"),
-                reader.GetString("display_name"),
-                reader.GetString("avatar_url"),
-                reader.GetString("email"),
-                reader.GetString("password"),
-                reader.GetDateTime("created_at"),
-                Enum.TryParse<Account.AccountPlan>(reader.GetString("plan"), out var plan) ? plan : Account.AccountPlan.FREE
-            );
-        } catch (NpgsqlException e) when (e.SqlState == "23505") {
-            return null;
-        }
-    }
-    */
-
     private async Task<Account?> GetAccountByIdentifierAsync(string identifier, CancellationToken ct) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-
-        MySqlCommand cmd;
         if (identifier.Contains('@')) {
-            cmd = new MySqlCommand("select * from users where email = @email limit 1;", conn);
-            cmd.Parameters.Add("@email", MySqlDbType.VarChar).Value = identifier;
-        } else if (ulong.TryParse(identifier, out var id)) {
-            cmd = new MySqlCommand("select * from users where id = @id limit 1;", conn);
-            cmd.Parameters.Add("@id", MySqlDbType.UInt64).Value = id;
-        } else {
+            return await db.Accounts
+                .AsNoTracking()
+                .Include(x => x.AccessTokens)
+                .FirstOrDefaultAsync(x => x.Email == identifier, ct);
+        }
+
+        if (!int.TryParse(identifier, out var id)) {
             return null;
         }
 
-        await using var reader = await cmd.ExecuteReaderAsync(ct);
-        if (!await reader.ReadAsync(ct)) return null;
-        return new Account(reader);
+        return await db.Accounts
+            .AsNoTracking()
+            .Include(x => x.AccessTokens)
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 
     public async Task<Account?> ReAuthFromContextOrNullAsync(CancellationToken ct = default) {
@@ -120,11 +80,11 @@ public class AuthService(IDatabaseService db, IHttpContextAccessor http, IAccoun
     }
 
     public async Task<bool> UpdateLastLoggedInAsync(Account account, CancellationToken ct = default) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        const string sql = "update users set last_logged_in = now() where id = @id";
-        await using var cmd = new MySqlCommand(sql, conn);
-        cmd.Parameters.AddWithValue("id", account.Id);
-        var affected = await cmd.ExecuteNonQueryAsync(ct);
-        return affected > 0;
+        var dbAccount = await db.Accounts.FirstOrDefaultAsync(x => x.Id == account.Id, ct);
+        if (dbAccount == null) return false;
+
+        dbAccount.LastLoggedIn = DateTime.UtcNow;
+        dbAccount.LastUpdated = DateTime.UtcNow;
+        return await db.SaveChangesAsync(ct) > 0;
     }
 }

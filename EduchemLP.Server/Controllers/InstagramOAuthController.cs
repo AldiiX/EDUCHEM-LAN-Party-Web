@@ -1,8 +1,9 @@
 using System.Text.Json.Nodes;
+using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.Data;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;
 using Microsoft.AspNetCore.Mvc;
-using MySqlConnector;
 
 namespace EduchemLP.Server.Controllers;
 
@@ -10,7 +11,7 @@ namespace EduchemLP.Server.Controllers;
 [Route("/_be/instagram/oauth")]
 public class InstagramOAuthController(
     IAuthService auth,
-    IDatabaseService db,
+    EduchemLpDbContext db,
     IAccountRepository accounts
 ) : Controller {
 
@@ -51,22 +52,26 @@ public class InstagramOAuthController(
 
 
         // zapsani do db
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return Redirect("/app/account");
+        var token = await db.AccountAccessTokens.FindAsync(
+            [Account.AccountAccessToken.AccountAccessTokenPlatform.INSTAGRAM, account.Id],
+            cancellationToken: ct
+        );
 
-        await using var cmd = new MySqlCommand(
-            """
-            DELETE FROM users_access_tokens WHERE platform = 'INSTAGRAM' AND user_id = @userId;
+        if (token == null) {
+            db.AccountAccessTokens.Add(new Account.AccountAccessToken(
+                userId: account.Id,
+                platform: Account.AccountAccessToken.AccountAccessTokenPlatform.INSTAGRAM,
+                accessToken: accessToken,
+                refreshToken: null,
+                type: Account.AccountAccessToken.AccountAccessTokenType.BEARER
+            ));
+        } else {
+            token.AccessToken = accessToken;
+            token.RefreshToken = null;
+            token.Type = Account.AccountAccessToken.AccountAccessTokenType.BEARER;
+        }
 
-            INSERT INTO 
-                users_access_tokens (user_id, platform, access_token, refresh_token, token_type) 
-                VALUES (@userId, 'INSTAGRAM', @accessToken, null, 'BEARER');
-            """,
-            conn);
-
-        cmd.Parameters.AddWithValue("@userId", account.Id );
-        cmd.Parameters.AddWithValue("@accessToken", accessToken);
-        await cmd.ExecuteNonQueryAsync(ct);
+        await db.SaveChangesAsync(ct);
 
         // znovu reauth
         account = await auth.ReAuthAsync(ct);

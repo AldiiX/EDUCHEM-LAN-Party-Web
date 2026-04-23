@@ -2,127 +2,60 @@ using System.Text;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
-using EduchemLP.Server.Controllers;
 using EduchemLP.Server.Models;
 using EduchemLP.Server.Services;
-using MySqlConnector;
+using EduchemLP.Server.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace EduchemLP.Server.Repositories;
 
-
-
-
-
 public class AccountRepository(
-    IDatabaseService db,
+    EduchemLpDbContext db,
     IHttpContextAccessor http
 ) : IAccountRepository {
 
     public async Task<Account?> GetByIdAsync(int id, CancellationToken ct = default) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return null;
-
-        const string query =
-            """
-                SELECT 
-                    u.*,
-                    COALESCE(
-                        (
-                            SELECT JSON_ARRAYAGG(
-                                JSON_OBJECT(
-                                    'userId', at.user_id,
-                                    'platform', at.platform,
-                                    'accessToken', at.access_token,
-                                    'refreshToken', at.refresh_token,
-                                    'type', at.token_type
-                                )
-                            )
-                            FROM users_access_tokens at
-                            WHERE at.user_id = u.id
-                        ),
-                        JSON_ARRAY()
-                    ) AS access_tokens
-                FROM `users` u
-                WHERE `id` = @id
-                LIMIT 1
-            """;
-
-        await using var cmd = new MySqlCommand(query, conn);
-        cmd.Parameters.AddWithValue("@id", id);
-
-        await using var reader = await cmd.ExecuteReaderAsync(ct);
-        if (!await reader.ReadAsync(ct)) return null;
-
-        var user = new Account(reader);
-
-        return user;
+        return await db.Accounts
+            .AsNoTracking()
+            .Include(account => account.AccessTokens)
+            .FirstOrDefaultAsync(account => account.Id == id, ct);
     }
 
     public async Task<List<Account>> GetAllAsync(CancellationToken ct = default) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return [];
-
-        await using var cmd = new MySqlCommand(
-        """
-            SELECT 
-                u.*,
-                COALESCE(
-                   (
-                       SELECT JSON_ARRAYAGG(
-                           JSON_OBJECT(
-                               'userId', at.user_id,
-                               'platform', at.platform,
-                               'accessToken', at.access_token,
-                               'refreshToken', at.refresh_token,
-                               'type', at.token_type
-                           )
-                       )
-                       FROM users_access_tokens at
-                       WHERE at.user_id = u.id
-                   ),
-                   JSON_ARRAY()
-                ) AS access_tokens
-            FROM `users` u
-            ORDER BY `display_name` ASC
-        """, conn);
-
-        await using var reader = await cmd.ExecuteReaderAsync(ct);
-
-        var list = new List<Account>();
-        while (await reader.ReadAsync(ct)) {
-            list.Add(new Account(reader));
-        }
-
-        return list;
+        return await db.Accounts
+            .AsNoTracking()
+            .Include(account => account.AccessTokens)
+            .OrderBy(account => account.DisplayName)
+            .ToListAsync(ct);
     }
 
     public async Task UpdateLastLoggedInAsync(Account account, CancellationToken ct = default) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return;
+        var dbAccount = await db.Accounts.FirstOrDefaultAsync(x => x.Id == account.Id, ct);
+        if (dbAccount == null) return;
 
-        const string updateQuery = "UPDATE users SET last_logged_in = @now WHERE id = @id";
-        await using var cmd = new MySqlCommand(updateQuery, conn);
-        cmd.Parameters.AddWithValue("@now", DateTime.Now);
-        cmd.Parameters.AddWithValue("@id", account.Id);
-        await cmd.ExecuteNonQueryAsync(ct);
+        dbAccount.LastLoggedIn = DateTime.UtcNow;
+        dbAccount.LastUpdated = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
     }
 
     public async Task UpdateAvatarByConnectedPlatformAsync(Account account, CancellationToken ct = default) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return;
+        var dbAccount = await db.Accounts
+            .Include(x => x.AccessTokens)
+            .FirstOrDefaultAsync(x => x.Id == account.Id, ct);
+        if (dbAccount == null) return;
 
         // novy avatar
         string? newAvatarLink = null;
 
         // zjisteni veci podle Discordu
-        Account.AccountAccessToken? discordToken = account.AccessTokens.FirstOrDefault(x => x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD);
-        Account.AccountAccessToken? googleToken  = account.AccessTokens.FirstOrDefault(x => x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.GOOGLE);
-        Account.AccountAccessToken? githubToken  = account.AccessTokens.FirstOrDefault(x => x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.GITHUB);
+        Account.AccountAccessToken? discordToken = dbAccount.AccessTokens.FirstOrDefault(x => x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD);
+        Account.AccountAccessToken? googleToken  = dbAccount.AccessTokens.FirstOrDefault(x => x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.GOOGLE);
+        Account.AccountAccessToken? githubToken  = dbAccount.AccessTokens.FirstOrDefault(x => x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.GITHUB);
 
         // google
         if (googleToken != null) {
             var client = new HttpClient();
-            var accessToken = await GenerateGoogleAccessTokenAsync(account, ct);
+            var accessToken = await GenerateGoogleAccessTokenAsync(dbAccount, ct);
 
             var userInfoRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v2/userinfo");
             userInfoRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
@@ -130,14 +63,13 @@ public class AccountRepository(
             var userInfoResponse = await client.SendAsync(userInfoRequest, ct);
             var userInfo = JsonNode.Parse(await userInfoResponse.Content.ReadAsStringAsync(ct));
 
-            //Console.WriteLine("Google User Info: " + userInfo?.ToJsonString());
             newAvatarLink = userInfo?["picture"]?.ToString();
         }
 
         // github
         else if (githubToken != null) {
             var client = new HttpClient();
-            var accessToken = account.AccessTokens.FirstOrDefault(x => x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.GITHUB)?.AccessToken;
+            var accessToken = githubToken.AccessToken;
             if (accessToken == null) return;
 
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
@@ -145,7 +77,6 @@ public class AccountRepository(
 
             var response = await client.GetAsync("https://api.github.com/user", ct);
             var content = JsonNode.Parse(await response.Content.ReadAsStringAsync(ct));
-            //Console.WriteLine("UpdateAvatarByConnectedPlatform: " + content?.ToJsonString());
 
             newAvatarLink = content?["avatar_url"]?.ToString();
         }
@@ -153,14 +84,13 @@ public class AccountRepository(
         // discord
         else if (discordToken != null) {
             var client = new HttpClient();
-            var accessToken = await GenerateDiscordAccessTokenAsync(account, ct);
+            var accessToken = await GenerateDiscordAccessTokenAsync(dbAccount, ct);
             if (accessToken == null) return;
 
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
             var response = await client.GetAsync("https://discord.com/api/users/@me", ct);
             var content = JsonNode.Parse(await response.Content.ReadAsStringAsync(ct));
-            //Console.WriteLine("UpdateAvatarByConnectedPlatform: " + content?.ToJsonString());
 
             // ziskani avataru
             var avatarId = content?["avatar"]?.ToString();
@@ -172,22 +102,9 @@ public class AccountRepository(
             }
         }
 
-
-
-        // updatnuti v db
-        const string updateQuery =
-            """
-            UPDATE users 
-            SET 
-                avatar = IF(@avatar IS NULL, avatar, @avatar)
-            WHERE id = @id
-            """;
-        await using var cmd = new MySqlCommand(updateQuery, conn);
-        cmd.Parameters.AddWithValue("@id", account.Id);
-        cmd.Parameters.AddWithValue("@avatar", newAvatarLink);
-        await cmd.ExecuteNonQueryAsync(ct);
-
-
+        dbAccount.Avatar = newAvatarLink ?? dbAccount.Avatar;
+        dbAccount.LastUpdated = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
 
         // aktualizace avataru v session
         var sessionAcc = JsonNode.Parse(http.HttpContext!.Session.GetString("loggedaccount") ?? "");
@@ -198,31 +115,26 @@ public class AccountRepository(
     }
 
     public async Task<Account?> CreateAsync(string email, string displayName, string? @class, Account.AccountGender gender, Account.AccountType accountType, bool sendToEmail = false, bool enableReservation = false, CancellationToken ct = default) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return null;
-
         var password = Utilities.GenerateRandomPassword();
-        const string insertQuery =
-            """
-            INSERT INTO users (email, display_name, password, class, account_type, gender, enable_reservation) VALUES (@email, @displayName, @password, @class, @accountType, @gender, @enableReservation);
+        var user = new Account(
+            id: 0,
+            displayName: displayName,
+            email: email,
+            password: Utilities.EncryptPassword(password),
+            @class: @class,
+            type: accountType,
+            createdAt: DateTime.UtcNow,
+            lastUpdated: DateTime.UtcNow,
+            lastLoggedIn: null,
+            gender: gender,
+            avatar: null,
+            banner: null,
+            accessTokens: [],
+            enableReservation: enableReservation
+        );
 
-            SELECT * FROM users WHERE id = LAST_INSERT_ID();
-            """;
-        await using var cmd = new MySqlCommand(insertQuery, conn);
-        cmd.Parameters.AddWithValue("@email", email);
-        cmd.Parameters.AddWithValue("@displayName", displayName);
-        cmd.Parameters.AddWithValue("@password", Utilities.EncryptPassword(password));
-        cmd.Parameters.AddWithValue("@class", @class);
-        cmd.Parameters.AddWithValue("@accountType", accountType.ToString().ToUpper());
-        cmd.Parameters.AddWithValue("@gender", gender.ToString().ToUpper());
-        cmd.Parameters.AddWithValue("@enableReservation", enableReservation ? 1 : 0);
-
-        await using var reader = await cmd.ExecuteReaderAsync(ct);
-        if (!await reader.ReadAsync(ct)) return null;
-
-        var user = new Account(reader);
-
-
+        db.Accounts.Add(user);
+        await db.SaveChangesAsync(ct);
 
         // odeslání emailu
         if (sendToEmail) {
@@ -232,8 +144,6 @@ public class AccountRepository(
             );
         }
 
-
-
         return user;
     }
 
@@ -242,14 +152,11 @@ public class AccountRepository(
         if (discordAccessToken?.RefreshToken is null) return null;
 
         using var client = new HttpClient();
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return null;
 
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", discordAccessToken.AccessToken);
 
         // zjištění platnosti tokenu
         var testRequest = await client.GetAsync("https://discord.com/api/users/@me", ct);
-        //Console.WriteLine(testRequest.ToJsonString());
 
         // když je token neplatný - přegeneruje se
         if (testRequest.StatusCode != System.Net.HttpStatusCode.Unauthorized) return testRequest.IsSuccessStatusCode ? discordAccessToken.AccessToken : null;
@@ -262,40 +169,28 @@ public class AccountRepository(
             { "client_secret", Program.ENV["DISCORD_CLIENT_SECRET"] },
             { "grant_type", "refresh_token" },
             { "refresh_token", discordAccessToken.RefreshToken },
-            { "redirect_uri", DiscordOAuthController.REDIRECT_URI }
+            { "redirect_uri", Controllers.DiscordOAuthController.REDIRECT_URI }
         });
 
         var refreshResponse = await refreshClient.SendAsync(refreshRequest, ct);
         var refreshContent = JsonNode.Parse(await refreshResponse.Content.ReadAsStringAsync(ct));
-        //Console.WriteLine("Token refresh response: " + refreshContent?.ToJsonString());
 
         // token nebyl úspěšně obnoven, pravdepodobne uzivatel zrusil pristup, odstrani se to i z db
         if (refreshContent?["access_token"] == null || refreshContent["refresh_token"] == null) {
-            const string deleteQuery = "DELETE FROM users_access_tokens WHERE user_id = @userId AND platform = @platform";
-            await using var deleteCmd = new MySqlCommand(deleteQuery, conn);
-            deleteCmd.Parameters.AddWithValue("@userId", account.Id);
-            deleteCmd.Parameters.AddWithValue("@platform", nameof(Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD).ToUpper());
-            await deleteCmd.ExecuteNonQueryAsync(ct);
+            var token = await db.AccountAccessTokens
+                .FirstOrDefaultAsync(x => x.UserId == account.Id && x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD, ct);
+            if (token != null) {
+                db.AccountAccessTokens.Remove(token);
+                await db.SaveChangesAsync(ct);
+            }
 
             return null;
         }
 
-
         // update v db
-        const string updateQuery = """
-                                       UPDATE users_access_tokens 
-                                       SET 
-                                           access_token = @accessToken,
-                                           refresh_token = @refreshToken
-                                       WHERE user_id = @userId AND platform = @platform
-                                   """;
-
-        await using var cmd = new MySqlCommand(updateQuery, conn);
-        cmd.Parameters.AddWithValue("@userId", account.Id);
-        cmd.Parameters.AddWithValue("@platform", nameof(Account.AccountAccessToken.Platform.DISCORD).ToUpper());
-        cmd.Parameters.AddWithValue("@accessToken", refreshContent["access_token"]?.ToString());
-        cmd.Parameters.AddWithValue("@refreshToken", refreshContent["refresh_token"]?.ToString());
-        await cmd.ExecuteNonQueryAsync(ct);
+        discordAccessToken.AccessToken = refreshContent["access_token"]?.ToString();
+        discordAccessToken.RefreshToken = refreshContent["refresh_token"]?.ToString();
+        await db.SaveChangesAsync(ct);
 
         return refreshContent["access_token"]?.ToString();
 
@@ -306,8 +201,6 @@ public class AccountRepository(
         if (googleAccessToken?.RefreshToken is null) return null;
 
         using var client = new HttpClient();
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return null;
 
         // Zkusíme volat Google API, abychom zjistili, jestli access token ještě platí
         var testRequest = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v2/userinfo");
@@ -326,34 +219,22 @@ public class AccountRepository(
 
             var refreshResponse = await refreshClient.PostAsync("https://oauth2.googleapis.com/token", refreshContent, ct);
             var refreshData = JsonNode.Parse(await refreshResponse.Content.ReadAsStringAsync(ct));
-            //Console.WriteLine("Google token refresh response: " + refreshData?.ToJsonString());
 
             // token nebyl úspěšně obnoven, pravdepodobne uzivatel zrusil pristup, odstrani se to i z db
             if (refreshData?["access_token"] == null) {
-                const string deleteQuery = "DELETE FROM users_access_tokens WHERE user_id = @userId AND platform = @platform";
-                await using var deleteCmd = new MySqlCommand(deleteQuery, conn);
-                deleteCmd.Parameters.AddWithValue("@userId", account.Id);
-                deleteCmd.Parameters.AddWithValue("@platform", nameof(Account.AccountAccessToken.AccountAccessTokenPlatform.GOOGLE).ToUpper());
-                await deleteCmd.ExecuteNonQueryAsync(ct);
+                var token = await db.AccountAccessTokens
+                    .FirstOrDefaultAsync(x => x.UserId == account.Id && x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.GOOGLE, ct);
+                if (token != null) {
+                    db.AccountAccessTokens.Remove(token);
+                    await db.SaveChangesAsync(ct);
+                }
 
                 return null;
             }
 
             string newAccessToken = refreshData["access_token"]!.ToString();
-
-            // Update v DB
-            const string updateQuery = """
-                UPDATE users_access_tokens 
-                SET 
-                    access_token = @accessToken
-                WHERE user_id = @userId AND platform = @platform
-            """;
-
-            await using var cmd = new MySqlCommand(updateQuery, conn);
-            cmd.Parameters.AddWithValue("@userId", account.Id);
-            cmd.Parameters.AddWithValue("@platform", nameof(Account.AccountAccessToken.AccountAccessTokenPlatform.GOOGLE).ToUpper());
-            cmd.Parameters.AddWithValue("@accessToken", newAccessToken);
-            await cmd.ExecuteNonQueryAsync(ct);
+            googleAccessToken.AccessToken = newAccessToken;
+            await db.SaveChangesAsync(ct);
 
             return newAccessToken;
         }
@@ -361,8 +242,6 @@ public class AccountRepository(
         if (testResponse.IsSuccessStatusCode)
             return googleAccessToken.AccessToken;
 
-        // Jiná chyba při ověřování access tokenu
-        //Console.WriteLine("Unexpected status code when checking Google token: " + testResponse.StatusCode);
         return null;
     }
 }

@@ -1,12 +1,16 @@
 using dotenv.net;
 using EduchemLP.Server.Classes;
+using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.Data;
 using EduchemLP.Server.Middlewares;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;
 using EduchemLP.Server.WebSockets;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Npgsql;
 using MySqlConnector;
 using StackExchange.Redis;
 
@@ -91,6 +95,30 @@ public static class Program {
         builder.Configuration
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+        // PostgreSQL / EF Core datasource
+        builder.Services.AddSingleton(sp => {
+            var pgHost = ENV.GetValueOrNull("POSTGRES_IP") ?? ENV["DATABASE_IP"];
+            var pgPort = ENV.GetValueOrNull("POSTGRES_PORT") ?? ENV.GetValueOrNull("DATABASE_PORT") ?? "5432";
+            var pgUser = ENV.GetValueOrNull("POSTGRES_USERNAME") ?? ENV["DATABASE_USERNAME"];
+            var pgPassword = ENV.GetValueOrNull("POSTGRES_PASSWORD") ?? ENV["DATABASE_PASSWORD"];
+            var pgDb = ENV.GetValueOrNull("POSTGRES_DBNAME") ?? ENV["DATABASE_DBNAME"];
+
+            var cs = $"Host={pgHost};Port={pgPort};Username={pgUser};Password={pgPassword};Database={pgDb};Pooling=true;Maximum Pool Size=300;";
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(cs);
+
+            dataSourceBuilder.MapEnum<Account.AccountGender>("account.account_gender_enum");
+            dataSourceBuilder.MapEnum<Account.AccountType>("account.account_type_enum");
+            dataSourceBuilder.MapEnum<Account.AccountAccessToken.AccountAccessTokenPlatform>("account.account_access_token_platform_enum");
+            dataSourceBuilder.MapEnum<Account.AccountAccessToken.AccountAccessTokenType>("account.account_access_token_type_enum");
+
+            return dataSourceBuilder.Build();
+        });
+
+        builder.Services.AddDbContext<EduchemLpDbContext>((sp, options) => {
+            var npgsqlDataSource = sp.GetRequiredService<NpgsqlDataSource>();
+            options.UseNpgsql(npgsqlDataSource);
+        });
 
         // databaze source service
         builder.Services.AddSingleton(sp => {

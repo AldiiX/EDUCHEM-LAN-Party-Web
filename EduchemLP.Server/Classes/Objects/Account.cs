@@ -1,33 +1,33 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using EduchemLP.Server.Infrastructure;
-using MySqlConnector;
 
 namespace EduchemLP.Server.Classes.Objects;
 
 public partial class Account {
     public int Id { get; private set; }
-    public string DisplayName { get; private set; }
+    public string DisplayName { get; set; } = null!;
 
     [Obsolete("Use DisplayName")]
     public string Name => DisplayName;
 
-    public string Email { get; private set; }
-    public string Password { get; private set; }
-    public string? Class { get; private set; }
-    public string? Avatar { get; private set; }
-    public string? Banner { get; private set; }
-    public AccountType Type { get; private set; }
+    public string Email { get; set; } = null!;
+    public string Password { get; set; } = null!;
+    public string? Class { get; set; }
+    public string? Avatar { get; set; }
+    public string? Banner { get; set; }
+    public AccountType Type { get; set; }
     public DateTime CreatedAt { get; private set; }
-    public DateTime LastUpdated { get; private set; }
-    public DateTime? LastLoggedIn { get; private set; }
-    public AccountGender? Gender { get; private set; }
-    public List<AccountAccessToken> AccessTokens { get; private set; }
+    public DateTime LastUpdated { get; set; }
+    public DateTime? LastLoggedIn { get; set; }
+    public AccountGender? Gender { get; set; }
+    public List<AccountAccessToken> AccessTokens { get; set; } = [];
 
-    public bool EnableReservation { get; private set; }
+    public bool EnableReservation { get; set; }
 
 
+
+    private Account() {}
 
     [JsonConstructor]
     public Account(int id, string displayName, string email, string password, string? @class, AccountType type, DateTime createdAt, DateTime lastUpdated, DateTime? lastLoggedIn, AccountGender? gender, string? avatar, string? banner, List<AccountAccessToken>? accessTokens, bool enableReservation = false) {
@@ -46,25 +46,6 @@ public partial class Account {
         AccessTokens = accessTokens ?? [];
         EnableReservation = enableReservation;
     }
-
-    public Account(MySqlDataReader reader) : this(
-        reader.GetInt32("id"),
-        reader.GetString("display_name"),
-        reader.GetString("email"),
-        reader.GetString("password"),
-        reader.GetStringOrNull("class"),
-        Enum.TryParse(reader.GetString("account_type"), out Account.AccountType _ac) ? _ac : Account.AccountType.STUDENT,
-        reader.GetDateTime("created_at"),
-        reader.GetDateTime("last_updated"),
-        reader.GetValueOrNull<DateTime>("last_logged_in"),
-        Enum.TryParse<Account.AccountGender>(reader.GetStringOrNull("gender"), out var _g ) ? _g : null,
-        reader.GetStringOrNull("avatar"),
-        reader.GetStringOrNull("banner"),
-        JsonSerializer.Deserialize<List<Account.AccountAccessToken>>(reader.GetStringOrNull("access_tokens") ?? "[]", JsonSerializerOptions.Web) ?? [],
-        reader.GetBoolean("enable_reservation")
-    ) {}
-
-
 
     public override string ToString() {
         return JsonSerializer.Serialize(this, JsonSerializerOptions.Web);
@@ -129,14 +110,17 @@ public partial class Account {
             Type = type;
         }
 
-        public int UserId { get; private set; }
-        public string? AccessToken { get; private set; }
-        public string? RefreshToken { get; private set; }
+        private AccountAccessToken() {}
+
+        public int UserId { get; set; }
+        public Account? User { get; set; }
+        public string? AccessToken { get; set; }
+        public string? RefreshToken { get; set; }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public AccountAccessTokenPlatform Platform { get; private set; }
+        public AccountAccessTokenPlatform Platform { get; set; }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
-        public AccountAccessTokenType Type { get; private set; }
+        public AccountAccessTokenType Type { get; set; }
     }
 }

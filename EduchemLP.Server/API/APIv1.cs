@@ -2,10 +2,12 @@
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.Data;
 using EduchemLP.Server.Models;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
 
 namespace EduchemLP.Server.API;
@@ -15,6 +17,7 @@ namespace EduchemLP.Server.API;
 [Route("api/v1")]
 public class APIv1(
     IDatabaseService db,
+    EduchemLpDbContext orm,
     IAuthService auth,
     IDbLoggerService dbLogger,
     IAppSettingsService appSettings,
@@ -55,27 +58,16 @@ public class APIv1(
         string? avatar = data.TryGetValue("avatar", out var _avatar) ? _avatar?.ToString() : null;
         string? banner = data.TryGetValue("banner", out var _banner) ? _banner?.ToString() : null;
 
-        // poslani do db
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if(conn == null) return new StatusCodeResult(500);
+        var dbUser = await orm.Accounts.FirstOrDefaultAsync(x => x.Id == acc.Id, ct);
+        if (dbUser == null) return new StatusCodeResult(500);
 
-        var command = new MySqlCommand(
-            """
-            UPDATE users 
-            SET 
-                avatar=IF(@avatar IS NULL, NULL, avatar), -- povleno pouze smazani
-                banner=IF(@banner IS NULL, NULL, banner), -- povleno pouze smazani
-                gender=@gender
-            WHERE id=@id;
-            """, conn
-        );
+        // povoleno pouze smazání avataru/banneru
+        if (avatar == null) dbUser.Avatar = null;
+        if (banner == null) dbUser.Banner = null;
+        dbUser.Gender = gender;
+        dbUser.LastUpdated = DateTime.UtcNow;
 
-        command.Parameters.AddWithValue("@avatar", avatar);
-        command.Parameters.AddWithValue("@banner", banner);
-        command.Parameters.AddWithValue("@gender", gender.ToString()?.ToUpper());
-        command.Parameters.AddWithValue("@id", acc.Id);
-
-        if(await command.ExecuteNonQueryAsync(ct) <= 0) return new JsonResult(new { success = false, message = "Nepodařilo se změnit údaje." }) { StatusCode = 500 };
+        if (await orm.SaveChangesAsync(ct) <= 0) return new JsonResult(new { success = false, message = "Nepodařilo se změnit údaje." }) { StatusCode = 500 };
 
         // zapsani do logu
         await dbLogger.LogInfoAsync($"Uživatel {acc.DisplayName} ({acc.Email}) si změnil údaje.", "user-edit", ct);
@@ -109,20 +101,12 @@ public class APIv1(
         // encrypnuti hesla
         var encryptedNewPassword = Utilities.HashPassword(newPassword);
 
-        // zapsani do db
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return new StatusCodeResult(500);
+        var dbUser = await orm.Accounts.FirstOrDefaultAsync(x => x.Id == acc.Id, ct);
+        if (dbUser == null) return new StatusCodeResult(500);
 
-        var command = new MySqlCommand(
-            """
-            UPDATE users SET password=@password WHERE id=@id;
-            """, conn
-        );
-
-        command.Parameters.AddWithValue("@password", encryptedNewPassword);
-        command.Parameters.AddWithValue("@id", acc.Id);
-
-        if(await command.ExecuteNonQueryAsync(ct) <= 0) return new JsonResult(new { success = false, message = "Nepodařilo se změnit heslo." }) { StatusCode = 500 };
+        dbUser.Password = encryptedNewPassword;
+        dbUser.LastUpdated = DateTime.UtcNow;
+        if (await orm.SaveChangesAsync(ct) <= 0) return new JsonResult(new { success = false, message = "Nepodařilo se změnit heslo." }) { StatusCode = 500 };
 
         // zapsani do logu
         await dbLogger.LogInfoAsync($"Uživatel {acc.DisplayName} ({acc.Email}) si změnil heslo.", "password-change", ct);
@@ -158,21 +142,11 @@ public class APIv1(
 
 
 
-        // zapsani do db
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn == null) return new StatusCodeResult(500);
+        var token = await orm.AccountAccessTokens.FindAsync([platform, acc.Id], cancellationToken: ct);
+        if (token == null) return new JsonResult(new { success = false, message = "Nepodařilo se odstranit připojení." }) { StatusCode = 500 };
 
-        var command = new MySqlCommand(
-            """
-            DELETE FROM users_access_tokens WHERE platform=@platform AND user_id=@userId;
-            """, conn
-        );
-
-        command.Parameters.AddWithValue("@platform", platform.ToString().ToUpper());
-        command.Parameters.AddWithValue("@userId", acc.Id);
-
-
-        return await command.ExecuteNonQueryAsync(ct) > 0 ? new NoContentResult() : new JsonResult(new { success = false, message = "Nepodařilo se odstranit připojení." }) { StatusCode = 500 };
+        orm.AccountAccessTokens.Remove(token);
+        return await orm.SaveChangesAsync(ct) > 0 ? new NoContentResult() : new JsonResult(new { success = false, message = "Nepodařilo se odstranit připojení." }) { StatusCode = 500 };
     }
 
     [HttpPost("loggeduser"), HttpPost("me")]
@@ -333,16 +307,8 @@ public class APIv1(
 
 
 
-        // query
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if(conn == null) return new StatusCodeResult(500);
-        await using var command = new MySqlCommand(
-            """
-            DELETE FROM users WHERE id=@id;
-            """, conn
-        );
-        command.Parameters.AddWithValue("@id", id);
-        await command.ExecuteNonQueryAsync(ct);
+        orm.Accounts.Remove(targetUser);
+        await orm.SaveChangesAsync(ct);
 
         // zapsani do logu
         await dbLogger.LogInfoAsync($"Uživatel {targetUser.DisplayName} ({targetUser.Email}) byl smazán uživatelem {loggedUser.DisplayName} ({loggedUser.Email}).", "user-delete", ct);
@@ -371,23 +337,12 @@ public class APIv1(
         var newPassword = Utilities.GenerateRandomPassword();
         var encryptedPassword = Utilities.EncryptPassword(newPassword);
 
-        // db
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if(conn == null) return new StatusCodeResult(500);
+        var dbUser = await orm.Accounts.FirstOrDefaultAsync(x => x.Id == user.Id, ct);
+        if (dbUser == null) return new StatusCodeResult(500);
 
-        await using var command = new MySqlCommand(
-            """
-            UPDATE users 
-            SET 
-                password = @password,
-                last_updated = NOW()
-            WHERE id=@id;
-            """, conn
-        );
-
-        command.Parameters.AddWithValue("@password", encryptedPassword);
-        command.Parameters.AddWithValue("@id", user.Id);
-        await command.ExecuteNonQueryAsync(ct);
+        dbUser.Password = encryptedPassword;
+        dbUser.LastUpdated = DateTime.UtcNow;
+        await orm.SaveChangesAsync(ct);
 
         // odeslani emailu
         string credentialsBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Email + " " + newPassword));
@@ -442,38 +397,21 @@ public class APIv1(
 
 
 
-        // zapsani do db
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if(conn == null) return new StatusCodeResult(500);
-
-        await using var command = new MySqlCommand(
-            """
-            UPDATE `users` 
-            SET 
-                `email`=IF(@email IS NULL, email, @email),
-                `display_name`=IF(@displayName IS NULL, display_name, @displayName),
-                `class`=@class,
-                `account_type`=IF(@accountType IS NULL, account_type, @accountType),
-                `gender`=IF(@gender IS NULL, gender, @gender),
-                `enable_reservation`=IF(@enableReservation IS NULL, enable_reservation, @enableReservation),
-                `last_updated`=NOW()
-            WHERE id=@id;
-            """, conn
-        );
-
-        command.Parameters.AddWithValue("@id", id);
-        command.Parameters.AddWithValue("@email", email);
-        command.Parameters.AddWithValue("@displayName", displayName);
-        command.Parameters.AddWithValue("@class", @class);
-        command.Parameters.AddWithValue("@accountType", accountType.ToString()?.ToUpper());
-        command.Parameters.AddWithValue("@gender", gender.ToString()?.ToUpper());
-        command.Parameters.AddWithValue("@enableReservation", enableReservation);
+        var dbUser = await orm.Accounts.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (dbUser == null) return new StatusCodeResult(500);
+        dbUser.Email = email ?? dbUser.Email;
+        dbUser.DisplayName = displayName ?? dbUser.DisplayName;
+        dbUser.Class = @class;
+        dbUser.Type = accountType.Value;
+        dbUser.Gender = gender.Value;
+        dbUser.EnableReservation = enableReservation ?? dbUser.EnableReservation;
+        dbUser.LastUpdated = DateTime.UtcNow;
 
 
         // zapsani do logu
         await dbLogger.LogInfoAsync($"Uživatel {user.DisplayName} ({user.Email}) byl upraven uživatelem {loggedAccount.DisplayName} ({loggedAccount.Email}).", "user-edit", ct);
 
-        var r = await command.ExecuteNonQueryAsync(ct);
+        var r = await orm.SaveChangesAsync(ct);
         return r > 0 ? new JsonResult(new { success = true, message = "Uživatel byl upraven." }) : new JsonResult(new { success = false, message = "Uživatel nebyl upraven." }) { StatusCode = 400 };
     }
 
