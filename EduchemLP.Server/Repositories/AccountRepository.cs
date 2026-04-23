@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json.Nodes;
-using EduchemLP.Server.Classes;
-using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.Infrastructure;
+using EduchemLP.Server.Data.Entities;
 using EduchemLP.Server.Models;
 using EduchemLP.Server.Services;
 using EduchemLP.Server.Data;

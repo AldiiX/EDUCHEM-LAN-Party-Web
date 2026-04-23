@@ -1,4 +1,4 @@
-using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.Data.Entities;
 
 namespace EduchemLP.Server.Repositories;
 

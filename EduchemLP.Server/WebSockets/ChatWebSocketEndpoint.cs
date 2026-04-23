@@ -2,13 +2,12 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using EduchemLP.Server.Classes.Objects;
-using EduchemLP.Server.Infrastructure;
+using EduchemLP.Server.Data;
+using EduchemLP.Server.Data.Entities;
 using EduchemLP.Server.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace EduchemLP.Server.WebSockets;
-
-
 
 public sealed class ChatClient : WSClient {
 
@@ -28,10 +27,8 @@ public sealed class ChatClient : WSClient {
     public string? Banner { get; }
 }
 
-
-
 public sealed class ChatWebSocketEndpoint(
-    IDatabaseService db,
+    EduchemLpDbContext orm,
     IServiceScopeFactory scopeFactory,
     ILogger<ChatWebSocketEndpoint> logger,
     IWebSocketHub hub
@@ -39,12 +36,9 @@ public sealed class ChatWebSocketEndpoint(
 
     public PathString Path => "/ws/chat";
 
-    // jednoduchy guard, at heartbeat nezaregistrujeme vicekrat
     private static int heartbeatRegistered = 0;
 
-
     public async Task HandleAsync(HttpContext context, WebSocket socket, CancellationToken ct) {
-        // auth
         using var scope = scopeFactory.CreateScope();
         var auth = scope.ServiceProvider.GetRequiredService<IAuthService>();
 
@@ -56,9 +50,6 @@ public sealed class ChatWebSocketEndpoint(
 
         if (!await EnsureChatEnabled(socket, ct)) return;
 
-
-
-        // registrace klienta (vypne duplicitni spojeni se stejnym id)
         var client = new ChatClient(socket, sessionUser);
         var clients = hub.GetClients("chat").ToDictionary(c => c.Id, c => c);
         if (clients.TryGetValue(client.Id, out var existing)) {
@@ -68,20 +59,10 @@ public sealed class ChatWebSocketEndpoint(
 
         hub.AddClient("chat", client);
 
-
-
-        // posli inicialni zpravy + stav online uzivatelu
         await SendInitialChatAsync(client, ct);
         await BroadcastConnectedUsersAsync(ct);
-
-
-
-        // spustit heartbeat (vyhazuje neaktivni klienty a posila stav online uzivatelu)
         await RegisterHeartbeatAsync();
 
-
-
-        // hlavni receive loop
         var buffer = new byte[4 * 1024];
         try {
             while (!ct.IsCancellationRequested && socket.State == WebSocketState.Open) {
@@ -149,19 +130,14 @@ public sealed class ChatWebSocketEndpoint(
             }
         }
 
-        // po skonceni receivu
         finally {
-            // odhlaseni klienta
             hub.RemoveClient("chat", client.Id);
 
-            try { await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None); } catch { /* ignore */ }
+            try { await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None); } catch { }
 
-            // poslat okamzity status po odhlaseni
             await BroadcastConnectedUsersAsync(CancellationToken.None);
         }
     }
-
-    // logistika
 
     private async Task<bool> EnsureChatEnabled(WebSocket socket, CancellationToken ct) {
         using var scope = scopeFactory.CreateScope();
@@ -169,7 +145,6 @@ public sealed class ChatWebSocketEndpoint(
 
         if (await appSettings.GetChatEnabledAsync(ct)) return true;
 
-        // odpojit vsechny a vycistit
         var clients = hub.GetClients("chat").ToDictionary(c => c.Id, c => c);
         foreach (var c in clients.Values) {
             await c.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Chat je vypnutý.", CancellationToken.None);
@@ -181,109 +156,73 @@ public sealed class ChatWebSocketEndpoint(
     }
 
     private async Task SendInitialChatAsync(ChatClient client, CancellationToken ct) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn is null) return;
+        var messages = await orm.ChatMessages
+            .AsNoTracking()
+            .Include(x => x.User)
+            .Where(x => !x.Deleted)
+            .OrderByDescending(x => x.Date)
+            .Take(20)
+            .ToListAsync(ct);
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText =
-        """
-            SELECT 
-                c.*, 
-                u.display_name AS author_name, 
-                u.avatar AS author_avatar,
-                u.class AS author_class,
-                u.account_type AS author_account_type,
-                u.banner AS author_banner
-            FROM chat c
-            LEFT JOIN users u ON c.user_id = u.id
-            WHERE c.deleted = 0
-            ORDER BY `date` DESC
-            LIMIT 20
-        """;
+        var arr = new JsonArray();
 
-        await using var reader = await cmd.ExecuteReaderAsync(System.Data.CommandBehavior.Default, ct);
-        var messages = new JsonArray();
+        foreach (var message in messages) {
+            if (message.User is null) continue;
 
-        while (await reader.ReadAsync(ct)) {
-            var userId = reader.GetValueOrNull<int>("user_id");
-            var authorName = reader.GetStringOrNull("author_name");
-            if (userId is null || authorName is null) continue;
-
-            var msg = CreateMessageObject(
-                reader.GetString("uuid"),
-                reader.GetInt32("user_id"),
-                authorName,
-                reader.GetStringOrNull("author_avatar"),
-                reader.GetString("author_account_type"),
-                reader.GetStringOrNull("author_class"),
-                reader.GetString("message"),
-                reader.GetDateTime("date"),
-                reader.GetStringOrNull("author_banner"),
-                reader.GetBoolean("deleted"),
-                reader.GetStringOrNull("replying_to_uuid"),
+            arr.Add(CreateMessageObject(
+                message.Uuid,
+                message.UserId,
+                message.User.DisplayName,
+                message.User.Avatar,
+                message.User.Type.ToString(),
+                message.User.Class,
+                message.Message,
+                message.Date,
+                message.User.Banner,
+                message.Deleted,
+                message.ReplyingToUuid,
                 client
-            );
-
-            messages.Add(msg);
+            ));
         }
 
         await client.SendAsync(new JsonObject {
             ["action"] = "sendMessages",
-            ["messages"] = messages
+            ["messages"] = arr
         }.ToJsonString(JsonSerializerOptions.Web), ct);
     }
 
     private async Task<JsonObject?> SaveMessageToDbAsync(ChatClient client, string message, CancellationToken ct) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn is null) return null;
-
-        await using var cmd = conn.CreateCommand();
-
         var uuid = Guid.NewGuid().ToString();
-        cmd.CommandText =
-        """
-            INSERT INTO chat (uuid, user_id, message, date, deleted, replying_to_uuid)
-            VALUES (@uuid, @userId, @message, NOW(), 0, @replyingToUuid);
 
-            SELECT 
-                c.*, 
-                u.display_name AS author_name, 
-                u.avatar AS author_avatar,
-                u.class AS author_class,
-                u.account_type AS author_account_type,
-                u.banner AS author_banner
-            FROM chat c
-            LEFT JOIN users u ON c.user_id = u.id
-            WHERE c.uuid = @uuid
-        """;
+        var entity = new ChatMessage(uuid, (int)client.Id, message, null) {
+            Date = DateTime.UtcNow,
+            Deleted = false
+        };
 
-        cmd.Parameters.AddWithValue("@uuid", uuid);
-        cmd.Parameters.AddWithValue("@userId", client.Id);
-        cmd.Parameters.AddWithValue("@message", message);
-        cmd.Parameters.AddWithValue("@replyingToUuid", DBNull.Value);
+        orm.ChatMessages.Add(entity);
+        await orm.SaveChangesAsync(ct);
 
-        await using var reader = await cmd.ExecuteReaderAsync(ct);
-        if (!await reader.ReadAsync(ct)) return null;
+        var account = await orm.Accounts
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == entity.UserId, ct);
 
-        var userId = reader.GetValueOrNull<int>("user_id");
-        var authorName = reader.GetStringOrNull("author_name");
-        if (userId is null || authorName is null) return null;
+        if (account is null) return null;
 
         return new JsonObject {
             ["action"] = "sendMessages",
             ["messages"] = new JsonArray {
                 CreateMessageObject(
-                    uuid,
-                    userId.Value,
-                    authorName,
-                    reader.GetStringOrNull("author_avatar"),
-                    reader.GetString("author_account_type"),
-                    reader.GetStringOrNull("author_class"),
-                    message,
-                    reader.GetDateTime("date"),
-                    reader.GetStringOrNull("author_banner"),
-                    reader.GetBoolean("deleted"),
-                    reader.GetStringOrNull("replying_to_uuid"),
+                    entity.Uuid,
+                    entity.UserId,
+                    account.DisplayName,
+                    account.Avatar,
+                    account.Type.ToString(),
+                    account.Class,
+                    entity.Message,
+                    entity.Date,
+                    account.Banner,
+                    entity.Deleted,
+                    entity.ReplyingToUuid,
                     client
                 )
             }
@@ -291,30 +230,20 @@ public sealed class ChatWebSocketEndpoint(
     }
 
     private async Task DeleteMessageAsync(ChatClient client, string messageUuid, CancellationToken ct) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn is null) return;
+        var message = await orm.ChatMessages.FirstOrDefaultAsync(x => x.Uuid == messageUuid, ct);
+        if (message is null) return;
 
-        // kdyz neni teacher/admin, smi smazat jen vlastni zpravu
-        if (client.AccountType < Account.AccountType.TEACHER_ORG) {
-            await using var checkCmd = conn.CreateCommand();
-            checkCmd.CommandText = "SELECT user_id FROM chat WHERE uuid = @uuid";
-            checkCmd.Parameters.AddWithValue("@uuid", messageUuid);
-
-            var ownerObj = await checkCmd.ExecuteScalarAsync(ct);
-            if (ownerObj is not int ownerId || ownerId != client.Id) {
-                await client.SendAsync(new JsonObject {
-                    ["action"] = "error",
-                    ["message"] = "Nemáte oprávnění smazat tuto zprávu."
-                }.ToJsonString(JsonSerializerOptions.Web), ct);
-                return;
-            }
+        if (client.AccountType < Account.AccountType.TEACHER_ORG && message.UserId != client.Id) {
+            await client.SendAsync(new JsonObject {
+                ["action"] = "error",
+                ["message"] = "Nemáte oprávnění smazat tuto zprávu."
+            }.ToJsonString(JsonSerializerOptions.Web), ct);
+            return;
         }
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText = "UPDATE chat SET deleted = 1 WHERE uuid = @uuid";
-        cmd.Parameters.AddWithValue("@uuid", messageUuid);
+        message.Deleted = true;
+        var affected = await orm.SaveChangesAsync(ct);
 
-        var affected = await cmd.ExecuteNonQueryAsync(ct);
         if (affected > 0) {
             var payload = new JsonObject {
                 ["action"] = "deleteMessage",
@@ -326,69 +255,53 @@ public sealed class ChatWebSocketEndpoint(
     }
 
     private async Task SendOlderMessagesAsync(ChatClient client, string beforeUuid, CancellationToken ct) {
-        await using var conn = await db.GetOpenConnectionAsync(ct);
-        if (conn is null) return;
+        var beforeDate = await orm.ChatMessages
+            .AsNoTracking()
+            .Where(x => x.Uuid == beforeUuid)
+            .Select(x => (DateTime?)x.Date)
+            .FirstOrDefaultAsync(ct);
 
-        // ziska datum referencni zpravy
-        await using var dateCmd = conn.CreateCommand();
-        dateCmd.CommandText = "SELECT `date` FROM chat WHERE uuid = @uuid";
-        dateCmd.Parameters.AddWithValue("@uuid", beforeUuid);
-
-        var beforeDateObj = await dateCmd.ExecuteScalarAsync(ct);
-        if (beforeDateObj is not DateTime beforeDate) {
+        if (!beforeDate.HasValue) {
             return;
         }
 
-        await using var cmd = conn.CreateCommand();
-        cmd.CommandText =
-        """
-            SELECT 
-                c.*, 
-                u.display_name AS author_name, 
-                u.avatar AS author_avatar,
-                u.class AS author_class,
-                u.account_type AS author_account_type,
-                u.banner AS author_banner
-            FROM chat c
-            LEFT JOIN users u ON c.user_id = u.id
-            WHERE c.date < @beforeDate AND c.deleted = 0
-            ORDER BY c.date DESC
-            LIMIT 20
-        """;
-        cmd.Parameters.AddWithValue("@beforeDate", beforeDate);
+        var messages = await orm.ChatMessages
+            .AsNoTracking()
+            .Include(x => x.User)
+            .Where(x => !x.Deleted && x.Date < beforeDate.Value)
+            .OrderByDescending(x => x.Date)
+            .Take(20)
+            .ToListAsync(ct);
 
-        await using var reader = await cmd.ExecuteReaderAsync(ct);
-        var messages = new JsonArray();
+        var arr = new JsonArray();
 
-        while (await reader.ReadAsync(ct)) {
-            var userId = reader.GetValueOrNull<int>("user_id");
-            var authorName = reader.GetStringOrNull("author_name");
-            if (userId is null || authorName is null) continue;
+        foreach (var message in messages) {
+            if (message.User is null) continue;
 
-            messages.Add(CreateMessageObject(
-                reader.GetString("uuid"),
-                userId.Value,
-                authorName,
-                reader.GetStringOrNull("author_avatar"),
-                reader.GetString("author_account_type"),
-                reader.GetStringOrNull("author_class"),
-                reader.GetString("message"),
-                reader.GetDateTime("date"),
-                reader.GetStringOrNull("author_banner"),
-                reader.GetBoolean("deleted"),
-                reader.GetStringOrNull("replying_to_uuid"),
+            arr.Add(CreateMessageObject(
+                message.Uuid,
+                message.UserId,
+                message.User.DisplayName,
+                message.User.Avatar,
+                message.User.Type.ToString(),
+                message.User.Class,
+                message.Message,
+                message.Date,
+                message.User.Banner,
+                message.Deleted,
+                message.ReplyingToUuid,
                 client
             ));
         }
 
-        if (messages.Count == 0) {
+        if (arr.Count == 0) {
             await client.SendAsync(new JsonObject { ["action"] = "noMoreMessagesToFetch" }.ToJsonString(JsonSerializerOptions.Web), ct);
             return;
         }
 
         await client.SendAsync(new JsonObject {
             ["action"] = "sendMessages",
-            ["messages"] = messages,
+            ["messages"] = arr,
             ["isLoadMoreAction"] = true
         }.ToJsonString(JsonSerializerOptions.Web), ct);
     }
@@ -402,21 +315,11 @@ public sealed class ChatWebSocketEndpoint(
             avatar = (c as ChatClient)?.Avatar
         }).ToList();
 
-        // pridani 20 test userů pro demo
-        /*for (int i = 1; i <= 20; i++) {
-            users.Add(new {
-                id = (uint) (1000 + i),
-                name = $"Test User {i}",
-                avatar = (i % 2 == 0) ? "https://i.pravatar.cc/150?img=" + (10 + i) : null
-            });
-        }*/
-
         var json = JsonSerializer.Serialize(new {
             action = "updateConnectedUsers",
             users
         }, JsonSerializerOptions.Web);
 
-        //Program.Logger.LogInformation("Broadcasting connected users: {x}", users);
         await hub.BroadcastAsync("chat", json, ct);
     }
 
@@ -450,7 +353,6 @@ public sealed class ChatWebSocketEndpoint(
             ["replyingToUuid"] = replyingToUuid
         };
 
-        // cenzura: studentum se schovava class
         if (!(client?.AccountType <= Account.AccountType.STUDENT)) return obj;
         if (obj["author"]?["class"] is not null) obj["author"]!["class"] = null;
 
@@ -458,12 +360,12 @@ public sealed class ChatWebSocketEndpoint(
     }
 
     private static async Task SafeCloseAsync(WebSocket socket, WebSocketCloseStatus status, string reason, CancellationToken ct) {
-        try { await socket.CloseAsync(status, reason, ct); } catch { /* ignore */ }
+        try { await socket.CloseAsync(status, reason, ct); } catch { }
     }
 
     private async Task RegisterHeartbeatAsync() {
         if (Interlocked.CompareExchange(ref heartbeatRegistered, 1, 0) == 0) {
-            hub.RegisterHeartbeat("chat", async (hub2, token) => {
+            hub.RegisterHeartbeat("chat", async (_, token) => {
                 await BroadcastConnectedUsersAsync(token);
             });
         }
