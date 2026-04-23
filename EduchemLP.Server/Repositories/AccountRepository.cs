@@ -188,8 +188,12 @@ public class AccountRepository(
         }
 
         // update v db
-        discordAccessToken.AccessToken = refreshContent["access_token"]?.ToString();
-        discordAccessToken.RefreshToken = refreshContent["refresh_token"]?.ToString();
+        var trackedToken = await db.AccountAccessTokens
+            .FirstOrDefaultAsync(x => x.UserId == account.Id && x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD, ct);
+        if (trackedToken == null) return null;
+
+        trackedToken.AccessToken = refreshContent["access_token"]?.ToString();
+        trackedToken.RefreshToken = refreshContent["refresh_token"]?.ToString();
         await db.SaveChangesAsync(ct);
 
         return refreshContent["access_token"]?.ToString();
@@ -233,7 +237,11 @@ public class AccountRepository(
             }
 
             string newAccessToken = refreshData["access_token"]!.ToString();
-            googleAccessToken.AccessToken = newAccessToken;
+            var trackedToken = await db.AccountAccessTokens
+                .FirstOrDefaultAsync(x => x.UserId == account.Id && x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.GOOGLE, ct);
+            if (trackedToken == null) return null;
+
+            trackedToken.AccessToken = newAccessToken;
             await db.SaveChangesAsync(ct);
 
             return newAccessToken;

@@ -62,8 +62,8 @@ public class APIv1(
         if (dbUser == null) return new StatusCodeResult(500);
 
         // povoleno pouze smazání avataru/banneru
-        if (avatar == null) dbUser.Avatar = null;
-        if (banner == null) dbUser.Banner = null;
+        if (data.ContainsKey("avatar") && avatar == null) dbUser.Avatar = null;
+        if (data.ContainsKey("banner") && banner == null) dbUser.Banner = null;
         dbUser.Gender = gender;
         dbUser.LastUpdated = DateTime.UtcNow;
 
