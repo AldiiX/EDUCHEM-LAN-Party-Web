@@ -1,4 +1,4 @@
-using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.Data.Entities;
 using EduchemLP.Server.Data;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;

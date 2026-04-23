@@ -1,6 +1,6 @@
 using System.Text.Json;
-using EduchemLP.Server.Classes;
-using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.Infrastructure;
+using EduchemLP.Server.Data.Entities;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Data;
 using Microsoft.EntityFrameworkCore;

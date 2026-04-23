@@ -1,6 +1,6 @@
 using dotenv.net;
-using EduchemLP.Server.Classes;
-using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.Infrastructure;
+using EduchemLP.Server.Data.Entities;
 using EduchemLP.Server.Data;
 using EduchemLP.Server.Middlewares;
 using EduchemLP.Server.Repositories;
@@ -129,8 +129,6 @@ public static class Program {
 
         // repozitare a service
         builder.Services.AddScoped<IAccountRepository, AccountRepository>();
-        builder.Services.AddScoped<IRoomRepository, RoomRepository>();
-        builder.Services.AddScoped<IComputerRepository, ComputerRepository>();
         builder.Services.AddSingleton<IDatabaseService, DatabaseService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IAppSettingsService, AppSettingsService>();

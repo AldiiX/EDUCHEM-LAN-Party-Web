@@ -1,4 +1,4 @@
-using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.WebSockets;
 
 namespace EduchemLP.Server.Services;
 

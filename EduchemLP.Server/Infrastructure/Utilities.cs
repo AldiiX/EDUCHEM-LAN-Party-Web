@@ -4,11 +4,7 @@ using System.Text.Json.Nodes;
 using BCrypt.Net;
 using EduchemLP.Server.Services;
 
-namespace EduchemLP.Server.Classes;
-
-
-
-
+namespace EduchemLP.Server.Infrastructure;
 
 public static class Utilities {
 
@@ -20,11 +16,9 @@ public static class Utilities {
 
             HttpContextService.Current.Items["tempcookie_" + key] = value;
             HttpContextService.Current.Response.Cookies.Append(key, value ?? "null", new CookieOptions() {
-                //HttpOnly = true,
                 IsEssential = true,
                 MaxAge = TimeSpan.FromDays(365),
                 Domain = Program.DEVELOPMENT_MODE ? "" : ".adminsphere.me",
-                //Secure = !Program.DEVELOPMENT_MODE,
             });
         }
 
@@ -34,18 +28,14 @@ public static class Utilities {
 
         public static void Delete(in string key) {
             HttpContextService.Current.Response.Cookies.Append(key, "", new CookieOptions() {
-                //HttpOnly = true,
                 IsEssential = true,
                 Expires = DateTime.UtcNow.AddDays(-1),
                 Domain = Program.DEVELOPMENT_MODE ? "" : ".adminsphere.me",
-                //Secure = !Program.DEVELOPMENT_MODE,
             });
         }
 
         public static void Remove(in string key) => Delete(key);
     }
-
-
 
     public static void SetObject<T>(this ISession session, in string key, in T value) {
         session.SetString(key, JsonSerializer.Serialize(value));
@@ -87,7 +77,6 @@ public static class Utilities {
     public static bool VerifyPassword(in string password, in string hashedPassword) {
         if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(hashedPassword)) return false;
         try {
-            // nejdriv enhanced, pak klasicky
             return BCrypt.Net.BCrypt.EnhancedVerify(password, hashedPassword, enhancedType)
                    || BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         } catch (BCrypt.Net.SaltParseException) {
@@ -98,15 +87,10 @@ public static class Utilities {
 
     public static bool IsPasswordValid(in string password) {
         if (string.IsNullOrEmpty(password)) return false;
-
         if (password.Length < 8) return false;
-
         if (!password.Any(char.IsUpper)) return false;
-
         if (!password.Any(char.IsLower)) return false;
-
         if (!password.Any(char.IsDigit)) return false;
-
         if (!password.Any(c => "ěščřžýáíéůú!@#$%^&*()_+-=[]{}|;':\",.<>?/".Contains(c))) return false;
 
         return true;

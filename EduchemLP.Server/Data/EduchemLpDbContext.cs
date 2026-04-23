@@ -1,4 +1,4 @@
-using EduchemLP.Server.Classes.Objects;
+using EduchemLP.Server.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace EduchemLP.Server.Data;
@@ -8,6 +8,10 @@ public class EduchemLpDbContext(DbContextOptions<EduchemLpDbContext> options) : 
     public DbSet<Account.AccountAccessToken> AccountAccessTokens => Set<Account.AccountAccessToken>();
     public DbSet<Room> Rooms => Set<Room>();
     public DbSet<Computer> Computers => Set<Computer>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<Reservation> Reservations => Set<Reservation>();
+    public DbSet<AppSetting> AppSettings => Set<AppSetting>();
+    public DbSet<Log> Logs => Set<Log>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Account>(entity => {
@@ -71,6 +75,64 @@ public class EduchemLpDbContext(DbContextOptions<EduchemLpDbContext> options) : 
                 .WithMany(x => x.Computers)
                 .HasForeignKey(x => x.RoomId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ChatMessage>(entity => {
+            entity.ToTable("chat");
+            entity.HasKey(x => x.Uuid);
+            entity.Property(x => x.Uuid).HasColumnName("uuid").HasMaxLength(36);
+            entity.Property(x => x.UserId).HasColumnName("user_id");
+            entity.Property(x => x.Message).HasColumnName("message").IsRequired();
+            entity.Property(x => x.Date).HasColumnName("date");
+            entity.Property(x => x.Deleted).HasColumnName("deleted");
+            entity.Property(x => x.ReplyingToUuid).HasColumnName("replying_to_uuid");
+
+            entity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Reservation>(entity => {
+            entity.ToTable("reservations");
+            entity.HasKey(x => x.UserId);
+            entity.Property(x => x.UserId).HasColumnName("user_id");
+            entity.Property(x => x.RoomId).HasColumnName("room_id").HasMaxLength(12);
+            entity.Property(x => x.ComputerId).HasColumnName("computer_id").HasMaxLength(12);
+            entity.Property(x => x.Note).HasColumnName("note");
+            entity.Property(x => x.CreatedAt).HasColumnName("created_at");
+
+            entity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Room)
+                .WithMany()
+                .HasForeignKey(x => x.RoomId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(x => x.Computer)
+                .WithMany()
+                .HasForeignKey(x => x.ComputerId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<AppSetting>(entity => {
+            entity.ToTable("settings");
+            entity.HasKey(x => x.Property);
+            entity.Property(x => x.Property).HasColumnName("property");
+            entity.Property(x => x.Value).HasColumnName("value");
+        });
+
+        modelBuilder.Entity<Log>(entity => {
+            entity.ToTable("logs");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Id).HasColumnName("id");
+            entity.Property(x => x.Type).HasColumnName("type");
+            entity.Property(x => x.ExactType).HasColumnName("exact_type");
+            entity.Property(x => x.Message).HasColumnName("message");
+            entity.Property(x => x.Date).HasColumnName("date");
         });
     }
 }
