@@ -17,7 +17,7 @@ namespace EduchemLP.Server.API;
 [Route("api/v1")]
 public class APIv1(
     IDatabaseService db,
-    EduchemLpDbContext orm,
+    AppDbContext orm,
     IAuthService auth,
     IDbLoggerService dbLogger,
     IAppSettingsService appSettings,

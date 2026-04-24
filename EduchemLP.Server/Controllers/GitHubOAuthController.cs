@@ -9,7 +9,7 @@ namespace EduchemLP.Server.Controllers;
 [Route("/_be/github/oauth")]
 public class GitHubOAuthController(
     IAuthService auth,
-    EduchemLpDbContext db,
+    AppDbContext dbContext,
     IAccountRepository accounts
 ) : Controller {
     #if DEBUG
@@ -48,13 +48,13 @@ public class GitHubOAuthController(
         }
 
         // zapsani do db
-        var token = await db.AccountAccessTokens.FindAsync(
+        var token = await dbContext.AccountAccessTokens.FindAsync(
             [Account.AccountAccessToken.AccountAccessTokenPlatform.GITHUB, account.Id],
             cancellationToken: ct
         );
 
         if (token == null) {
-            db.AccountAccessTokens.Add(new Account.AccountAccessToken(
+            dbContext.AccountAccessTokens.Add(new Account.AccountAccessToken(
                 userId: account.Id,
                 platform: Account.AccountAccessToken.AccountAccessTokenPlatform.GITHUB,
                 accessToken: accessToken,
@@ -67,7 +67,7 @@ public class GitHubOAuthController(
             token.Type = Account.AccountAccessToken.AccountAccessTokenType.BEARER;
         }
 
-        await db.SaveChangesAsync(ct);
+        await dbContext.SaveChangesAsync(ct);
 
         // znovu reauth
         account = await auth.ReAuthAsync(ct);

@@ -115,7 +115,7 @@ public static class Program {
             return dataSourceBuilder.Build();
         });
 
-        builder.Services.AddDbContext<EduchemLpDbContext>((sp, options) => {
+        builder.Services.AddDbContext<AppDbContext>((sp, options) => {
             var npgsqlDataSource = sp.GetRequiredService<NpgsqlDataSource>();
             options.UseNpgsql(npgsqlDataSource);
         });

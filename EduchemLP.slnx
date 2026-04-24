@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="educhemlp.client/educhemlp.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="EduchemLP.Server/EduchemLP.Server.csproj" />
+</Solution>

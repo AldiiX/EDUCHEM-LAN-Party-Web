@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EduchemLP.Server.Services;
 
-public class AuthService(EduchemLpDbContext db, IHttpContextAccessor http, IAccountRepository accounts) : IAuthService {
+public class AuthService(AppDbContext dbContext, IHttpContextAccessor http, IAccountRepository accounts) : IAuthService {
 
     public async Task<Account?> LoginAsync(string identifier, string plainPassword, CancellationToken ct = default) {
         var acc = await GetAccountByIdentifierAsync(identifier, ct);
@@ -50,7 +50,7 @@ public class AuthService(EduchemLpDbContext db, IHttpContextAccessor http, IAcco
 
     private async Task<Account?> GetAccountByIdentifierAsync(string identifier, CancellationToken ct) {
         if (identifier.Contains('@')) {
-            return await db.Accounts
+            return await dbContext.Accounts
                 .AsNoTracking()
                 .Include(x => x.AccessTokens)
                 .FirstOrDefaultAsync(x => x.Email == identifier, ct);
@@ -60,7 +60,7 @@ public class AuthService(EduchemLpDbContext db, IHttpContextAccessor http, IAcco
             return null;
         }
 
-        return await db.Accounts
+        return await dbContext.Accounts
             .AsNoTracking()
             .Include(x => x.AccessTokens)
             .FirstOrDefaultAsync(x => x.Id == id, ct);
@@ -80,11 +80,11 @@ public class AuthService(EduchemLpDbContext db, IHttpContextAccessor http, IAcco
     }
 
     public async Task<bool> UpdateLastLoggedInAsync(Account account, CancellationToken ct = default) {
-        var dbAccount = await db.Accounts.FirstOrDefaultAsync(x => x.Id == account.Id, ct);
+        var dbAccount = await dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == account.Id, ct);
         if (dbAccount == null) return false;
 
         dbAccount.LastLoggedIn = DateTime.UtcNow;
         dbAccount.LastUpdated = DateTime.UtcNow;
-        return await db.SaveChangesAsync(ct) > 0;
+        return await dbContext.SaveChangesAsync(ct) > 0;
     }
 }

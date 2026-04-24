@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using EduchemLP.Server.Infrastructure;
 
 namespace EduchemLP.Server.Data.Entities;
 

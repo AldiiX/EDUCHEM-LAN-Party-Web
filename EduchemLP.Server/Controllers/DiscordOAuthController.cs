@@ -9,7 +9,7 @@ namespace EduchemLP.Server.Controllers;
 
 
 [Route("/_be/discord/oauth")]
-public class DiscordOAuthController(IAuthService auth, EduchemLpDbContext db, IAccountRepository accounts) : Controller {
+public class DiscordOAuthController(IAuthService auth, AppDbContext dbContext, IAccountRepository accounts) : Controller {
 
     #if DEBUG
         public const string REDIRECT_URI = "http://localhost:3154/_be/discord/oauth";
@@ -50,13 +50,13 @@ public class DiscordOAuthController(IAuthService auth, EduchemLpDbContext db, IA
 
 
         // zapsani do db
-        var token = await db.AccountAccessTokens.FindAsync(
+        var token = await dbContext.AccountAccessTokens.FindAsync(
             [Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD, account.Id],
             cancellationToken: ct
         );
 
         if (token == null) {
-            db.AccountAccessTokens.Add(new Account.AccountAccessToken(
+            dbContext.AccountAccessTokens.Add(new Account.AccountAccessToken(
                 userId: account.Id,
                 platform: Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD,
                 accessToken: body?["access_token"]?.ToString(),
@@ -69,7 +69,7 @@ public class DiscordOAuthController(IAuthService auth, EduchemLpDbContext db, IA
             token.Type = Account.AccountAccessToken.AccountAccessTokenType.BEARER;
         }
 
-        await db.SaveChangesAsync(ct);
+        await dbContext.SaveChangesAsync(ct);
 
         // znovu reauth
         account = await auth.ReAuthAsync(ct);

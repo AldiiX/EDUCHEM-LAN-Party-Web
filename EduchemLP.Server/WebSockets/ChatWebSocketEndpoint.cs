@@ -28,7 +28,7 @@ public sealed class ChatClient : WSClient {
 }
 
 public sealed class ChatWebSocketEndpoint(
-    EduchemLpDbContext orm,
+    AppDbContext orm,
     IServiceScopeFactory scopeFactory,
     ILogger<ChatWebSocketEndpoint> logger,
     IWebSocketHub hub

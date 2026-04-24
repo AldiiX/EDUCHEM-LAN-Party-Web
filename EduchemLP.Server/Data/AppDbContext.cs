@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EduchemLP.Server.Data;
 
-public class EduchemLpDbContext(DbContextOptions<EduchemLpDbContext> options) : DbContext(options) {
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options) {
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Account.AccountAccessToken> AccountAccessTokens => Set<Account.AccountAccessToken>();
     public DbSet<Room> Rooms => Set<Room>();

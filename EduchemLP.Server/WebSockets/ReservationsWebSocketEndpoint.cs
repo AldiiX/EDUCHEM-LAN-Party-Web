@@ -14,6 +14,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using EduchemLP.Server.Data;
 using EduchemLP.Server.Data.Entities;
+using EduchemLP.Server.Infrastructure;
 using EduchemLP.Server.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -72,7 +73,7 @@ internal sealed record ReservationSnapshot(
 );
 
 public sealed class ReservationsWebSocketEndpoint(
-    EduchemLpDbContext orm,
+    AppDbContext orm,
     IServiceScopeFactory scopeFactory,
     ILogger<ReservationsWebSocketEndpoint> logger,
     IDbLoggerService dbLogger,

@@ -11,7 +11,7 @@ namespace EduchemLP.Server.Controllers;
 [Route("/_be/instagram/oauth")]
 public class InstagramOAuthController(
     IAuthService auth,
-    EduchemLpDbContext db,
+    AppDbContext dbContext,
     IAccountRepository accounts
 ) : Controller {
 
@@ -52,13 +52,13 @@ public class InstagramOAuthController(
 
 
         // zapsani do db
-        var token = await db.AccountAccessTokens.FindAsync(
+        var token = await dbContext.AccountAccessTokens.FindAsync(
             [Account.AccountAccessToken.AccountAccessTokenPlatform.INSTAGRAM, account.Id],
             cancellationToken: ct
         );
 
         if (token == null) {
-            db.AccountAccessTokens.Add(new Account.AccountAccessToken(
+            dbContext.AccountAccessTokens.Add(new Account.AccountAccessToken(
                 userId: account.Id,
                 platform: Account.AccountAccessToken.AccountAccessTokenPlatform.INSTAGRAM,
                 accessToken: accessToken,
@@ -71,7 +71,7 @@ public class InstagramOAuthController(
             token.Type = Account.AccountAccessToken.AccountAccessTokenType.BEARER;
         }
 
-        await db.SaveChangesAsync(ct);
+        await dbContext.SaveChangesAsync(ct);
 
         // znovu reauth
         account = await auth.ReAuthAsync(ct);

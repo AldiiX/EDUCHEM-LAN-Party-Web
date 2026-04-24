@@ -10,7 +10,7 @@ namespace EduchemLP.Server.Controllers;
 [Route("/_be/google/oauth")]
 public class GoogleOAuthController(
     IAuthService auth,
-    EduchemLpDbContext db,
+    AppDbContext dbContext,
     IAccountRepository accounts
 ) : Controller {
 
@@ -49,13 +49,13 @@ public class GoogleOAuthController(
 
 
         // zapsani do db
-        var token = await db.AccountAccessTokens.FindAsync(
+        var token = await dbContext.AccountAccessTokens.FindAsync(
             [Account.AccountAccessToken.AccountAccessTokenPlatform.GOOGLE, account.Id],
             cancellationToken: ct
         );
 
         if (token == null) {
-            db.AccountAccessTokens.Add(new Account.AccountAccessToken(
+            dbContext.AccountAccessTokens.Add(new Account.AccountAccessToken(
                 userId: account.Id,
                 platform: Account.AccountAccessToken.AccountAccessTokenPlatform.GOOGLE,
                 accessToken: accessToken,
@@ -68,7 +68,7 @@ public class GoogleOAuthController(
             token.Type = Account.AccountAccessToken.AccountAccessTokenType.BEARER;
         }
 
-        await db.SaveChangesAsync(ct);
+        await dbContext.SaveChangesAsync(ct);
 
         // znovu reauth
         account = await auth.ReAuthAsync(ct);

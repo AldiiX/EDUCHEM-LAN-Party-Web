@@ -10,19 +10,19 @@ using Microsoft.EntityFrameworkCore;
 namespace EduchemLP.Server.Repositories;
 
 public class AccountRepository(
-    EduchemLpDbContext db,
+    AppDbContext dbContext,
     IHttpContextAccessor http
 ) : IAccountRepository {
 
     public async Task<Account?> GetByIdAsync(int id, CancellationToken ct = default) {
-        return await db.Accounts
+        return await dbContext.Accounts
             .AsNoTracking()
             .Include(account => account.AccessTokens)
             .FirstOrDefaultAsync(account => account.Id == id, ct);
     }
 
     public async Task<List<Account>> GetAllAsync(CancellationToken ct = default) {
-        return await db.Accounts
+        return await dbContext.Accounts
             .AsNoTracking()
             .Include(account => account.AccessTokens)
             .OrderBy(account => account.DisplayName)
@@ -30,16 +30,16 @@ public class AccountRepository(
     }
 
     public async Task UpdateLastLoggedInAsync(Account account, CancellationToken ct = default) {
-        var dbAccount = await db.Accounts.FirstOrDefaultAsync(x => x.Id == account.Id, ct);
+        var dbAccount = await dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == account.Id, ct);
         if (dbAccount == null) return;
 
         dbAccount.LastLoggedIn = DateTime.UtcNow;
         dbAccount.LastUpdated = DateTime.UtcNow;
-        await db.SaveChangesAsync(ct);
+        await dbContext.SaveChangesAsync(ct);
     }
 
     public async Task UpdateAvatarByConnectedPlatformAsync(Account account, CancellationToken ct = default) {
-        var dbAccount = await db.Accounts
+        var dbAccount = await dbContext.Accounts
             .Include(x => x.AccessTokens)
             .FirstOrDefaultAsync(x => x.Id == account.Id, ct);
         if (dbAccount == null) return;
@@ -104,7 +104,7 @@ public class AccountRepository(
 
         dbAccount.Avatar = newAvatarLink ?? dbAccount.Avatar;
         dbAccount.LastUpdated = DateTime.UtcNow;
-        await db.SaveChangesAsync(ct);
+        await dbContext.SaveChangesAsync(ct);
 
         // aktualizace avataru v session
         var sessionAcc = JsonNode.Parse(http.HttpContext!.Session.GetString("loggedaccount") ?? "");
@@ -133,8 +133,8 @@ public class AccountRepository(
             enableReservation: enableReservation
         );
 
-        db.Accounts.Add(user);
-        await db.SaveChangesAsync(ct);
+        dbContext.Accounts.Add(user);
+        await dbContext.SaveChangesAsync(ct);
 
         // odeslání emailu
         if (sendToEmail) {
@@ -177,24 +177,24 @@ public class AccountRepository(
 
         // token nebyl úspěšně obnoven, pravdepodobne uzivatel zrusil pristup, odstrani se to i z db
         if (refreshContent?["access_token"] == null || refreshContent["refresh_token"] == null) {
-            var token = await db.AccountAccessTokens
+            var token = await dbContext.AccountAccessTokens
                 .FirstOrDefaultAsync(x => x.UserId == account.Id && x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD, ct);
             if (token != null) {
-                db.AccountAccessTokens.Remove(token);
-                await db.SaveChangesAsync(ct);
+                dbContext.AccountAccessTokens.Remove(token);
+                await dbContext.SaveChangesAsync(ct);
             }
 
             return null;
         }
 
         // update v db
-        var trackedToken = await db.AccountAccessTokens
+        var trackedToken = await dbContext.AccountAccessTokens
             .FirstOrDefaultAsync(x => x.UserId == account.Id && x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.DISCORD, ct);
         if (trackedToken == null) return null;
 
         trackedToken.AccessToken = refreshContent["access_token"]?.ToString();
         trackedToken.RefreshToken = refreshContent["refresh_token"]?.ToString();
-        await db.SaveChangesAsync(ct);
+        await dbContext.SaveChangesAsync(ct);
 
         return refreshContent["access_token"]?.ToString();
 
@@ -226,23 +226,23 @@ public class AccountRepository(
 
             // token nebyl úspěšně obnoven, pravdepodobne uzivatel zrusil pristup, odstrani se to i z db
             if (refreshData?["access_token"] == null) {
-                var token = await db.AccountAccessTokens
+                var token = await dbContext.AccountAccessTokens
                     .FirstOrDefaultAsync(x => x.UserId == account.Id && x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.GOOGLE, ct);
                 if (token != null) {
-                    db.AccountAccessTokens.Remove(token);
-                    await db.SaveChangesAsync(ct);
+                    dbContext.AccountAccessTokens.Remove(token);
+                    await dbContext.SaveChangesAsync(ct);
                 }
 
                 return null;
             }
 
             string newAccessToken = refreshData["access_token"]!.ToString();
-            var trackedToken = await db.AccountAccessTokens
+            var trackedToken = await dbContext.AccountAccessTokens
                 .FirstOrDefaultAsync(x => x.UserId == account.Id && x.Platform == Account.AccountAccessToken.AccountAccessTokenPlatform.GOOGLE, ct);
             if (trackedToken == null) return null;
 
             trackedToken.AccessToken = newAccessToken;
-            await db.SaveChangesAsync(ct);
+            await dbContext.SaveChangesAsync(ct);
 
             return newAccessToken;
         }
