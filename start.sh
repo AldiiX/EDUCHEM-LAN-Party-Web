@@ -1,6 +1,10 @@
 #!/bin/sh
 
 # pouziti env souboru
+log() {
+  echo "[init] $*"
+}
+
 if [ -f "/app/.env" ]; then
   log "/app/.env already exists, skipping generation"
 elif b64="$(read_b64)"; then
