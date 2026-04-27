@@ -32,6 +32,14 @@ COPY . .
 # switch to server project
 WORKDIR "/src/EduchemLP.Server"
 
+# vytvoreni .env z BACKEND_ENV_B64 secretu (pokud existuje a .env neexistuje), nebo prazdneho .env pokud zadna data nejsou k dispozici
+RUN --mount=type=secret,id=BACKEND_ENV_B64 \
+    sh -c 'set -eu; \
+      if [ -f .env ] && [ -s .env ]; then echo ".env uz existuje, preskakuju envb64"; \
+      elif [ -f /run/secrets/BACKEND_ENV_B64 ] && [ -s /run/secrets/BACKEND_ENV_B64 ]; then echo "vytvarim .env z BACKEND_ENV_B64"; \
+        base64 -d /run/secrets/BACKEND_ENV_B64 > .env; chmod 600 .env; \
+      else echo "neni .env a neni secret, vytvarim prazdny .env"; : > .env; chmod 600 .env; fi'
+
 # create empty .env if not present
 RUN if [ ! -f ".env" ]; then touch .env; fi
 
@@ -51,15 +59,6 @@ COPY --from=publish /app/publish .
 # keep npm scripts disabled here as well (for explicit frontend install below)
 ENV npm_config_ignore_scripts=true
 ENV NPM_CONFIG_IGNORE_SCRIPTS=true
-
-# pokud je predany build secret BACKEND_ENV_B64, vytvori se /app/.env uz pri buildu
-RUN --mount=type=secret,id=BACKEND_ENV_B64,required=false \
-    if [ ! -f /app/.env ] && [ -f /run/secrets/BACKEND_ENV_B64 ]; then \
-      umask 077; \
-      base64 -d /run/secrets/BACKEND_ENV_B64 > /app/.env; \
-      chmod 600 /app/.env; \
-    fi
-
 
 # switch to root to install packages
 USER root
