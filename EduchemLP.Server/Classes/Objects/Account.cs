@@ -23,6 +23,7 @@ public partial class Account {
     public DateTime LastUpdated { get; private set; }
     public DateTime? LastLoggedIn { get; private set; }
     public AccountGender? Gender { get; private set; }
+    public AccountSchool School { get; private set; }
     public List<AccountAccessToken> AccessTokens { get; private set; }
 
     public bool EnableReservation { get; private set; }
@@ -30,7 +31,7 @@ public partial class Account {
 
 
     [JsonConstructor]
-    public Account(int id, string displayName, string email, string password, string? @class, AccountType type, DateTime createdAt, DateTime lastUpdated, DateTime? lastLoggedIn, AccountGender? gender, string? avatar, string? banner, List<AccountAccessToken>? accessTokens, bool enableReservation = false) {
+    public Account(int id, string displayName, string email, string password, string? @class, AccountType type, DateTime createdAt, DateTime lastUpdated, DateTime? lastLoggedIn, AccountGender? gender, AccountSchool school = AccountSchool.EDUCHEM, string? avatar = null, string? banner = null, List<AccountAccessToken>? accessTokens = null, bool enableReservation = false) {
         Id = id;
         DisplayName = displayName;
         Class = @class;
@@ -43,6 +44,7 @@ public partial class Account {
         Avatar = avatar;
         Banner = banner;
         Gender = gender;
+        School = school;
         AccessTokens = accessTokens ?? [];
         EnableReservation = enableReservation;
     }
@@ -58,6 +60,7 @@ public partial class Account {
         reader.GetDateTime("last_updated"),
         reader.GetValueOrNull<DateTime>("last_logged_in"),
         Enum.TryParse<Account.AccountGender>(reader.GetStringOrNull("gender"), out var _g ) ? _g : null,
+        Enum.TryParse<Account.AccountSchool>(reader.GetStringOrNull("school"), out var _s) ? _s : Account.AccountSchool.EDUCHEM,
         reader.GetStringOrNull("avatar"),
         reader.GetStringOrNull("banner"),
         JsonSerializer.Deserialize<List<Account.AccountAccessToken>>(reader.GetStringOrNull("access_tokens") ?? "[]", JsonSerializerOptions.Web) ?? [],
@@ -103,6 +106,12 @@ public partial class Account {
         TEACHER_ORG,
         ADMIN,
         SUPERADMIN,
+    }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public enum AccountSchool {
+        EDUCHEM,
+        SSSMEP,
     }
 
     public sealed class AccountAccessToken {

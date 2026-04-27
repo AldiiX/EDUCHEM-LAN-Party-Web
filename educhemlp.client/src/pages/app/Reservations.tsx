@@ -70,6 +70,7 @@ interface Reservation {
         id: number,
         displayName: string,
         class: string,
+        school?: "EDUCHEM" | "SSSMEP" | null,
         avatar: string | null,
         banner: string | null,
     } | "unknown", // kdyz uzivatel neni prihlasen, dropne to "unknown"
@@ -259,7 +260,10 @@ const SelectedReservation = memo(() => {
                                 <p title={reservation?.user?.displayName}>
                                     {reservation?.user?.displayName}{" "}
                                 </p>
-                                <span>{reservation?.user?.class}</span>
+                                <span>
+                                    {reservation?.user?.class}
+                                    {reservation?.user?.school ? ` • ${reservation.user.school === "SSSMEP" ? "SSŠMEP" : "Educhem"}` : ""}
+                                </span>
                             </div>
                             {/* poznamka: pokud budes chtit cas, odkomentuj a dopln createdAt
                         <p className="date">
@@ -283,7 +287,10 @@ const SelectedReservation = memo(() => {
                 />
                 <p title={user?.displayName}>{user?.displayName}</p>
             </div>
-            <p className="class">{user?.class}</p>
+            <p className="class">
+                {user?.class}
+                {user?.school ? ` • ${user.school === "SSSMEP" ? "SSŠMEP" : "Educhem"}` : ""}
+            </p>
         </div>
     );
 
@@ -997,7 +1004,13 @@ export const Reservations = () => {
                                                         <div className={"banner profilebannercustomization"} style={{ '--banner': `url(${reservation.user?.banner})`  } as CSSProperties}></div>
 
                                                         <div className="texts">
-                                                            <p className={"name"}>{reservation.user?.displayName} <span>{reservation.user?.class}</span></p>
+                                                            <p className={"name"}>
+                                                                {reservation.user?.displayName}{" "}
+                                                                <span>
+                                                                    {reservation.user?.class}
+                                                                    {reservation.user?.school ? ` • ${reservation.user.school === "SSSMEP" ? "SSŠMEP" : "Educhem"}` : ""}
+                                                                </span>
+                                                            </p>
                                                             <p className={"id"}>{reservation.computer?.id ?? reservation.room?.label}</p>
                                                             <p className={"date"}>{new Date(reservation.createdAt).toLocaleString("cs-CZ" )}</p>
                                                         </div>

@@ -296,6 +296,7 @@ public class APIv1(
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
         string? accountType = body.TryGetValue("type", out var _accountType) ? _accountType?.ToString() : null;
         string? gender = body.TryGetValue("gender", out var _gender) ? _gender?.ToString() : null;
+        string? school = body.TryGetValue("school", out var _school) ? _school?.ToString() : null;
         bool sendToEmail = body.TryGetValue("sendToEmail", out var _sendToEmail) && bool.TryParse(_sendToEmail?.ToString(), out var _sendToEmail2) && _sendToEmail2;
         bool enableReservation = body.TryGetValue("enableReservation", out var _enableReservation) && bool.TryParse(_enableReservation?.ToString(), out var _enableReservation2) && _enableReservation2;
 
@@ -305,7 +306,8 @@ public class APIv1(
         if(loggedUser.Type < accountTypeParsed && loggedUser.Type != Account.AccountType.SUPERADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nemůžeš vytvořit uživatele s vyššími právy." });
 
         var genderParsed = Enum.TryParse(gender, out Account.AccountGender _g) ? _g : Account.AccountGender.OTHER;
-        var account = await accounts.CreateAsync(email, displayName, @class, genderParsed, accountTypeParsed, sendToEmail, enableReservation, ct);
+        var schoolParsed = Enum.TryParse(school, out Account.AccountSchool _s) ? _s : Account.AccountSchool.EDUCHEM;
+        var account = await accounts.CreateAsync(email, displayName, @class, genderParsed, schoolParsed, accountTypeParsed, sendToEmail, enableReservation, ct);
         if(account == null) return new JsonResult(new { success = false, message = "Chyba při vytváření uživatele." }) { StatusCode = 500};
 
         // zapassani do logu
@@ -425,6 +427,7 @@ public class APIv1(
         string? @class = body.TryGetValue("class", out var _class) ? _class?.ToString() : null;
         Account.AccountType? accountType = body.TryGetValue("type", out var _accountType) ? Enum.TryParse(_accountType?.ToString(), out Account.AccountType _ac) ? _ac : null : null;
         Account.AccountGender? gender = body.TryGetValue("gender", out var _gender) ? Enum.TryParse(_gender?.ToString(), out Account.AccountGender _g) ? _g : null : null;
+        Account.AccountSchool? school = body.TryGetValue("school", out var _school) ? Enum.TryParse(_school?.ToString(), out Account.AccountSchool _s) ? _s : null : null;
         bool? enableReservation = body.TryGetValue("enableReservation", out var _enableReservation) ? bool.TryParse(_enableReservation?.ToString(), out var _er) ? _er : null : null;
         email = email == "" ? null : email?.Trim();
         displayName = displayName == "" ? null : displayName?.Trim();
@@ -455,6 +458,7 @@ public class APIv1(
                 `class`=@class,
                 `account_type`=IF(@accountType IS NULL, account_type, @accountType),
                 `gender`=IF(@gender IS NULL, gender, @gender),
+                `school`=IF(@school IS NULL, school, @school),
                 `enable_reservation`=IF(@enableReservation IS NULL, enable_reservation, @enableReservation),
                 `last_updated`=NOW()
             WHERE id=@id;
@@ -467,6 +471,7 @@ public class APIv1(
         command.Parameters.AddWithValue("@class", @class);
         command.Parameters.AddWithValue("@accountType", accountType.ToString()?.ToUpper());
         command.Parameters.AddWithValue("@gender", gender.ToString()?.ToUpper());
+        command.Parameters.AddWithValue("@school", school?.ToString()?.ToUpper());
         command.Parameters.AddWithValue("@enableReservation", enableReservation);
 
 
