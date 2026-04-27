@@ -52,6 +52,15 @@ COPY --from=publish /app/publish .
 ENV npm_config_ignore_scripts=true
 ENV NPM_CONFIG_IGNORE_SCRIPTS=true
 
+# pokud je predany build secret BACKEND_ENV_B64, vytvori se /app/.env uz pri buildu
+RUN --mount=type=secret,id=BACKEND_ENV_B64,required=false \
+    if [ ! -f /app/.env ] && [ -f /run/secrets/BACKEND_ENV_B64 ]; then \
+      umask 077; \
+      base64 -d /run/secrets/BACKEND_ENV_B64 > /app/.env; \
+      chmod 600 /app/.env; \
+    fi
+
+
 # switch to root to install packages
 USER root
 RUN apt-get update && apt-get install -y curl nginx

@@ -1,19 +1,36 @@
 name: Deploy to Emsio Servers
 
 on:
-  #push:
-  #  branches: [ main ]
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy to Emsio
-        uses: AldiiX/emsio-deploy@v3
+      - uses: actions/checkout@v4
+
+      - name: Log in to Emsio Docker Registry
+        uses: docker/login-action@v3
         with:
-          deploy_token: ${{ secrets.DEPLOY_TOKEN }}
-          project_uuid: ${{ secrets.PROJECT_UUID }}
-          # branch is optional; defaults to the current branch
-          branch: main
+          registry: registry.emsio.cz
+          username: robot$${{ secrets.REGISTRY_USER }}+ci
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and Push Docker Image to Emsio Registry
+        uses: docker/build-push-action@v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
+        with:
+          context: .
+          push: true
+          secrets: |
+            BACKEND_ENV_B64=${{ secrets.BACKEND_ENV_B64 }}
+          tags: |
+            registry.emsio.cz/${{ secrets.REGISTRY_USER }}/${{ secrets.PROJECT_UUID }}:latest
+
+      - name: Deploy to Emsio
+        uses: AldiiX/emsio-deploy@v4
+        with:
+          app_secret: ${{ secrets.APP_SECRET }}
