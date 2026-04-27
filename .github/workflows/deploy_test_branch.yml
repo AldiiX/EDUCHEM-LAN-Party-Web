@@ -1,8 +1,6 @@
 name: Deploy to Emsio Servers (Test Branch)
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
