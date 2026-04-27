@@ -8,6 +8,7 @@ export type LoggedUser = {
     email: string,
     type: AccountType,
     gender: "MALE" | "FEMALE" | "OTHER" | null,
+    school: AccountSchool,
     avatar: string | null,
     connections: string[] | null,
     banner: string | null,
@@ -44,6 +45,11 @@ export enum AccountType {
 
 export enum AccountGender {
     MALE, FEMALE, OTHER
+}
+
+export enum AccountSchool {
+    EDUCHEM = "EDUCHEM",
+    SSSMEP = "SSSMEP",
 }
 
 /*

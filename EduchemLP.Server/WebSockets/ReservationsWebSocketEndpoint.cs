@@ -25,6 +25,7 @@ public sealed class ReservationsClient : WSClient {
     public string DisplayName { get; }
     public Account.AccountType? AccountType { get; }
     public string? Class { get; }
+    public Account.AccountSchool? School { get; }
     public string? Avatar { get; }
     public string? Banner { get; }
     public bool IsGuest { get; }
@@ -42,6 +43,7 @@ public sealed class ReservationsClient : WSClient {
             DisplayName = account.DisplayName;
             AccountType = account.Type;
             Class = account.Class;
+            School = account.School;
             Avatar = account.Avatar;
             Banner = account.Banner;
             IsGuest = false;
@@ -54,6 +56,7 @@ internal sealed record ReservationRow(
     int? UserId,
     string? UserDisplayName,
     string? UserClass,
+    Account.AccountSchool? UserSchool,
     string? UserAvatar,
     string? UserBanner,
     string? RoomId,
@@ -396,6 +399,7 @@ public sealed class ReservationsWebSocketEndpoint(
                 usr.id AS user_id,
                 usr.display_name AS user_display_name,
                 usr.class AS user_class,
+                usr.school AS user_school,
                 usr.avatar AS user_avatar,
                 usr.banner AS user_banner,
                 COALESCE(room.id, NULL) AS room_id, 
@@ -424,6 +428,7 @@ public sealed class ReservationsWebSocketEndpoint(
                 UserId: reader.GetValueOrNull<int>("user_id"),
                 UserDisplayName: reader.GetStringOrNull("user_display_name"),
                 UserClass: reader.GetStringOrNull("user_class"),
+                UserSchool: Enum.TryParse<Account.AccountSchool>(reader.GetStringOrNull("user_school"), out var userSchool) ? userSchool : null,
                 UserAvatar: reader.GetStringOrNull("user_avatar"),
                 UserBanner: reader.GetStringOrNull("user_banner"),
                 RoomId: reader.GetStringOrNull("room_id"),
@@ -515,6 +520,7 @@ public sealed class ReservationsWebSocketEndpoint(
 
                 if (client.AccountType is > Account.AccountType.STUDENT) {
                     userObj["class"] = row.UserClass;
+                    userObj["school"] = row.UserSchool?.ToString();
                 }
 
                 userNode = userObj;
@@ -618,7 +624,8 @@ public sealed class ReservationsWebSocketEndpoint(
             connectedUsers.Add(new JsonObject {
                 ["id"] = c.Id,
                 ["displayName"] = c.DisplayName,
-                ["class"] = c.AccountType > Account.AccountType.STUDENT ? c.Class : null
+                ["class"] = c.AccountType > Account.AccountType.STUDENT ? c.Class : null,
+                ["school"] = c.AccountType > Account.AccountType.STUDENT ? c.School?.ToString() : null
             });
         }
 

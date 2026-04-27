@@ -8,7 +8,7 @@ import {Modal} from "../../components/modals/Modal.tsx";
 import {TextWithIcon} from "../../components/TextWithIcon.tsx";
 import {toast} from "react-toastify";
 import Switch from "../../components/Switch.tsx";
-import {AccountGender, AccountType, AppSettings, BasicAPIResponse, Log, LoggedUser} from "../../interfaces.ts";
+import {AccountGender, AccountSchool, AccountType, AppSettings, BasicAPIResponse, Log, LoggedUser} from "../../interfaces.ts";
 import {
     authUser,
     compareEnumValues,
@@ -36,6 +36,7 @@ interface User {
     class: string,
     type: AccountType,
     gender: AccountGender | null,
+    school: AccountSchool,
     createdAt: string,
     lastUpdated: string,
     lastLoggedIn: string,
@@ -149,6 +150,17 @@ function translateAccountType(type: AccountType | null | undefined, gender: Acco
     }
 }
 
+function translateSchool(school: AccountSchool | string | null | undefined) {
+    switch (school?.toString()) {
+        case "SSSMEP":
+            return "SSŠMEP";
+        case "EDUCHEM":
+            return "Educhem";
+        default:
+            return "Neznámá";
+    }
+}
+
 // endregion
 
 
@@ -165,6 +177,7 @@ const UsersTab = () => {
     const [selectedAccountTypes, setSelectedAccountTypes] = useState<Set<string>>(new Set());
     const [selectedGenders, setSelectedGenders] = useState<Set<string>>(new Set());
     const [selectedClasses, setSelectedClasses] = useState<Set<string>>(new Set());
+    const [selectedSchools, setSelectedSchools] = useState<Set<string>>(new Set());
     const [enabledReservationFilter, setEnabledReservationFilter] = useState<string>("all");
 
     const closeModal = useAdminStore((state) => state.closeModal);
@@ -201,6 +214,7 @@ const UsersTab = () => {
     const uniqueAccountTypes = Array.from(new Set(users?.map((user) => user.type?.toString()).filter((t): t is string => !!t) || [])).sort();
     const uniqueGenders = Array.from(new Set(users?.map((user) => user.gender?.toString()).filter((g): g is string => !!g) || [])).sort();
     const uniqueClasses = Array.from(new Set(users?.map((user) => user.class).filter((c): c is string => !!c) || [])).sort();
+    const uniqueSchools = Array.from(new Set(users?.map((user) => user.school?.toString()).filter((s): s is string => !!s) || [])).sort();
 
     // Toggle filters
     const toggleAccountType = (type: string) => {
@@ -239,6 +253,18 @@ const UsersTab = () => {
         });
     };
 
+    const toggleSchool = (school: string) => {
+        setSelectedSchools((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(school)) {
+                newSet.delete(school);
+            } else {
+                newSet.add(school);
+            }
+            return newSet;
+        });
+    };
+
     const filteredAndSortedUsers = users
         ?.filter((user) =>
             user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -257,6 +283,11 @@ const UsersTab = () => {
             
             // Filter by class
             if (selectedClasses.size > 0 && !selectedClasses.has(user.class ?? "")) {
+                return false;
+            }
+
+            // Filter by school
+            if (selectedSchools.size > 0 && !selectedSchools.has(user.school?.toString() ?? "")) {
                 return false;
             }
 
@@ -310,6 +341,7 @@ const UsersTab = () => {
         const email = (userModal.querySelector("input[name='email']") as HTMLInputElement).value;
         let cls: string | null = (userModal.querySelector("input[name='class']") as HTMLInputElement).value;
         const gender = (userModal.querySelector("select[name='gender']") as HTMLSelectElement).value;
+        const school = (userModal.querySelector("select[name='school']") as HTMLSelectElement).value;
         const accountType = (userModal.querySelector("select[name='accountType']") as HTMLSelectElement).value;
         const enableReservation = (userModal.querySelector("input[name='enableReservation']") as HTMLInputElement)?.checked ?? false;
 
@@ -338,6 +370,7 @@ const UsersTab = () => {
                 class: cls,
                 type: accountType,
                 gender: gender,
+                school: school,
                 enableReservation: enableReservation,
             })
         }).then(async res => {
@@ -365,6 +398,7 @@ const UsersTab = () => {
         const email = (userModal.querySelector("input[name='email']") as HTMLInputElement).value;
         let cls: string | null = (userModal.querySelector("input[name='class']") as HTMLInputElement).value;
         const gender = (userModal.querySelector("select[name='gender']") as HTMLSelectElement).value;
+        const school = (userModal.querySelector("select[name='school']") as HTMLSelectElement).value;
         const accountType = (userModal.querySelector("select[name='accountType']") as HTMLSelectElement).value;
         const sendToEmail = (userModal.querySelector("input[name='sendToEmail']") as HTMLInputElement).checked;
         const enableReservation = (userModal.querySelector("input[name='enableReservation']") as HTMLInputElement)?.checked ?? false;
@@ -394,6 +428,7 @@ const UsersTab = () => {
                 class: cls,
                 type: accountType,
                 gender: gender,
+                school: school,
                 sendToEmail: sendToEmail,
                 enableReservation: enableReservation,
             })
@@ -669,6 +704,20 @@ const UsersTab = () => {
                                         )
                                     }
                                 </div>
+
+                                <div className="child" title="Škola">
+                                    <div className="icon" style={{maskImage: `url(/images/icons/organization.svg)`}}></div>
+                                    {
+                                        !userModalEditMode ? (
+                                            <p>{translateSchool(selectedUser?.school)}</p>
+                                        ) : (
+                                            <select name="school" defaultValue={selectedUser?.school ?? "EDUCHEM"}>
+                                                <option value="EDUCHEM">Educhem</option>
+                                                <option value="SSSMEP">SSŠMEP</option>
+                                            </select>
+                                        )
+                                    }
+                                </div>
                             </div>
 
                             {
@@ -847,6 +896,22 @@ const UsersTab = () => {
                             </div>
 
                             <div className="filter-section">
+                                <p className="filter-label">Škola:</p>
+                                <div className="filter-checkboxes">
+                                    {uniqueSchools.map((school) => (
+                                        <label key={school} className="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedSchools.has(school)}
+                                                onChange={() => toggleSchool(school)}
+                                            />
+                                            <span>{translateSchool(school)}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="filter-section">
                                 <p className="filter-label">Rezervace:</p>
                                 <div className="filter-checkboxes">
                                     <label className="checkbox-label">
@@ -888,6 +953,7 @@ const UsersTab = () => {
                             <th onClick={() => handleSort("name")}>Jméno a příjmení</th>
                             <th onClick={() => handleSort("email")}>Email</th>
                             <th onClick={() => handleSort("gender")}>Pohlaví</th>
+                            <th onClick={() => handleSort("school")}>Škola</th>
                             <th onClick={() => handleSort("class")}>Třída</th>
                             <th onClick={() => handleSort("type")}>Typ účtu</th>
                             <th onClick={() => handleSort("createdAt")}>Vytvořen</th>
@@ -919,6 +985,7 @@ const UsersTab = () => {
                                 </td>
                                 <td>{user.email}</td>
                                 <td>{translateGender(user.gender?.toString())}</td>
+                                <td>{translateSchool(user.school)}</td>
                                 <td>{user.class}</td>
                                 <td>{translateAccountType(user.type, user.gender)}</td>
                                 <td>{new Date(user.createdAt).toLocaleString()}</td>
