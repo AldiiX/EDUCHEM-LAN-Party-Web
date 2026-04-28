@@ -13,7 +13,7 @@ import {create} from "zustand";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
 import {AccountGender, AppSettings, LoggedUser} from "../../interfaces.ts";
-import {formatTime, getAppSettings} from "../../utils.ts";
+import {formatTime, formatUtcDateTime, getAppSettings, parseUtcDate} from "../../utils.ts";
 import {ITHub} from "../../components/reservation_areas/ITHub.tsx";
 import {areas, RoomMap} from "./Map.tsx";
 
@@ -267,7 +267,7 @@ const SelectedReservation = memo(() => {
                             </div>
                             {/* poznamka: pokud budes chtit cas, odkomentuj a dopln createdAt
                         <p className="date">
-                            {new Date(reservation.createdAt).toLocaleString("cs-CZ")}
+                            {formatUtcDateTime(reservation.createdAt)}
                         </p>
                         */}
                         </div>
@@ -465,16 +465,29 @@ const CountdownDisplay = memo(({ appSettings, setAppSettings }: { appSettings: A
     const [countdownText2, setCountdownText2] = useState<string | null>(null);
 
     useEffect(() => {
+        const setReservationsEnabledRightNow = (enabled: boolean) => {
+            if (appSettings.reservationsEnabledRightNow === enabled) return;
+
+            setAppSettings({
+                ...appSettings,
+                reservationsEnabledRightNow: enabled,
+            });
+        };
+
         if (appSettings.reservationsStatus !== "USE_TIMER") {
             setCountdownText(null);
             setCountdownText2(null);
+            setReservationsEnabledRightNow(appSettings.reservationsStatus === "OPEN");
             return;
         }
 
         const updateCountdown = () => {
             const now = Date.now();
-            const from = new Date(appSettings.reservationsEnabledFrom).getTime();
-            const to = new Date(appSettings.reservationsEnabledTo).getTime();
+            const from = parseUtcDate(appSettings.reservationsEnabledFrom).getTime();
+            const to = parseUtcDate(appSettings.reservationsEnabledTo).getTime();
+            const enabledRightNow = now >= from && now <= to;
+
+            setReservationsEnabledRightNow(enabledRightNow);
 
             if (now < from) {
                 const diff = from - now;
@@ -490,9 +503,9 @@ const CountdownDisplay = memo(({ appSettings, setAppSettings }: { appSettings: A
             }
 
             // v pripade ze se odpocet odpocita, tak se znovu nacte appsettings
-            const dateDiff = Math.min(Math.abs(now - from), Math.abs(now - to));
+            const nextBoundary = now < from ? from : now < to ? to : null;
 
-            if(dateDiff < 1000) getAppSettings(setAppSettings);
+            if(nextBoundary !== null && Math.abs(now - nextBoundary) < 1500) getAppSettings(setAppSettings);
         }
 
         updateCountdown();
@@ -992,7 +1005,7 @@ export const Reservations = () => {
                                             </>
                                         ) :
                                             reservations?.sort((a,b) => {
-                                                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                                                return parseUtcDate(b.createdAt).getTime() - parseUtcDate(a.createdAt).getTime();
                                             }).map((reservation, index) => {
                                                 reservation = reservation as any;
                                                 if(reservation.user === "unknown") return null;
@@ -1012,7 +1025,7 @@ export const Reservations = () => {
                                                                 </span>
                                                             </p>
                                                             <p className={"id"}>{reservation.computer?.id ?? reservation.room?.label}</p>
-                                                            <p className={"date"}>{new Date(reservation.createdAt).toLocaleString("cs-CZ" )}</p>
+                                                            <p className={"date"}>{formatUtcDateTime(reservation.createdAt)}</p>
                                                         </div>
                                                     </div>
                                                 );

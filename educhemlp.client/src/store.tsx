@@ -50,8 +50,8 @@ export const useStore = create<Store | any>((set: any) => ({
 
     appSettings: {
         reservationsStatus: "CLOSED",
-        reservationsEnabledFrom: "9999-12-31T23:59:59.9999999",
-        reservationsEnabledTo: "9999-12-31T23:59:59.9999999",
+        reservationsEnabledFrom: "9999-12-31T23:59:59.9999999Z",
+        reservationsEnabledTo: "9999-12-31T23:59:59.9999999Z",
         reservationsEnabledRightNow: false,
     },
     setAppSettings: (settings: AppSettings) => set((state: Store) => {

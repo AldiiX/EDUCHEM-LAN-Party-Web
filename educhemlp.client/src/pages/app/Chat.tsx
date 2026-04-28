@@ -4,7 +4,7 @@ import {useStore} from "../../store.tsx";
 import React, {useEffect, useRef, useState} from "react";
 import "./Chat.scss";
 import {Avatar} from "../../components/Avatar.tsx";
-import {enumIsGreater, enumIsGreaterOrEquals} from "../../utils.ts";
+import {enumIsGreater, enumIsGreaterOrEquals, formatUtcDate, formatUtcTime, parseUtcDate} from "../../utils.ts";
 import {AccountType} from "../../interfaces.ts";
 import {toast} from "react-toastify";
 import {create} from "zustand/index";
@@ -137,11 +137,12 @@ export const Chat = () => {
     const [forceCloseMenuPopover, setForceCloseMenuPopover] = useState<boolean>(false);
     const scrollToBottomButtonRef = useRef<HTMLDivElement | null>(null);
     const isIntentionalCloseRef = useRef<boolean>(false);
+    const reconnectTimerRef = useRef<number | null>(null);
 
 
     // datumy v cestine textem
     const formatDateToCzech = (dateString: string) => {
-        const date = new Date(dateString);
+        const date = parseUtcDate(dateString);
         const months = ["led", "úno", "bře", "dub", "kvě", "čvn", "čvc", "srp", "zář", "říj", "lis", "pro"];
 
         const day = date.getDate();
@@ -205,7 +206,14 @@ export const Chat = () => {
     }
 
     function connectToWebSocket() {
+        if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) return;
+
         isIntentionalCloseRef.current = false;
+        if (reconnectTimerRef.current !== null) {
+            window.clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
+
         const ws = new WebSocket(
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/chat`
         );
@@ -214,6 +222,7 @@ export const Chat = () => {
 
         ws.onopen = () => {
             setSocketState(ChatSocketState.CONNECTED);
+            reconnectTimerRef.current = null;
         }
 
         ws.onmessage = (e) => { // kdyz prijdou novy zpravy ze socketu
@@ -235,7 +244,7 @@ export const Chat = () => {
 
                 setMessages((prevMessages) => {
                     const merged = [...prevMessages, ...newMessages]; // nejdriv se novy zpravy mergnou s tema staryma
-                    const sorted = merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // pak se sortnou podle datumu (aby to nebylo random rozhazeny)
+                    const sorted = merged.sort((a, b) => parseUtcDate(a.date).getTime() - parseUtcDate(b.date).getTime()); // pak se sortnou podle datumu (aby to nebylo random rozhazeny)
                     const unique = sorted.filter((msg, i, self) => i === self.findIndex(m => m.uuid === msg.uuid)); // pak se z toho odstrani duplicitni zpravy podle uuid (je mozne ze se to muze stat)
 
                     messagesRef.current = unique;
@@ -320,9 +329,17 @@ export const Chat = () => {
             }
         };
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
             setSocketState(ChatSocketState.DISCONNECTED);
             setConnectedUsers([]);
+            wsRef.current = null;
+
+            if (!isIntentionalCloseRef.current && event.code !== 1000 && event.code !== 1008) {
+                reconnectTimerRef.current = window.setTimeout(() => {
+                    setSocketState(ChatSocketState.LOADING);
+                    connectToWebSocket();
+                }, 2000);
+            }
         };
     }
 
@@ -347,6 +364,10 @@ export const Chat = () => {
 
         return () => {
             isIntentionalCloseRef.current = true;
+            if (reconnectTimerRef.current !== null) {
+                window.clearTimeout(reconnectTimerRef.current);
+                reconnectTimerRef.current = null;
+            }
             wsRef.current?.close();
 
             const scrollContainer = document.querySelector("body #app .right");
@@ -450,13 +471,8 @@ export const Chat = () => {
                                 messages.map((message, index) => {
                                     const isOwn = message.author.id === loggedUser.id;
 
-                                    const dateObj = new Date(message.date);
-                                    const dateOnly = dateObj.toLocaleDateString("cs-CZ");
-                                    const time = dateObj.toLocaleTimeString("cs-CZ", {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: false
-                                    });
+                                    const dateOnly = formatUtcDate(message.date);
+                                    const time = formatUtcTime(message.date);
 
                                     const showDateSeparator = dateOnly !== lastRenderedDate;
                                     if (showDateSeparator) lastRenderedDate = dateOnly;

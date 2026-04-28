@@ -47,6 +47,39 @@ export const generateRandomNumberFromTo = (from: number, to: number) => {
     return Math.floor(Math.random() * (to - from + 1) + from);
 }
 
+export function parseUtcDate(value: string | Date): Date {
+    if (value instanceof Date) return value;
+    const hasTimeZone = /(?:z|[+-]\d{2}:?\d{2})$/i.test(value);
+    return new Date(hasTimeZone ? value : `${value}Z`);
+}
+
+export function formatUtcDateTimeLocal(value: string): string {
+    const date = parseUtcDate(value);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export function localDateTimeInputToUtcIso(value: string | null | undefined): string | null {
+    if (!value) return null;
+    return new Date(value).toISOString();
+}
+
+export function formatUtcDateTime(value: string | Date, locale = "cs-CZ"): string {
+    return parseUtcDate(value).toLocaleString(locale);
+}
+
+export function formatUtcDate(value: string | Date, locale = "cs-CZ"): string {
+    return parseUtcDate(value).toLocaleDateString(locale);
+}
+
+export function formatUtcTime(value: string | Date, locale = "cs-CZ"): string {
+    return parseUtcDate(value).toLocaleTimeString(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    });
+}
+
 export const setWebTheme = (theme: "light" | "dark") => {
     document.documentElement.classList.remove('theme-dark', 'theme-light');
     document.documentElement.classList.add(`theme-${theme}`);

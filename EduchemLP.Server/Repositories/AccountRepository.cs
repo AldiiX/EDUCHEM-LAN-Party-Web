@@ -102,7 +102,7 @@ public class AccountRepository(
 
         const string updateQuery = "UPDATE users SET last_logged_in = @now WHERE id = @id";
         await using var cmd = new MySqlCommand(updateQuery, conn);
-        cmd.Parameters.AddWithValue("@now", DateTime.Now);
+        cmd.Parameters.AddWithValue("@now", DateTime.UtcNow);
         cmd.Parameters.AddWithValue("@id", account.Id);
         await cmd.ExecuteNonQueryAsync(ct);
     }
