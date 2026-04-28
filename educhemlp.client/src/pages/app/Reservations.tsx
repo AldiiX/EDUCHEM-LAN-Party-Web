@@ -465,9 +465,19 @@ const CountdownDisplay = memo(({ appSettings, setAppSettings }: { appSettings: A
     const [countdownText2, setCountdownText2] = useState<string | null>(null);
 
     useEffect(() => {
+        const setReservationsEnabledRightNow = (enabled: boolean) => {
+            if (appSettings.reservationsEnabledRightNow === enabled) return;
+
+            setAppSettings({
+                ...appSettings,
+                reservationsEnabledRightNow: enabled,
+            });
+        };
+
         if (appSettings.reservationsStatus !== "USE_TIMER") {
             setCountdownText(null);
             setCountdownText2(null);
+            setReservationsEnabledRightNow(appSettings.reservationsStatus === "OPEN");
             return;
         }
 
@@ -475,6 +485,9 @@ const CountdownDisplay = memo(({ appSettings, setAppSettings }: { appSettings: A
             const now = Date.now();
             const from = parseUtcDate(appSettings.reservationsEnabledFrom).getTime();
             const to = parseUtcDate(appSettings.reservationsEnabledTo).getTime();
+            const enabledRightNow = now >= from && now <= to;
+
+            setReservationsEnabledRightNow(enabledRightNow);
 
             if (now < from) {
                 const diff = from - now;
@@ -490,9 +503,9 @@ const CountdownDisplay = memo(({ appSettings, setAppSettings }: { appSettings: A
             }
 
             // v pripade ze se odpocet odpocita, tak se znovu nacte appsettings
-            const dateDiff = Math.min(Math.abs(now - from), Math.abs(now - to));
+            const nextBoundary = now < from ? from : now < to ? to : null;
 
-            if(dateDiff < 1000) getAppSettings(setAppSettings);
+            if(nextBoundary !== null && Math.abs(now - nextBoundary) < 1500) getAppSettings(setAppSettings);
         }
 
         updateCountdown();
