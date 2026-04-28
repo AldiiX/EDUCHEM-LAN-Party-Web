@@ -197,13 +197,14 @@ const AppInner = () => {
             setSyncSocket(null);
         }
 
-        setSyncSocket(new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/sync`));
+        const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/sync`);
+        setSyncSocket(ws);
 
-        if(syncSocket) syncSocket.onopen = () => {
+        ws.onopen = () => {
             //console.log('WebSocket connected');
         }
 
-        if(syncSocket) syncSocket.onmessage = (event) => {
+        ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             const action = data.action;
 
@@ -215,7 +216,7 @@ const AppInner = () => {
         }
 
         return () => {
-            syncSocket?.close();
+            ws.close();
         }
     }, [location])
 

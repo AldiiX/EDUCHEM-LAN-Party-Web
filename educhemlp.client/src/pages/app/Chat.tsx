@@ -137,6 +137,7 @@ export const Chat = () => {
     const [forceCloseMenuPopover, setForceCloseMenuPopover] = useState<boolean>(false);
     const scrollToBottomButtonRef = useRef<HTMLDivElement | null>(null);
     const isIntentionalCloseRef = useRef<boolean>(false);
+    const reconnectTimerRef = useRef<number | null>(null);
 
 
     // datumy v cestine textem
@@ -205,7 +206,14 @@ export const Chat = () => {
     }
 
     function connectToWebSocket() {
+        if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) return;
+
         isIntentionalCloseRef.current = false;
+        if (reconnectTimerRef.current !== null) {
+            window.clearTimeout(reconnectTimerRef.current);
+            reconnectTimerRef.current = null;
+        }
+
         const ws = new WebSocket(
             `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/chat`
         );
@@ -214,6 +222,7 @@ export const Chat = () => {
 
         ws.onopen = () => {
             setSocketState(ChatSocketState.CONNECTED);
+            reconnectTimerRef.current = null;
         }
 
         ws.onmessage = (e) => { // kdyz prijdou novy zpravy ze socketu
@@ -320,9 +329,17 @@ export const Chat = () => {
             }
         };
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
             setSocketState(ChatSocketState.DISCONNECTED);
             setConnectedUsers([]);
+            wsRef.current = null;
+
+            if (!isIntentionalCloseRef.current && event.code !== 1000 && event.code !== 1008) {
+                reconnectTimerRef.current = window.setTimeout(() => {
+                    setSocketState(ChatSocketState.LOADING);
+                    connectToWebSocket();
+                }, 2000);
+            }
         };
     }
 
@@ -347,6 +364,10 @@ export const Chat = () => {
 
         return () => {
             isIntentionalCloseRef.current = true;
+            if (reconnectTimerRef.current !== null) {
+                window.clearTimeout(reconnectTimerRef.current);
+                reconnectTimerRef.current = null;
+            }
             wsRef.current?.close();
 
             const scrollContainer = document.querySelector("body #app .right");

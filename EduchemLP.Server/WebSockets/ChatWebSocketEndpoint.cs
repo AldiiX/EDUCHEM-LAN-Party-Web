@@ -154,7 +154,7 @@ public sealed class ChatWebSocketEndpoint(
             // odhlaseni klienta
             hub.RemoveClient("chat", client.Id);
 
-            try { await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None); } catch { /* ignore */ }
+            try { await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None); } catch { /* ignore */ }
 
             // poslat okamzity status po odhlaseni
             await BroadcastConnectedUsersAsync(CancellationToken.None);

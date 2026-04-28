@@ -15,14 +15,23 @@ public sealed class WebSocketHub : IWebSocketHub {
 
     public void AddClient(string channel, WSClient client) {
         var dict = channels.GetOrAdd(channel, _ => new ConcurrentDictionary<uint, WSClient>());
+        if (dict.TryGetValue(client.Id, out var existing) && !ReferenceEquals(existing, client)) {
+            _ = Task.Run(async () => {
+                try {
+                    await existing.CloseAsync(WebSocketCloseStatus.PolicyViolation, "New connection opened.", CancellationToken.None);
+                }
+                catch {
+                    existing.Abort();
+                }
+            });
+        }
+
         dict[client.Id] = client;
     }
 
     public void RemoveClient(string channel, uint clientId) {
         if (!channels.TryGetValue(channel, out var dict)) return;
 
-        var client = dict.GetValueOrDefault(clientId);
-        client?.Abort();
         dict.TryRemove(clientId, out _);
     }
 
@@ -56,6 +65,7 @@ public sealed class WebSocketHub : IWebSocketHub {
         }
 
         foreach (var c in clientsToRemove) {
+            if (c.State == WebSocketState.Open) c.Abort();
             RemoveClient(channel, c.Id);
         }
     }
@@ -71,6 +81,7 @@ public sealed class WebSocketHub : IWebSocketHub {
         try {
             await c.SendAsync(payload, ct);
         } catch {
+            if (c.State == WebSocketState.Open) c.Abort();
             RemoveClient(channel, clientId);
         }
     }
