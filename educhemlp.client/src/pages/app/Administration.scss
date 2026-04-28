@@ -305,6 +305,22 @@
                 width: calc(100%/2 - 8px);
             }
         }
+
+        .cache-reset {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+
+            >p {
+                color: var(--text-color-secondary);
+                font-weight: 600;
+            }
+
+            >button {
+                width: 100%;
+            }
+        }
     }
 }
 

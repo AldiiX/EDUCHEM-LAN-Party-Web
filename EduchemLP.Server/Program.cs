@@ -112,7 +112,8 @@ public static class Program {
         builder.Services.AddSingleton<IWebSocketHub, WebSocketHub>();
         builder.Services.AddHostedService<WebSocketHeartbeatService>();
         builder.Services.AddSingleton<IWebSocketEndpoint, ChatWebSocketEndpoint>();
-        builder.Services.AddSingleton<IWebSocketEndpoint, ReservationsWebSocketEndpoint>();
+        builder.Services.AddSingleton<ReservationsWebSocketEndpoint>();
+        builder.Services.AddSingleton<IWebSocketEndpoint>(sp => sp.GetRequiredService<ReservationsWebSocketEndpoint>());
         builder.Services.AddSingleton<IWebSocketEndpoint, SyncWebSocketEndpoint>();
 
         #if DEBUG
