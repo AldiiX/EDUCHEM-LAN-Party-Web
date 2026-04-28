@@ -356,6 +356,10 @@ public sealed class ReservationsWebSocketEndpoint(
     }
 
     // vynuti nove nacteni snapshotu z db a pak broadcast vsem
+    public Task ResetSnapshotAsync(CancellationToken ct = default) {
+        return ReloadAndBroadcastFullReservationInfoAsync(ct);
+    }
+
     private async Task ReloadAndBroadcastFullReservationInfoAsync(CancellationToken ct) {
         ReservationSnapshot snapshot;
 

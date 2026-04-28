@@ -1219,6 +1219,7 @@ const AppSettingsTab = () => {
     const appSettings: AppSettings | null = useStore((state) => state.appSettings);
     const setAppSettings = useStore((state) => state.setAppSettings);
     const [reservationsStatus, setReservationsStatus] = useState(appSettings?.reservationsStatus ?? "CLOSED");
+    const [reservationCacheResetting, setReservationCacheResetting] = useState(false);
 
 
 
@@ -1298,6 +1299,30 @@ const AppSettingsTab = () => {
         setReservationsStatus(appSettings?.reservationsStatus ?? "CLOSED");
     }
 
+    function resetReservationsCache() {
+        if (reservationCacheResetting) return;
+
+        setReservationCacheResetting(true);
+        fetch("/api/v1/adm/reservations/snapshot/reset", {
+            method: "POST",
+        }).then(async res => {
+            const data: BasicAPIResponse | null = res.headers.get("content-type")?.includes("application/json")
+                ? await res.json()
+                : null;
+
+            if (!res.ok || data?.success === false) {
+                toast.error(data?.message ?? "Chyba při resetu cache rezervací.");
+                return;
+            }
+
+            toast.success(data?.message ?? "Cache rezervací úspěšně resetována.");
+        }).catch(() => {
+            toast.error("Chyba při resetu cache rezervací.");
+        }).finally(() => {
+            setReservationCacheResetting(false);
+        });
+    }
+
     function toDatetimeLocal(utcString: string) {
         const date = new Date(utcString);
         const pad = (n: number) => n.toString().padStart(2, '0');
@@ -1357,6 +1382,17 @@ const AppSettingsTab = () => {
                 <div className="buttons">
                     <Button type={ButtonType.SECONDARY} text="Zrušit změny" onClick={() => resetEditAppSettingsForm() } />
                     <Button type={ButtonType.PRIMARY} text="Uložit změny" form="editappsettings" buttonType="submit" />
+                </div>
+
+                <div className="cache-reset">
+                    <p>Cache rezervací</p>
+                    <Button
+                        type={ButtonType.SECONDARY}
+                        text="Resetovat cache"
+                        onClick={resetReservationsCache}
+                        loading={reservationCacheResetting}
+                        disabled={reservationCacheResetting}
+                    />
                 </div>
             </div>
 

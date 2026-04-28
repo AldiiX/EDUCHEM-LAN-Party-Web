@@ -5,6 +5,7 @@ using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Models;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;
+using EduchemLP.Server.WebSockets;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
 
@@ -19,7 +20,8 @@ public class APIv1(
     IDbLoggerService dbLogger,
     IAppSettingsService appSettings,
     IAccountRepository accounts,
-    IWebSocketHub webSocketHub
+    IWebSocketHub webSocketHub,
+    ReservationsWebSocketEndpoint reservationsWebSocketEndpoint
 ) : Controller {
 
 
@@ -263,6 +265,17 @@ public class APIv1(
 
         Task.WaitAll(t1, t2, t3, t4);
         return new NoContentResult();
+    }
+
+    [HttpPost("adm/reservations/snapshot/reset")]
+    public async Task<IActionResult> ResetReservationsSnapshot(CancellationToken ct = default) {
+        var acc = await auth.ReAuthFromContextOrNullAsync(ct);
+        if(acc == null || acc.Type < Account.AccountType.ADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nelze resetovat cache rezervací, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
+
+        await reservationsWebSocketEndpoint.ResetSnapshotAsync(ct);
+        await dbLogger.LogInfoAsync($"Uživatel {acc.DisplayName} ({acc.Email}) resetoval cache rezervací.", "reservation-cache-reset", ct);
+
+        return new JsonResult(new { success = true, message = "Cache rezervací byla resetována." });
     }
 
 
