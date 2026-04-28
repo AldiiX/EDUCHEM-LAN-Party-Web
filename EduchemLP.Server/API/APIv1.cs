@@ -1,8 +1,10 @@
 ﻿using System.Text;
 using System.Text.Json.Nodes;
+using System.Globalization;
 using EduchemLP.Server.Classes;
 using EduchemLP.Server.Classes.Objects;
 using EduchemLP.Server.Models;
+using EduchemLP.Server.Infrastructure;
 using EduchemLP.Server.Repositories;
 using EduchemLP.Server.Services;
 using EduchemLP.Server.WebSockets;
@@ -230,40 +232,22 @@ public class APIv1(
         if(acc == null || acc.Type < Account.AccountType.ADMIN) return new UnauthorizedObjectResult(new { success = false, message = "Nelze upravit nastavení, pokud nejsi přihlášený, nebo nemáš dostatečná práva." });
 
         IAppSettingsService.ReservationStatusType? status = data.TryGetValue("reservationsStatus", out var _status) ? Enum.TryParse(_status?.ToString(), out IAppSettingsService.ReservationStatusType _status2) ? _status2 : null : null;
-        DateTime? from = data.TryGetValue("reservationsEnabledFrom", out var _from) ? DateTime.TryParse(_from?.ToString(), out var _from2) ? _from2 : null : null;
-        DateTime? to = data.TryGetValue("reservationsEnabledTo", out var _to) ? DateTime.TryParse(_to?.ToString(), out var _to2) ? _to2 : null : null;
+        DateTime? from = data.TryGetValue("reservationsEnabledFrom", out var _from) ? ParseUtcDateTime(_from?.ToString()) : null;
+        DateTime? to = data.TryGetValue("reservationsEnabledTo", out var _to) ? ParseUtcDateTime(_to?.ToString()) : null;
         bool? chatEnabled = data.TryGetValue("chatEnabled", out var _chatEnabled) ? bool.TryParse(_chatEnabled?.ToString(), out var _chatEnabled2) ? _chatEnabled2 : null : null;
 
-        // datetime musi byt v UTC
+        var tasks = new List<Task>();
+        if (status is not null) tasks.Add(appSettings.SetReservationsStatusAsync(status.Value, ct));
+        if (from is not null) tasks.Add(appSettings.SetReservationsEnabledFromAsync(from.Value, ct));
+        if (to is not null) tasks.Add(appSettings.SetReservationsEnabledToAsync(to.Value, ct));
+        if (chatEnabled is not null) tasks.Add(appSettings.SetChatEnabledAsync(chatEnabled.Value, ct));
 
-        // asynch picovinky
-        var t1 = Task.Run(() => {
-            if(status == null) return;
-            appSettings.SetReservationsStatusAsync((IAppSettingsService.ReservationStatusType) status, ct);
-        }, ct);
-
-        var t2 = Task.Run(() => {
-            if(from == null) return;
-            appSettings.SetReservationsEnabledFromAsync((DateTime) from, ct);
-        }, ct);
-
-        var t3 = Task.Run(() => {
-            if(to == null) return;
-            appSettings.SetReservationsEnabledToAsync((DateTime) to, ct);
-        }, ct);
-
-        var t4 = Task.Run(() => {
-            if(chatEnabled == null) return;
-            appSettings.SetChatEnabledAsync((bool) chatEnabled, ct);
-        }, ct);
-
+        await Task.WhenAll(tasks);
 
         // oznameni do sync socketu
         var json = new { action = "updateAppSettings"}.ToJsonString();
         await webSocketHub.BroadcastAsync("sync", json, ct);
 
-
-        Task.WaitAll(t1, t2, t3, t4);
         return new NoContentResult();
     }
 
@@ -518,7 +502,7 @@ public class APIv1(
                 ["type"] = (Enum.TryParse(reader.GetString("exact_type"), out IDbLoggerService.LogType _type) ? _type : IDbLoggerService.LogType.INFO).ToString(),
                 ["exactType"] = reader.GetString("exact_type"),
                 ["message"] = reader.GetString("message"),
-                ["date"] = reader.GetDateTime("date"),
+                ["date"] = reader.GetUtcDateTime("date"),
             };
 
             array.Add(obj);
@@ -546,5 +530,21 @@ public class APIv1(
         if(!success) return new ObjectResult(new { success = false, message = "Nepodařilo se přihlásit jako tento uživatel." }) { StatusCode = 500 };
 
         return new JsonResult(new { success = true, message = "Přihlášení proběhlo úspěšně." });
+    }
+
+    private static DateTime? ParseUtcDateTime(string? value) {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        if (DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var offset)) {
+            return offset.UtcDateTime;
+        }
+
+        if (!DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dateTime)) {
+            return null;
+        }
+
+        return dateTime.Kind == DateTimeKind.Local
+            ? dateTime.ToUniversalTime()
+            : DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
     }
 }

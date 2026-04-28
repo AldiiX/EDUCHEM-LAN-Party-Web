@@ -217,7 +217,7 @@ public sealed class ChatWebSocketEndpoint(
                 reader.GetString("author_account_type"),
                 reader.GetStringOrNull("author_class"),
                 reader.GetString("message"),
-                reader.GetDateTime("date"),
+                reader.GetUtcDateTime("date"),
                 reader.GetStringOrNull("author_banner"),
                 reader.GetBoolean("deleted"),
                 reader.GetStringOrNull("replying_to_uuid"),
@@ -280,7 +280,7 @@ public sealed class ChatWebSocketEndpoint(
                     reader.GetString("author_account_type"),
                     reader.GetStringOrNull("author_class"),
                     message,
-                    reader.GetDateTime("date"),
+                    reader.GetUtcDateTime("date"),
                     reader.GetStringOrNull("author_banner"),
                     reader.GetBoolean("deleted"),
                     reader.GetStringOrNull("replying_to_uuid"),
@@ -338,6 +338,7 @@ public sealed class ChatWebSocketEndpoint(
         if (beforeDateObj is not DateTime beforeDate) {
             return;
         }
+        beforeDate = DateTime.SpecifyKind(beforeDate, DateTimeKind.Utc);
 
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
@@ -373,7 +374,7 @@ public sealed class ChatWebSocketEndpoint(
                 reader.GetString("author_account_type"),
                 reader.GetStringOrNull("author_class"),
                 reader.GetString("message"),
-                reader.GetDateTime("date"),
+                reader.GetUtcDateTime("date"),
                 reader.GetStringOrNull("author_banner"),
                 reader.GetBoolean("deleted"),
                 reader.GetStringOrNull("replying_to_uuid"),

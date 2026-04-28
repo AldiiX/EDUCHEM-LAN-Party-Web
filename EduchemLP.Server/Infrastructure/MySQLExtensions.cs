@@ -3,6 +3,15 @@ using MySqlConnector;
 namespace EduchemLP.Server.Infrastructure;
 
 public static class MySQLExtensions {
+    public static DateTime GetUtcDateTime(this MySqlDataReader reader, string key) {
+        return DateTime.SpecifyKind(reader.GetDateTime(key), DateTimeKind.Utc);
+    }
+
+    public static DateTime? GetUtcDateTimeOrNull(this MySqlDataReader reader, string key) {
+        var value = reader.GetValueOrNull<DateTime>(key);
+        return value.HasValue ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc) : null;
+    }
+
     public static T? GetValueOrNull<T>(this MySqlDataReader reader, string key) where T : struct {
         int ordinal = reader.GetOrdinal(key);
         if(reader.IsDBNull(ordinal)) return null;

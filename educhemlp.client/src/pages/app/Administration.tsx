@@ -15,7 +15,11 @@ import {
     enumEquals,
     enumIsGreater,
     enumIsGreaterOrEquals,
-    enumIsSmaller
+    enumIsSmaller,
+    formatUtcDateTime,
+    formatUtcDateTimeLocal,
+    localDateTimeInputToUtcIso,
+    parseUtcDate
 } from "../../utils.ts";
 import {create} from "zustand";
 import {ButtonStyle, ButtonType} from "../../components/buttons/ButtonProps.ts";
@@ -988,9 +992,9 @@ const UsersTab = () => {
                                 <td>{translateSchool(user.school)}</td>
                                 <td>{user.class}</td>
                                 <td>{translateAccountType(user.type, user.gender)}</td>
-                                <td>{new Date(user.createdAt).toLocaleString()}</td>
-                                <td>{new Date(user.lastUpdated).toLocaleString()}</td>
-                                <td>{user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleString() : null}</td>
+                                <td>{formatUtcDateTime(user.createdAt)}</td>
+                                <td>{formatUtcDateTime(user.lastUpdated)}</td>
+                                <td>{user.lastLoggedIn ? formatUtcDateTime(user.lastLoggedIn) : null}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -1073,7 +1077,7 @@ const LogsTab = () => {
         }
 
         // Filter by date range
-        const logDate = new Date(log.date);
+        const logDate = parseUtcDate(log.date);
         if (dateFrom && logDate < new Date(dateFrom)) {
             return false;
         }
@@ -1179,7 +1183,7 @@ const LogsTab = () => {
                             <td className={log.type.toString().toLowerCase()}>{log.type}</td>
                             <td>{log.exactType}</td>
                             <td>{log.message}</td>
-                            <td>{new Date(log.date).toLocaleString()}</td>
+                            <td>{formatUtcDateTime(log.date)}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -1232,16 +1236,8 @@ const AppSettingsTab = () => {
         let reservationsEnabledTo = form.reservationsEnabledTo?.value as string | null;
         //console.log(reservationsStatus, reservationsEnabledFrom, reservationsEnabledTo);
 
-        // prevedeni casu do UTC
-        if (reservationsEnabledFrom) {
-            const date = new Date(reservationsEnabledFrom);
-            reservationsEnabledFrom = date.toISOString();
-        }
-
-        if (reservationsEnabledTo) {
-            const date = new Date(reservationsEnabledTo);
-            reservationsEnabledTo = date.toISOString();
-        }
+        reservationsEnabledFrom = localDateTimeInputToUtcIso(reservationsEnabledFrom);
+        reservationsEnabledTo = localDateTimeInputToUtcIso(reservationsEnabledTo);
 
         fetch("/api/v1/appsettings", {
             method: "PUT",
@@ -1323,15 +1319,6 @@ const AppSettingsTab = () => {
         });
     }
 
-    function toDatetimeLocal(utcString: string) {
-        const date = new Date(utcString);
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-    };
-
-
-
-
     return (
         <div className="appsettings-tab">
             <div className="appsettings">
@@ -1357,7 +1344,7 @@ const AppSettingsTab = () => {
                                 <input
                                     type="datetime-local"
                                     defaultValue={appSettings?.reservationsEnabledFrom
-                                        ? toDatetimeLocal(appSettings.reservationsEnabledFrom)
+                                        ? formatUtcDateTimeLocal(appSettings.reservationsEnabledFrom)
                                         : ""}
                                     name="reservationsEnabledFrom"
                                     form="editappsettings"
@@ -1369,7 +1356,7 @@ const AppSettingsTab = () => {
                                 <input
                                     type="datetime-local"
                                     defaultValue={appSettings?.reservationsEnabledTo
-                                        ? toDatetimeLocal(appSettings.reservationsEnabledTo)
+                                        ? formatUtcDateTimeLocal(appSettings.reservationsEnabledTo)
                                         : ""}
                                     name="reservationsEnabledTo"
                                     form="editappsettings"

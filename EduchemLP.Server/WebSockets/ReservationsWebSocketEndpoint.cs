@@ -445,7 +445,7 @@ public sealed class ReservationsWebSocketEndpoint(
                 ComputerAvailable: reader.GetValueOrNull<bool>("computer_available"),
                 ComputerImage: reader.GetStringOrNull("computer_image"),
                 Note: reader.GetStringOrNull("note"),
-                CreatedAt: reader.GetDateTime("created_at")
+                CreatedAt: reader.GetUtcDateTime("created_at")
             );
 
             reservations.Add(row);

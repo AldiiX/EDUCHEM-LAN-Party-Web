@@ -19,18 +19,18 @@ public class AppSettingsService(IDatabaseService db) : IAppSettingsService {
 
         var s = await GetSettingRawAsync("reservations_enabled_from", ct);
         if (!string.IsNullOrWhiteSpace(s)) {
-            if (DateTime.TryParseExact(s, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt)
-                || DateTime.TryParse(s, out dt)) {
+            if (TryParseUtc(s, out var dt)) {
                 _reservationsEnabledFrom = dt;
-                return dt;
+                return _reservationsEnabledFrom.Value;
             }
         }
 
-        _reservationsEnabledFrom = DateTime.MaxValue;
+        _reservationsEnabledFrom = DateTime.SpecifyKind(DateTime.MaxValue, DateTimeKind.Utc);
         return _reservationsEnabledFrom.Value;
     }
 
     public async Task SetReservationsEnabledFromAsync(DateTime value, CancellationToken ct = default) {
+        value = NormalizeToUtc(value);
         var s = value.ToString(DateFormat, CultureInfo.InvariantCulture);
         await UpsertSettingRawAsync("reservations_enabled_from", s, ct);
         _reservationsEnabledFrom = value;
@@ -41,18 +41,18 @@ public class AppSettingsService(IDatabaseService db) : IAppSettingsService {
 
         var s = await GetSettingRawAsync("reservations_enabled_to", ct);
         if (!string.IsNullOrWhiteSpace(s)) {
-            if (DateTime.TryParseExact(s, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt)
-                || DateTime.TryParse(s, out dt)) {
+            if (TryParseUtc(s, out var dt)) {
                 _reservationsEnabledTo = dt;
-                return dt;
+                return _reservationsEnabledTo.Value;
             }
         }
 
-        _reservationsEnabledTo = DateTime.MaxValue;
+        _reservationsEnabledTo = DateTime.SpecifyKind(DateTime.MaxValue, DateTimeKind.Utc);
         return _reservationsEnabledTo.Value;
     }
 
     public async Task SetReservationsEnabledToAsync(DateTime value, CancellationToken ct = default) {
+        value = NormalizeToUtc(value);
         var s = value.ToString(DateFormat, CultureInfo.InvariantCulture);
         await UpsertSettingRawAsync("reservations_enabled_to", s, ct);
         _reservationsEnabledTo = value;
@@ -109,6 +109,29 @@ public class AppSettingsService(IDatabaseService db) : IAppSettingsService {
 
 
     // helpers
+
+    private static bool TryParseUtc(string value, out DateTime result) {
+        if (DateTime.TryParseExact(value, DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var exact)) {
+            result = DateTime.SpecifyKind(exact, DateTimeKind.Utc);
+            return true;
+        }
+
+        if (DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var offset)) {
+            result = offset.UtcDateTime;
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    private static DateTime NormalizeToUtc(DateTime value) {
+        return value.Kind switch {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+    }
 
     private async Task<string?> GetSettingRawAsync(string key, CancellationToken ct) {
         await using var conn = await db.GetOpenConnectionAsync(ct);

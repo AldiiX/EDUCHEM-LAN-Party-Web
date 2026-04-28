@@ -13,7 +13,7 @@ import {create} from "zustand";
 import {Button} from "../../components/buttons/Button.tsx";
 import {ButtonType} from "../../components/buttons/ButtonProps.ts";
 import {AccountGender, AppSettings, LoggedUser} from "../../interfaces.ts";
-import {formatTime, getAppSettings} from "../../utils.ts";
+import {formatTime, formatUtcDateTime, getAppSettings, parseUtcDate} from "../../utils.ts";
 import {ITHub} from "../../components/reservation_areas/ITHub.tsx";
 import {areas, RoomMap} from "./Map.tsx";
 
@@ -267,7 +267,7 @@ const SelectedReservation = memo(() => {
                             </div>
                             {/* poznamka: pokud budes chtit cas, odkomentuj a dopln createdAt
                         <p className="date">
-                            {new Date(reservation.createdAt).toLocaleString("cs-CZ")}
+                            {formatUtcDateTime(reservation.createdAt)}
                         </p>
                         */}
                         </div>
@@ -473,8 +473,8 @@ const CountdownDisplay = memo(({ appSettings, setAppSettings }: { appSettings: A
 
         const updateCountdown = () => {
             const now = Date.now();
-            const from = new Date(appSettings.reservationsEnabledFrom).getTime();
-            const to = new Date(appSettings.reservationsEnabledTo).getTime();
+            const from = parseUtcDate(appSettings.reservationsEnabledFrom).getTime();
+            const to = parseUtcDate(appSettings.reservationsEnabledTo).getTime();
 
             if (now < from) {
                 const diff = from - now;
@@ -992,7 +992,7 @@ export const Reservations = () => {
                                             </>
                                         ) :
                                             reservations?.sort((a,b) => {
-                                                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                                                return parseUtcDate(b.createdAt).getTime() - parseUtcDate(a.createdAt).getTime();
                                             }).map((reservation, index) => {
                                                 reservation = reservation as any;
                                                 if(reservation.user === "unknown") return null;
@@ -1012,7 +1012,7 @@ export const Reservations = () => {
                                                                 </span>
                                                             </p>
                                                             <p className={"id"}>{reservation.computer?.id ?? reservation.room?.label}</p>
-                                                            <p className={"date"}>{new Date(reservation.createdAt).toLocaleString("cs-CZ" )}</p>
+                                                            <p className={"date"}>{formatUtcDateTime(reservation.createdAt)}</p>
                                                         </div>
                                                     </div>
                                                 );

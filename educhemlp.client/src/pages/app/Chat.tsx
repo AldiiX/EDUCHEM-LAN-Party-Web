@@ -4,7 +4,7 @@ import {useStore} from "../../store.tsx";
 import React, {useEffect, useRef, useState} from "react";
 import "./Chat.scss";
 import {Avatar} from "../../components/Avatar.tsx";
-import {enumIsGreater, enumIsGreaterOrEquals} from "../../utils.ts";
+import {enumIsGreater, enumIsGreaterOrEquals, formatUtcDate, formatUtcTime, parseUtcDate} from "../../utils.ts";
 import {AccountType} from "../../interfaces.ts";
 import {toast} from "react-toastify";
 import {create} from "zustand/index";
@@ -141,7 +141,7 @@ export const Chat = () => {
 
     // datumy v cestine textem
     const formatDateToCzech = (dateString: string) => {
-        const date = new Date(dateString);
+        const date = parseUtcDate(dateString);
         const months = ["led", "úno", "bře", "dub", "kvě", "čvn", "čvc", "srp", "zář", "říj", "lis", "pro"];
 
         const day = date.getDate();
@@ -235,7 +235,7 @@ export const Chat = () => {
 
                 setMessages((prevMessages) => {
                     const merged = [...prevMessages, ...newMessages]; // nejdriv se novy zpravy mergnou s tema staryma
-                    const sorted = merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // pak se sortnou podle datumu (aby to nebylo random rozhazeny)
+                    const sorted = merged.sort((a, b) => parseUtcDate(a.date).getTime() - parseUtcDate(b.date).getTime()); // pak se sortnou podle datumu (aby to nebylo random rozhazeny)
                     const unique = sorted.filter((msg, i, self) => i === self.findIndex(m => m.uuid === msg.uuid)); // pak se z toho odstrani duplicitni zpravy podle uuid (je mozne ze se to muze stat)
 
                     messagesRef.current = unique;
@@ -450,13 +450,8 @@ export const Chat = () => {
                                 messages.map((message, index) => {
                                     const isOwn = message.author.id === loggedUser.id;
 
-                                    const dateObj = new Date(message.date);
-                                    const dateOnly = dateObj.toLocaleDateString("cs-CZ");
-                                    const time = dateObj.toLocaleTimeString("cs-CZ", {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: false
-                                    });
+                                    const dateOnly = formatUtcDate(message.date);
+                                    const time = formatUtcTime(message.date);
 
                                     const showDateSeparator = dateOnly !== lastRenderedDate;
                                     if (showDateSeparator) lastRenderedDate = dateOnly;
