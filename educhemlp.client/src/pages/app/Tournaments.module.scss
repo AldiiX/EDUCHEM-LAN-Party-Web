@@ -7,13 +7,17 @@
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr));
     gap: 16px;
     z-index: 2;
+    min-width: 0;
 }
 
 .card {
     position: relative;
+    display: flex;
+    width: 100%;
+    min-width: 0;
     aspect-ratio: 16/9;
     align-items: center;
     justify-content: space-between;
@@ -47,6 +51,7 @@
         display: flex;
         gap: 8px;
         width: 100%;
+        min-width: 0;
         height: 100%;
         justify-content: space-between;
         align-items: end;

@@ -155,16 +155,17 @@ export const AppLayout = ({ children, className, customTitleBar, titleBarType = 
 
             <section className="left">
                 {/*<h1>Educhem<br/>LAN Party</h1>*/}
-                <div className="title">
+                <Link to="/" className="title">
                     <div className="logo"></div>
                     <h1>EDUCHEM<br/>LAN Party</h1>
-                </div>
+                </Link>
 
                 <AppMenu />
 
                 <div className="footer">
                     <p>© { new Date().getFullYear() } EDUCHEM LAN Party</p>
                     <p>Vytvořili: <a href="https://stanislavskudrna.cz" target="_blank">Stanislav Škudrna</a>, <a href="https://serhii.cz" target="_blank">Serhii Yavorskyi</a></p>
+                    <p>v{__APP_VERSION__}</p>
                 </div>
             </section>
 
