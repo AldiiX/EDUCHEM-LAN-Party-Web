@@ -29,6 +29,7 @@ export type AppSettings = {
     reservationsEnabledFrom: string,
     reservationsEnabledTo: string,
     reservationsEnabledRightNow: boolean,
+    serverNow: string,
     chatEnabled: boolean,
 }
 

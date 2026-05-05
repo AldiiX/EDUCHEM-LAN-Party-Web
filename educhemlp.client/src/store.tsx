@@ -53,6 +53,8 @@ export const useStore = create<Store | any>((set: any) => ({
         reservationsEnabledFrom: "9999-12-31T23:59:59.9999999Z",
         reservationsEnabledTo: "9999-12-31T23:59:59.9999999Z",
         reservationsEnabledRightNow: false,
+        serverNow: "1970-01-01T00:00:00Z",
+        chatEnabled: false,
     },
     setAppSettings: (settings: AppSettings) => set((state: Store) => {
         if (JSON.stringify(state.appSettings) === JSON.stringify(settings)) return {};

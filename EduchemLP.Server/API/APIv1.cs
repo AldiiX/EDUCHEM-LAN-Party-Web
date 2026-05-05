@@ -221,6 +221,7 @@ public class APIv1(
                 reservationsEnabledFrom = await appSettings.GetReservationsEnabledFromAsync(ct),
                 reservationsEnabledTo = await appSettings.GetReservationsEnabledToAsync(ct),
                 reservationsEnabledRightNow = await appSettings.AreReservationsEnabledRightNowAsync(ct),
+                serverNow = DateTime.UtcNow,
                 chatEnabled = await appSettings.GetChatEnabledAsync(ct),
             }
         );

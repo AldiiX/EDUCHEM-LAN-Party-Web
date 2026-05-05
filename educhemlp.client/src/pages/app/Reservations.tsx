@@ -465,8 +465,26 @@ SelectedReservation.displayName = 'SelectedReservation';
 const CountdownDisplay = memo(({ appSettings, setAppSettings }: { appSettings: AppSettings, setAppSettings: (settings: AppSettings) => void }) => {
     const [countdownText, setCountdownText] = useState<string | null>(null);
     const [countdownText2, setCountdownText2] = useState<string | null>(null);
+    const serverClockRef = useRef({
+        serverNowValue: "",
+        serverNowMs: 0,
+        performanceNowMs: 0,
+    });
 
     useEffect(() => {
+        if (serverClockRef.current.serverNowValue !== appSettings.serverNow) {
+            serverClockRef.current = {
+                serverNowValue: appSettings.serverNow,
+                serverNowMs: parseUtcDate(appSettings.serverNow).getTime(),
+                performanceNowMs: performance.now(),
+            };
+        }
+
+        const getServerNowMs = () => {
+            const {serverNowMs, performanceNowMs} = serverClockRef.current;
+            return serverNowMs + (performance.now() - performanceNowMs);
+        };
+
         const setReservationsEnabledRightNow = (enabled: boolean) => {
             if (appSettings.reservationsEnabledRightNow === enabled) return;
 
@@ -484,7 +502,7 @@ const CountdownDisplay = memo(({ appSettings, setAppSettings }: { appSettings: A
         }
 
         const updateCountdown = () => {
-            const now = Date.now();
+            const now = getServerNowMs();
             const from = parseUtcDate(appSettings.reservationsEnabledFrom).getTime();
             const to = parseUtcDate(appSettings.reservationsEnabledTo).getTime();
             const enabledRightNow = now >= from && now <= to;
