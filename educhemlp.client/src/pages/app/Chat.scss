@@ -7,6 +7,8 @@
         .wrapper {
             display: flex;
             justify-content: space-between;
+            gap: 16px;
+            min-width: 0;
 
             .online-users {
                 position: absolute;
@@ -14,11 +16,13 @@
                 left: 50%;
                 transform: translate(-50%, -50%);
                 user-select: none;
+                max-width: 50%;
 
                 >p {
                     font-size: 14px;
                     margin-bottom: 4px;
                     text-align: center;
+                    white-space: nowrap;
                 }
 
                 >.users-container {
@@ -198,6 +202,7 @@
                     display: flex;
                     justify-content: center;
                     align-items: center;
+                    flex-shrink: 0;
                 }
 
                 >.buttons .menu-button {
@@ -213,6 +218,7 @@
                 >.chat-message {
                     width: fit-content;
                     max-width: 60%;
+                    min-width: 0;
                     padding: 12px;
                     border-radius: 10px;
                     font-size: 16px;
@@ -226,8 +232,11 @@
                     }
     
                     >.texts {
+                        min-width: 0;
+
                         article{
                             overflow: hidden;
+                            overflow-wrap: anywhere;
                             color: var(--text-color-darker);
                             margin-top: 4px;
                         }
@@ -287,6 +296,10 @@
                         p, span {
                             color: var(--accent-color-text);
                         }
+
+                        p {
+                            overflow-wrap: anywhere;
+                        }
                     }
     
                     &.other-message {
@@ -310,6 +323,7 @@
         bottom: 0;
         height: $input-div-height;
         width: calc(100vw - 361px - 48px*2);
+        max-width: calc(100% - 96px);
         background-color: var(--background-bg);
         
         >.scroll-button{
@@ -424,14 +438,21 @@
                     top: unset;
                     left: unset;
                     transform: unset;
+                    max-width: calc(100% - 88px);
+                    min-width: 0;
 
                     p {
                         text-align: right;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
                     }
 
                     .users-container {
+                        min-width: 0;
+
                         .users {
                             justify-content: right;
+                            overflow: hidden;
                         }
 
                         .all-users-popover {
@@ -456,7 +477,7 @@
 
                 .wrapped-message {
                     .chat-message {
-                        max-width: 80%;
+                        max-width: calc(100% - 44px);
                     }
                 }
             }
@@ -465,6 +486,7 @@
         .chat-input {
             bottom: calc(64px);
             width: calc(100% - 48px);
+            max-width: calc(100% - 48px);
             height: 64px;
         }
     }

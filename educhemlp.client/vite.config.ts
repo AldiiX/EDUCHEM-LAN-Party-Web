@@ -11,12 +11,16 @@ const target = env.ASPNETCORE_HTTPS_PORT
     : env.ASPNETCORE_URLS
         ? env.ASPNETCORE_URLS.split(';')[0]
         : 'http://localhost:5047';
+const appVersion = JSON.parse(fs.readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8')).version;
 
 export default defineConfig(({ command, mode }: any): any => {
     // Produkční konfigurace: vypínáme HTTPS (a tedy ani generování certifikátů)
     if (mode === 'production') {
         return {
             plugins: [plugin()],
+            define: {
+                __APP_VERSION__: JSON.stringify(appVersion)
+            },
             resolve: {
                 alias: {
                     '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -83,6 +87,9 @@ export default defineConfig(({ command, mode }: any): any => {
 
     return {
         plugins: [plugin()],
+        define: {
+            __APP_VERSION__: JSON.stringify(appVersion)
+        },
         resolve: {
             alias: {
                 '@': fileURLToPath(new URL('./src', import.meta.url))

@@ -2,6 +2,7 @@
     position: fixed;
     z-index: 4;
     width: 100vw;
+    max-width: 100vw;
     height: 100dvh;
     padding: 24px;
     background-color: var(--element-bg);
@@ -39,6 +40,13 @@
         gap: 16px;
         justify-content: center;
         margin-top: 16px;
+        text-decoration: none;
+        transition-duration: 0.3s;
+
+        &:hover {
+            opacity: 0.75;
+            transition-duration: 0.3s;
+        }
 
         >.logo {
             width: 80px;
@@ -71,6 +79,7 @@
             align-items: center;
             background-color: transparent;
             transition-duration: 0.3s;
+            min-width: 0;
 
             &:hover {
                 >p {
@@ -87,11 +96,18 @@
             >div {
                 width: 20px;
                 height: 20px;
+                flex-shrink: 0;
                 mask-repeat: no-repeat;
                 mask-position: left;
                 mask-size: cover;
                 background-color: var(--text-color);
                 transition-duration: 0.3s;
+            }
+
+            >p {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
 
             &:is(.active) {
