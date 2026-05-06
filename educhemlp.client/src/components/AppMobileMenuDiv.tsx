@@ -25,10 +25,10 @@ export const AppMobileMenuDiv = () => {
 
     return (
         <div className="mobile-menu">
-            <Link to="/" className="title" onClick={() => closeMenu()}>
+            <a href="/" className="title" onClick={() => closeMenu()}>
                 <div className="logo"></div>
                 <h1>EDUCHEM<br/>LAN Party</h1>
-            </Link>
+            </a>
 
             <AppMenu onClick={() => closeMenu() } />
 
