@@ -1,5 +1,9 @@
 # EDUCHEM LAN Party App
 
+> ❗❗❗ Tato codebase byla dne 15.5.2026 ukončena a nyní vývoj probíhá v nové přepsané codebase. https://github.com/AldiiX/Educhem-LAN-Party-App ❗❗❗
+
+<br><br><br>
+
 Tento projekt poskytuje webovou platformu pro správu a organizaci LAN party událostí na EDUCHEM. Umožňuje registraci týmů, plánování turnajů a poskytuje aktuální informace o událostech.
 
 
